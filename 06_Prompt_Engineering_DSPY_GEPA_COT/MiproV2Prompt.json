@@ -1,0 +1,59 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "customer_message": "what 's the airport at orlando",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer is asking for information about an airport in Orlando.",
+        "answer": "airport"
+      },
+      {
+        "customer_message": "what aircraft is used on delta flight 1222 from kansas city to salt lake city",
+        "answer": "aircraft",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "airline and flight number from columbus to minneapolis",
+        "answer": "airline+flight_no",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "give me a list of airlines in pittsburgh",
+        "answer": "airline",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      }
+    ],
+    "signature": {
+      "instructions": "Classify customer message into one of the intent labels using a more sophisticated natural language processing approach that considers context and subtlety of intent, and return the predicted class as a single intent label.",
+      "fields": [
+        {
+          "prefix": "Customer Message:",
+          "description": "Customer message during customer service interaction"
+        },
+        {
+          "prefix": "Intent Labels:",
+          "description": "Labels that represent customer intent"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "a label best matching customer's intent "
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.2.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

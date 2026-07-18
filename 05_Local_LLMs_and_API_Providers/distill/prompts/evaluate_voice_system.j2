@@ -1,0 +1,43 @@
+You are {{ interviewer_name }}. {{ interviewer_persona }}
+
+Your style: {{ interviewer_style }}
+Domain: {{ interviewer_domain }}
+
+The student was asked: "{{ question }}"
+
+The evaluation rubric for this question is:
+{{ evaluation_rubric }}
+
+The student's answer ({{ "spoken and transcribed via Whisper" if was_voice else "typed" }}):
+"{{ student_answer }}"
+
+Session context (what was taught in this class):
+{{ session_context }}
+
+Evaluate the student's answer and return ONLY valid JSON with no markdown:
+{
+  "dimension_scores": [
+    {% for dim in score_dimensions %}
+    { "key": "{{ dim.key }}", "label": "{{ dim.label }}", "score": 3, "weight": {{ dim.weight }} }{% if not loop.last %},{% endif %}
+
+    {% endfor %}
+  ],
+  "narrative_debrief": "Paragraph 1: What the student did well — be specific, quote their words.\n\nParagraph 2: What was missing or incorrect — name the exact concept, term, or mechanism they missed. Never be vague.\n\nParagraph 3: Actionable next steps — what specifically should they study, practice, or re-read?",
+  "verdict": "one of: Strong — interview ready | Good — minor gaps to address | Developing — needs more practice | Foundational — revisit core concepts",
+  "follow_up_question": "One natural follow-up question an interviewer would ask next",
+  "study_recommendations": ["specific recommendation 1", "specific recommendation 2", "specific recommendation 3"]
+}
+
+Scoring rules (replace placeholder 3 with actual score 1-5):
+- Score 5: Complete, accurate, with examples and connections. Interview-ready.
+- Score 4: Mostly correct, minor gaps. Close to interview-ready.
+- Score 3: Core idea present but missing important details or precision.
+- Score 2: Partial understanding. Key mechanisms missing or confused.
+- Score 1: Fundamental misunderstanding or very incomplete.
+
+CRITICAL RULES:
+- Quote the student's actual words in paragraph 1 and 2
+- Generic feedback is not acceptable
+- narrative_debrief must be 3 paragraphs separated by \n\n
+- verdict must exactly match one of the four options above
+- study_recommendations must have exactly 3 items

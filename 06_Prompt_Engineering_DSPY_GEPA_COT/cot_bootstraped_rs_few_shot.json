@@ -1,0 +1,89 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "customer_message": "how far from the airport in the dallas fort worth airport is dallas",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "Not supplied for this particular example. The system needs to make an inference that \"airport\" refers to the Dallas Fort Worth Airport, and then calculate the distance between the airport and the city of Dallas.",
+        "answer": "distance"
+      },
+      {
+        "customer_message": "flight numbers from columbus to minneapolis tomorrow",
+        "answer": "flight_no",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "ground san francisco",
+        "answer": "ground_service",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "how many flights does delta have with a class of service code f",
+        "answer": "quantity",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "explain the restriction ap 80",
+        "answer": "abbreviation",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "houston airports",
+        "answer": "airport",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "what is airline nw",
+        "answer": "airline",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "what are my meal options from boston to denver",
+        "answer": "meal",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "what is the cost of the air taxi operation at philadelphia international airport",
+        "answer": "ground_fare",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      },
+      {
+        "customer_message": "find me the flights that are nonstop between boston and dallas that leave between 12 and 2 in the afternoon",
+        "answer": "flight",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no"
+      }
+    ],
+    "signature": {
+      "instructions": "Classify the customer message into one of the intent labels.\nThe output should be only the predicted class as a single intent label.",
+      "fields": [
+        {
+          "prefix": "Customer Message:",
+          "description": "Customer message during customer service interaction"
+        },
+        {
+          "prefix": "Intent Labels:",
+          "description": "Labels that represent customer intent"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "a label best matching customer's intent "
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.2.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

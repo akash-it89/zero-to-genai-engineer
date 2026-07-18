@@ -1,0 +1,2043 @@
+<!DOCTYPE html><html><head>
+<title>RECAP_SLIDES.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/*
+
+Arduino® Light Theme - Stefania Mellai <s.mellai@arduino.cc>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #FFFFFF;
+}
+
+.hljs,
+.hljs-subst {
+  color: #434f54;
+}
+
+.hljs-keyword,
+.hljs-attribute,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: #00979D;
+}
+
+.hljs-built_in,
+.hljs-literal,
+.hljs-bullet,
+.hljs-code,
+.hljs-addition {
+  color: #D35400;
+}
+
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #00979D;
+}
+
+.hljs-type,
+.hljs-string,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-quote,
+.hljs-template-tag,
+.hljs-deletion {
+  color: #005C5F;
+}
+
+.hljs-title,
+.hljs-section {
+  color: #880000;
+  font-weight: bold;
+}
+
+.hljs-comment {
+  color: rgba(149,165,166,.8);
+}
+
+.hljs-meta-keyword {
+  color: #728E00;
+}
+
+.hljs-meta {
+  color: #434f54;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-function {
+  color: #728E00;
+}
+
+.hljs-number {
+  color: #8A7B52;  
+}
+
+</style>
+
+<style>
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+@font-face {
+	font-family: "CursorViewerCJK";
+	font-style: normal;
+	font-weight: 400;
+	/* local first, then online fallback to improve cross-machine consistency */
+	src:
+		local("PingFang SC"),
+		local("Hiragino Sans GB"),
+		local("Noto Sans CJK SC"),
+		local("Source Han Sans SC"),
+		local("Microsoft YaHei"),
+		url("https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-sc@5.0.16/files/noto-sans-sc-chinese-simplified-400-normal.woff2") format("woff2");
+	font-display: swap;
+}
+
+body {
+	/* Prefer CJK-capable fonts first to avoid missing Chinese glyphs in Chromium PDF rendering. */
+	font-family: "CursorViewerCJK", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", "WenQuanYi Micro Hei", "Source Han Sans SC", "宋体", "HelveticaNeue-Light", "SFUIText-Light", "Segoe UI", "Segoe WPC", "Droid Sans Fallback", Arial, sans-serif;
+	font-size: 18px;
+	padding: 0 12px;
+	line-height: 1.6;
+	word-wrap: break-word;
+	color: #333333;
+}
+
+.content-wrapper{
+	max-width: 860px;
+    margin: 0 auto;
+    padding: 0 30px;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	color: #4080D0;
+	text-decoration: none;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom: 1px solid #eee;
+}
+
+
+h2{
+	padding-bottom: .3em;
+    font-size: 2em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+h3{
+	font-size: 1.75em;
+    line-height: 1.225;
+}
+
+h1, h2, h3 {
+	font-weight: bold;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code {
+	font-size: inherit;
+	line-height: auto;
+}
+
+a:hover {
+	color: #4080D0;
+	text-decoration: underline;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left: 5px solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 14px;
+	line-height: 19px;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+.mac code {
+	font-size: 12px;
+	line-height: 18px;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+/** Theming */
+
+.vscode-light,
+.vscode-light pre code {
+	color: rgb(30, 30, 30);
+}
+
+.vscode-dark,
+.vscode-dark pre code {
+	color: #DDD;
+}
+
+.vscode-high-contrast,
+.vscode-high-contrast pre code {
+	color: white;
+}
+
+.vscode-light code {
+	color: #A31515;
+}
+
+.vscode-dark code {
+	color: #D7BA7D;
+}
+
+.vscode-light pre:not(.hljs),
+.vscode-light code > div {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre:not(.hljs),
+.vscode-dark code > div {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre:not(.hljs),
+.vscode-high-contrast code > div {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vscode-light blockquote,
+.vscode-dark blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.vscode-high-contrast blockquote {
+	background: transparent;
+	border-color: #fff;
+}
+</style>
+
+<style>
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+.table-of-contents li{
+	list-style-type: initial;
+}
+</style>
+
+<style>
+@font-face{font-family:KaTeX_AMS;font-style:normal;font-weight:400;src:url(fonts/KaTeX_AMS-Regular.woff2) format("woff2"),url(fonts/KaTeX_AMS-Regular.woff) format("woff"),url(fonts/KaTeX_AMS-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Caligraphic;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Caligraphic-Bold.woff2) format("woff2"),url(fonts/KaTeX_Caligraphic-Bold.woff) format("woff"),url(fonts/KaTeX_Caligraphic-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Caligraphic;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Caligraphic-Regular.woff2) format("woff2"),url(fonts/KaTeX_Caligraphic-Regular.woff) format("woff"),url(fonts/KaTeX_Caligraphic-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Fraktur;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Fraktur-Bold.woff2) format("woff2"),url(fonts/KaTeX_Fraktur-Bold.woff) format("woff"),url(fonts/KaTeX_Fraktur-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Fraktur;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Fraktur-Regular.woff2) format("woff2"),url(fonts/KaTeX_Fraktur-Regular.woff) format("woff"),url(fonts/KaTeX_Fraktur-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:normal;font-weight:700;src:url(fonts/KaTeX_Main-Bold.woff2) format("woff2"),url(fonts/KaTeX_Main-Bold.woff) format("woff"),url(fonts/KaTeX_Main-Bold.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:italic;font-weight:700;src:url(fonts/KaTeX_Main-BoldItalic.woff2) format("woff2"),url(fonts/KaTeX_Main-BoldItalic.woff) format("woff"),url(fonts/KaTeX_Main-BoldItalic.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:italic;font-weight:400;src:url(fonts/KaTeX_Main-Italic.woff2) format("woff2"),url(fonts/KaTeX_Main-Italic.woff) format("woff"),url(fonts/KaTeX_Main-Italic.ttf) format("truetype")}@font-face{font-family:KaTeX_Main;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Main-Regular.woff2) format("woff2"),url(fonts/KaTeX_Main-Regular.woff) format("woff"),url(fonts/KaTeX_Main-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Math;font-style:italic;font-weight:700;src:url(fonts/KaTeX_Math-BoldItalic.woff2) format("woff2"),url(fonts/KaTeX_Math-BoldItalic.woff) format("woff"),url(fonts/KaTeX_Math-BoldItalic.ttf) format("truetype")}@font-face{font-family:KaTeX_Math;font-style:italic;font-weight:400;src:url(fonts/KaTeX_Math-Italic.woff2) format("woff2"),url(fonts/KaTeX_Math-Italic.woff) format("woff"),url(fonts/KaTeX_Math-Italic.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:normal;font-weight:700;src:url(fonts/KaTeX_SansSerif-Bold.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Bold.woff) format("woff"),url(fonts/KaTeX_SansSerif-Bold.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:italic;font-weight:400;src:url(fonts/KaTeX_SansSerif-Italic.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Italic.woff) format("woff"),url(fonts/KaTeX_SansSerif-Italic.ttf) format("truetype")}@font-face{font-family:"KaTeX_SansSerif";font-style:normal;font-weight:400;src:url(fonts/KaTeX_SansSerif-Regular.woff2) format("woff2"),url(fonts/KaTeX_SansSerif-Regular.woff) format("woff"),url(fonts/KaTeX_SansSerif-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Script;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Script-Regular.woff2) format("woff2"),url(fonts/KaTeX_Script-Regular.woff) format("woff"),url(fonts/KaTeX_Script-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size1;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size1-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size1-Regular.woff) format("woff"),url(fonts/KaTeX_Size1-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size2;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size2-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size2-Regular.woff) format("woff"),url(fonts/KaTeX_Size2-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size3;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size3-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size3-Regular.woff) format("woff"),url(fonts/KaTeX_Size3-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Size4;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Size4-Regular.woff2) format("woff2"),url(fonts/KaTeX_Size4-Regular.woff) format("woff"),url(fonts/KaTeX_Size4-Regular.ttf) format("truetype")}@font-face{font-family:KaTeX_Typewriter;font-style:normal;font-weight:400;src:url(fonts/KaTeX_Typewriter-Regular.woff2) format("woff2"),url(fonts/KaTeX_Typewriter-Regular.woff) format("woff"),url(fonts/KaTeX_Typewriter-Regular.ttf) format("truetype")}.katex{text-rendering:auto;font:normal 1.21em KaTeX_Main,Times New Roman,serif;line-height:1.2;text-indent:0}.katex *{-ms-high-contrast-adjust:none!important;border-color:currentColor}.katex .katex-version:after{content:"0.16.2"}.katex .katex-mathml{clip:rect(1px,1px,1px,1px);border:0;height:1px;overflow:hidden;padding:0;position:absolute;width:1px}.katex .katex-html>.newline{display:block}.katex .base{position:relative;white-space:nowrap;width:-webkit-min-content;width:-moz-min-content;width:min-content}.katex .base,.katex .strut{display:inline-block}.katex .textbf{font-weight:700}.katex .textit{font-style:italic}.katex .textrm{font-family:KaTeX_Main}.katex .textsf{font-family:KaTeX_SansSerif}.katex .texttt{font-family:KaTeX_Typewriter}.katex .mathnormal{font-family:KaTeX_Math;font-style:italic}.katex .mathit{font-family:KaTeX_Main;font-style:italic}.katex .mathrm{font-style:normal}.katex .mathbf{font-family:KaTeX_Main;font-weight:700}.katex .boldsymbol{font-family:KaTeX_Math;font-style:italic;font-weight:700}.katex .amsrm,.katex .mathbb,.katex .textbb{font-family:KaTeX_AMS}.katex .mathcal{font-family:KaTeX_Caligraphic}.katex .mathfrak,.katex .textfrak{font-family:KaTeX_Fraktur}.katex .mathtt{font-family:KaTeX_Typewriter}.katex .mathscr,.katex .textscr{font-family:KaTeX_Script}.katex .mathsf,.katex .textsf{font-family:KaTeX_SansSerif}.katex .mathboldsf,.katex .textboldsf{font-family:KaTeX_SansSerif;font-weight:700}.katex .mathitsf,.katex .textitsf{font-family:KaTeX_SansSerif;font-style:italic}.katex .mainrm{font-family:KaTeX_Main;font-style:normal}.katex .vlist-t{border-collapse:collapse;display:inline-table;table-layout:fixed}.katex .vlist-r{display:table-row}.katex .vlist{display:table-cell;position:relative;vertical-align:bottom}.katex .vlist>span{display:block;height:0;position:relative}.katex .vlist>span>span{display:inline-block}.katex .vlist>span>.pstrut{overflow:hidden;width:0}.katex .vlist-t2{margin-right:-2px}.katex .vlist-s{display:table-cell;font-size:1px;min-width:2px;vertical-align:bottom;width:2px}.katex .vbox{align-items:baseline;display:inline-flex;flex-direction:column}.katex .hbox{width:100%}.katex .hbox,.katex .thinbox{display:inline-flex;flex-direction:row}.katex .thinbox{max-width:0;width:0}.katex .msupsub{text-align:left}.katex .mfrac>span>span{text-align:center}.katex .mfrac .frac-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline,.katex .hline,.katex .mfrac .frac-line,.katex .overline .overline-line,.katex .rule,.katex .underline .underline-line{min-height:1px}.katex .mspace{display:inline-block}.katex .clap,.katex .llap,.katex .rlap{position:relative;width:0}.katex .clap>.inner,.katex .llap>.inner,.katex .rlap>.inner{position:absolute}.katex .clap>.fix,.katex .llap>.fix,.katex .rlap>.fix{display:inline-block}.katex .llap>.inner{right:0}.katex .clap>.inner,.katex .rlap>.inner{left:0}.katex .clap>.inner>span{margin-left:-50%;margin-right:50%}.katex .rule{border:0 solid;display:inline-block;position:relative}.katex .hline,.katex .overline .overline-line,.katex .underline .underline-line{border-bottom-style:solid;display:inline-block;width:100%}.katex .hdashline{border-bottom-style:dashed;display:inline-block;width:100%}.katex .sqrt>.root{margin-left:.27777778em;margin-right:-.55555556em}.katex .fontsize-ensurer.reset-size1.size1,.katex .sizing.reset-size1.size1{font-size:1em}.katex .fontsize-ensurer.reset-size1.size2,.katex .sizing.reset-size1.size2{font-size:1.2em}.katex .fontsize-ensurer.reset-size1.size3,.katex .sizing.reset-size1.size3{font-size:1.4em}.katex .fontsize-ensurer.reset-size1.size4,.katex .sizing.reset-size1.size4{font-size:1.6em}.katex .fontsize-ensurer.reset-size1.size5,.katex .sizing.reset-size1.size5{font-size:1.8em}.katex .fontsize-ensurer.reset-size1.size6,.katex .sizing.reset-size1.size6{font-size:2em}.katex .fontsize-ensurer.reset-size1.size7,.katex .sizing.reset-size1.size7{font-size:2.4em}.katex .fontsize-ensurer.reset-size1.size8,.katex .sizing.reset-size1.size8{font-size:2.88em}.katex .fontsize-ensurer.reset-size1.size9,.katex .sizing.reset-size1.size9{font-size:3.456em}.katex .fontsize-ensurer.reset-size1.size10,.katex .sizing.reset-size1.size10{font-size:4.148em}.katex .fontsize-ensurer.reset-size1.size11,.katex .sizing.reset-size1.size11{font-size:4.976em}.katex .fontsize-ensurer.reset-size2.size1,.katex .sizing.reset-size2.size1{font-size:.83333333em}.katex .fontsize-ensurer.reset-size2.size2,.katex .sizing.reset-size2.size2{font-size:1em}.katex .fontsize-ensurer.reset-size2.size3,.katex .sizing.reset-size2.size3{font-size:1.16666667em}.katex .fontsize-ensurer.reset-size2.size4,.katex .sizing.reset-size2.size4{font-size:1.33333333em}.katex .fontsize-ensurer.reset-size2.size5,.katex .sizing.reset-size2.size5{font-size:1.5em}.katex .fontsize-ensurer.reset-size2.size6,.katex .sizing.reset-size2.size6{font-size:1.66666667em}.katex .fontsize-ensurer.reset-size2.size7,.katex .sizing.reset-size2.size7{font-size:2em}.katex .fontsize-ensurer.reset-size2.size8,.katex .sizing.reset-size2.size8{font-size:2.4em}.katex .fontsize-ensurer.reset-size2.size9,.katex .sizing.reset-size2.size9{font-size:2.88em}.katex .fontsize-ensurer.reset-size2.size10,.katex .sizing.reset-size2.size10{font-size:3.45666667em}.katex .fontsize-ensurer.reset-size2.size11,.katex .sizing.reset-size2.size11{font-size:4.14666667em}.katex .fontsize-ensurer.reset-size3.size1,.katex .sizing.reset-size3.size1{font-size:.71428571em}.katex .fontsize-ensurer.reset-size3.size2,.katex .sizing.reset-size3.size2{font-size:.85714286em}.katex .fontsize-ensurer.reset-size3.size3,.katex .sizing.reset-size3.size3{font-size:1em}.katex .fontsize-ensurer.reset-size3.size4,.katex .sizing.reset-size3.size4{font-size:1.14285714em}.katex .fontsize-ensurer.reset-size3.size5,.katex .sizing.reset-size3.size5{font-size:1.28571429em}.katex .fontsize-ensurer.reset-size3.size6,.katex .sizing.reset-size3.size6{font-size:1.42857143em}.katex .fontsize-ensurer.reset-size3.size7,.katex .sizing.reset-size3.size7{font-size:1.71428571em}.katex .fontsize-ensurer.reset-size3.size8,.katex .sizing.reset-size3.size8{font-size:2.05714286em}.katex .fontsize-ensurer.reset-size3.size9,.katex .sizing.reset-size3.size9{font-size:2.46857143em}.katex .fontsize-ensurer.reset-size3.size10,.katex .sizing.reset-size3.size10{font-size:2.96285714em}.katex .fontsize-ensurer.reset-size3.size11,.katex .sizing.reset-size3.size11{font-size:3.55428571em}.katex .fontsize-ensurer.reset-size4.size1,.katex .sizing.reset-size4.size1{font-size:.625em}.katex .fontsize-ensurer.reset-size4.size2,.katex .sizing.reset-size4.size2{font-size:.75em}.katex .fontsize-ensurer.reset-size4.size3,.katex .sizing.reset-size4.size3{font-size:.875em}.katex .fontsize-ensurer.reset-size4.size4,.katex .sizing.reset-size4.size4{font-size:1em}.katex .fontsize-ensurer.reset-size4.size5,.katex .sizing.reset-size4.size5{font-size:1.125em}.katex .fontsize-ensurer.reset-size4.size6,.katex .sizing.reset-size4.size6{font-size:1.25em}.katex .fontsize-ensurer.reset-size4.size7,.katex .sizing.reset-size4.size7{font-size:1.5em}.katex .fontsize-ensurer.reset-size4.size8,.katex .sizing.reset-size4.size8{font-size:1.8em}.katex .fontsize-ensurer.reset-size4.size9,.katex .sizing.reset-size4.size9{font-size:2.16em}.katex .fontsize-ensurer.reset-size4.size10,.katex .sizing.reset-size4.size10{font-size:2.5925em}.katex .fontsize-ensurer.reset-size4.size11,.katex .sizing.reset-size4.size11{font-size:3.11em}.katex .fontsize-ensurer.reset-size5.size1,.katex .sizing.reset-size5.size1{font-size:.55555556em}.katex .fontsize-ensurer.reset-size5.size2,.katex .sizing.reset-size5.size2{font-size:.66666667em}.katex .fontsize-ensurer.reset-size5.size3,.katex .sizing.reset-size5.size3{font-size:.77777778em}.katex .fontsize-ensurer.reset-size5.size4,.katex .sizing.reset-size5.size4{font-size:.88888889em}.katex .fontsize-ensurer.reset-size5.size5,.katex .sizing.reset-size5.size5{font-size:1em}.katex .fontsize-ensurer.reset-size5.size6,.katex .sizing.reset-size5.size6{font-size:1.11111111em}.katex .fontsize-ensurer.reset-size5.size7,.katex .sizing.reset-size5.size7{font-size:1.33333333em}.katex .fontsize-ensurer.reset-size5.size8,.katex .sizing.reset-size5.size8{font-size:1.6em}.katex .fontsize-ensurer.reset-size5.size9,.katex .sizing.reset-size5.size9{font-size:1.92em}.katex .fontsize-ensurer.reset-size5.size10,.katex .sizing.reset-size5.size10{font-size:2.30444444em}.katex .fontsize-ensurer.reset-size5.size11,.katex .sizing.reset-size5.size11{font-size:2.76444444em}.katex .fontsize-ensurer.reset-size6.size1,.katex .sizing.reset-size6.size1{font-size:.5em}.katex .fontsize-ensurer.reset-size6.size2,.katex .sizing.reset-size6.size2{font-size:.6em}.katex .fontsize-ensurer.reset-size6.size3,.katex .sizing.reset-size6.size3{font-size:.7em}.katex .fontsize-ensurer.reset-size6.size4,.katex .sizing.reset-size6.size4{font-size:.8em}.katex .fontsize-ensurer.reset-size6.size5,.katex .sizing.reset-size6.size5{font-size:.9em}.katex .fontsize-ensurer.reset-size6.size6,.katex .sizing.reset-size6.size6{font-size:1em}.katex .fontsize-ensurer.reset-size6.size7,.katex .sizing.reset-size6.size7{font-size:1.2em}.katex .fontsize-ensurer.reset-size6.size8,.katex .sizing.reset-size6.size8{font-size:1.44em}.katex .fontsize-ensurer.reset-size6.size9,.katex .sizing.reset-size6.size9{font-size:1.728em}.katex .fontsize-ensurer.reset-size6.size10,.katex .sizing.reset-size6.size10{font-size:2.074em}.katex .fontsize-ensurer.reset-size6.size11,.katex .sizing.reset-size6.size11{font-size:2.488em}.katex .fontsize-ensurer.reset-size7.size1,.katex .sizing.reset-size7.size1{font-size:.41666667em}.katex .fontsize-ensurer.reset-size7.size2,.katex .sizing.reset-size7.size2{font-size:.5em}.katex .fontsize-ensurer.reset-size7.size3,.katex .sizing.reset-size7.size3{font-size:.58333333em}.katex .fontsize-ensurer.reset-size7.size4,.katex .sizing.reset-size7.size4{font-size:.66666667em}.katex .fontsize-ensurer.reset-size7.size5,.katex .sizing.reset-size7.size5{font-size:.75em}.katex .fontsize-ensurer.reset-size7.size6,.katex .sizing.reset-size7.size6{font-size:.83333333em}.katex .fontsize-ensurer.reset-size7.size7,.katex .sizing.reset-size7.size7{font-size:1em}.katex .fontsize-ensurer.reset-size7.size8,.katex .sizing.reset-size7.size8{font-size:1.2em}.katex .fontsize-ensurer.reset-size7.size9,.katex .sizing.reset-size7.size9{font-size:1.44em}.katex .fontsize-ensurer.reset-size7.size10,.katex .sizing.reset-size7.size10{font-size:1.72833333em}.katex .fontsize-ensurer.reset-size7.size11,.katex .sizing.reset-size7.size11{font-size:2.07333333em}.katex .fontsize-ensurer.reset-size8.size1,.katex .sizing.reset-size8.size1{font-size:.34722222em}.katex .fontsize-ensurer.reset-size8.size2,.katex .sizing.reset-size8.size2{font-size:.41666667em}.katex .fontsize-ensurer.reset-size8.size3,.katex .sizing.reset-size8.size3{font-size:.48611111em}.katex .fontsize-ensurer.reset-size8.size4,.katex .sizing.reset-size8.size4{font-size:.55555556em}.katex .fontsize-ensurer.reset-size8.size5,.katex .sizing.reset-size8.size5{font-size:.625em}.katex .fontsize-ensurer.reset-size8.size6,.katex .sizing.reset-size8.size6{font-size:.69444444em}.katex .fontsize-ensurer.reset-size8.size7,.katex .sizing.reset-size8.size7{font-size:.83333333em}.katex .fontsize-ensurer.reset-size8.size8,.katex .sizing.reset-size8.size8{font-size:1em}.katex .fontsize-ensurer.reset-size8.size9,.katex .sizing.reset-size8.size9{font-size:1.2em}.katex .fontsize-ensurer.reset-size8.size10,.katex .sizing.reset-size8.size10{font-size:1.44027778em}.katex .fontsize-ensurer.reset-size8.size11,.katex .sizing.reset-size8.size11{font-size:1.72777778em}.katex .fontsize-ensurer.reset-size9.size1,.katex .sizing.reset-size9.size1{font-size:.28935185em}.katex .fontsize-ensurer.reset-size9.size2,.katex .sizing.reset-size9.size2{font-size:.34722222em}.katex .fontsize-ensurer.reset-size9.size3,.katex .sizing.reset-size9.size3{font-size:.40509259em}.katex .fontsize-ensurer.reset-size9.size4,.katex .sizing.reset-size9.size4{font-size:.46296296em}.katex .fontsize-ensurer.reset-size9.size5,.katex .sizing.reset-size9.size5{font-size:.52083333em}.katex .fontsize-ensurer.reset-size9.size6,.katex .sizing.reset-size9.size6{font-size:.5787037em}.katex .fontsize-ensurer.reset-size9.size7,.katex .sizing.reset-size9.size7{font-size:.69444444em}.katex .fontsize-ensurer.reset-size9.size8,.katex .sizing.reset-size9.size8{font-size:.83333333em}.katex .fontsize-ensurer.reset-size9.size9,.katex .sizing.reset-size9.size9{font-size:1em}.katex .fontsize-ensurer.reset-size9.size10,.katex .sizing.reset-size9.size10{font-size:1.20023148em}.katex .fontsize-ensurer.reset-size9.size11,.katex .sizing.reset-size9.size11{font-size:1.43981481em}.katex .fontsize-ensurer.reset-size10.size1,.katex .sizing.reset-size10.size1{font-size:.24108004em}.katex .fontsize-ensurer.reset-size10.size2,.katex .sizing.reset-size10.size2{font-size:.28929605em}.katex .fontsize-ensurer.reset-size10.size3,.katex .sizing.reset-size10.size3{font-size:.33751205em}.katex .fontsize-ensurer.reset-size10.size4,.katex .sizing.reset-size10.size4{font-size:.38572806em}.katex .fontsize-ensurer.reset-size10.size5,.katex .sizing.reset-size10.size5{font-size:.43394407em}.katex .fontsize-ensurer.reset-size10.size6,.katex .sizing.reset-size10.size6{font-size:.48216008em}.katex .fontsize-ensurer.reset-size10.size7,.katex .sizing.reset-size10.size7{font-size:.57859209em}.katex .fontsize-ensurer.reset-size10.size8,.katex .sizing.reset-size10.size8{font-size:.69431051em}.katex .fontsize-ensurer.reset-size10.size9,.katex .sizing.reset-size10.size9{font-size:.83317261em}.katex .fontsize-ensurer.reset-size10.size10,.katex .sizing.reset-size10.size10{font-size:1em}.katex .fontsize-ensurer.reset-size10.size11,.katex .sizing.reset-size10.size11{font-size:1.19961427em}.katex .fontsize-ensurer.reset-size11.size1,.katex .sizing.reset-size11.size1{font-size:.20096463em}.katex .fontsize-ensurer.reset-size11.size2,.katex .sizing.reset-size11.size2{font-size:.24115756em}.katex .fontsize-ensurer.reset-size11.size3,.katex .sizing.reset-size11.size3{font-size:.28135048em}.katex .fontsize-ensurer.reset-size11.size4,.katex .sizing.reset-size11.size4{font-size:.32154341em}.katex .fontsize-ensurer.reset-size11.size5,.katex .sizing.reset-size11.size5{font-size:.36173633em}.katex .fontsize-ensurer.reset-size11.size6,.katex .sizing.reset-size11.size6{font-size:.40192926em}.katex .fontsize-ensurer.reset-size11.size7,.katex .sizing.reset-size11.size7{font-size:.48231511em}.katex .fontsize-ensurer.reset-size11.size8,.katex .sizing.reset-size11.size8{font-size:.57877814em}.katex .fontsize-ensurer.reset-size11.size9,.katex .sizing.reset-size11.size9{font-size:.69453376em}.katex .fontsize-ensurer.reset-size11.size10,.katex .sizing.reset-size11.size10{font-size:.83360129em}.katex .fontsize-ensurer.reset-size11.size11,.katex .sizing.reset-size11.size11{font-size:1em}.katex .delimsizing.size1{font-family:KaTeX_Size1}.katex .delimsizing.size2{font-family:KaTeX_Size2}.katex .delimsizing.size3{font-family:KaTeX_Size3}.katex .delimsizing.size4{font-family:KaTeX_Size4}.katex .delimsizing.mult .delim-size1>span{font-family:KaTeX_Size1}.katex .delimsizing.mult .delim-size4>span{font-family:KaTeX_Size4}.katex .nulldelimiter{display:inline-block;width:.12em}.katex .delimcenter,.katex .op-symbol{position:relative}.katex .op-symbol.small-op{font-family:KaTeX_Size1}.katex .op-symbol.large-op{font-family:KaTeX_Size2}.katex .accent>.vlist-t,.katex .op-limits>.vlist-t{text-align:center}.katex .accent .accent-body{position:relative}.katex .accent .accent-body:not(.accent-full){width:0}.katex .overlay{display:block}.katex .mtable .vertical-separator{display:inline-block;min-width:1px}.katex .mtable .arraycolsep{display:inline-block}.katex .mtable .col-align-c>.vlist-t{text-align:center}.katex .mtable .col-align-l>.vlist-t{text-align:left}.katex .mtable .col-align-r>.vlist-t{text-align:right}.katex .svg-align{text-align:left}.katex svg{fill:currentColor;stroke:currentColor;fill-rule:nonzero;fill-opacity:1;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:block;height:inherit;position:absolute;width:100%}.katex svg path{stroke:none}.katex img{border-style:none;max-height:none;max-width:none;min-height:0;min-width:0}.katex .stretchy{display:block;overflow:hidden;position:relative;width:100%}.katex .stretchy:after,.katex .stretchy:before{content:""}.katex .hide-tail{overflow:hidden;position:relative;width:100%}.katex .halfarrow-left{left:0;overflow:hidden;position:absolute;width:50.2%}.katex .halfarrow-right{overflow:hidden;position:absolute;right:0;width:50.2%}.katex .brace-left{left:0;overflow:hidden;position:absolute;width:25.1%}.katex .brace-center{left:25%;overflow:hidden;position:absolute;width:50%}.katex .brace-right{overflow:hidden;position:absolute;right:0;width:25.1%}.katex .x-arrow-pad{padding:0 .5em}.katex .cd-arrow-pad{padding:0 .55556em 0 .27778em}.katex .mover,.katex .munder,.katex .x-arrow{text-align:center}.katex .boxpad{padding:0 .3em}.katex .fbox,.katex .fcolorbox{border:.04em solid;box-sizing:border-box}.katex .cancel-pad{padding:0 .2em}.katex .cancel-lap{margin-left:-.2em;margin-right:-.2em}.katex .sout{border-bottom-style:solid;border-bottom-width:.08em}.katex .angl{border-right:.049em solid;border-top:.049em solid;box-sizing:border-box;margin-right:.03889em}.katex .anglpad{padding:0 .03889em}.katex .eqn-num:before{content:"(" counter(katexEqnNo) ")";counter-increment:katexEqnNo}.katex .mml-eqn-num:before{content:"(" counter(mmlEqnNo) ")";counter-increment:mmlEqnNo}.katex .mtr-glue{width:50%}.katex .cd-vert-arrow{display:inline-block;position:relative}.katex .cd-label-left{display:inline-block;position:absolute;right:calc(50% + .3em);text-align:left}.katex .cd-label-right{display:inline-block;left:calc(50% + .3em);position:absolute;text-align:right}.katex-display{display:block;margin:1em 0;text-align:center}.katex-display>.katex{display:block;text-align:center;white-space:nowrap}.katex-display>.katex>.katex-html{display:block;position:relative}.katex-display>.katex>.katex-html>.tag{position:absolute;right:0}.katex-display.leqno>.katex>.katex-html>.tag{left:0;right:auto}.katex-display.fleqn>.katex{padding-left:2em;text-align:left}body{counter-reset:katexEqnNo mmlEqnNo}
+
+</style>
+
+
+</head>
+<body>
+    <div class="content-wrapper">
+        <!-- _class: lead -->
+<!-- _backgroundColor: #020617 -->
+<h1 id="the-journey-so-far" tabindex="-1">The Journey So Far</h1>
+<h2 id="zero-to-genai-engineer%3A-full-recap" tabindex="-1">Zero to GenAI Engineer: Full Recap</h2>
+<p><strong>Sessions 00 → 05 · Everything in one story</strong></p>
+<p><em>Mohamed Noordeen Alaudeen</em></p>
+<hr>
+<!-- _backgroundColor: #020617 -->
+<h1 id="before-we-start" tabindex="-1">Before We Start</h1>
+<blockquote>
+<p>"You did not just learn tools. You learned how AI thinks."</p>
+</blockquote>
+<p>One month ago, most of you were asking: <em>"How does Google even work?"</em></p>
+<p>Today, after 8 sessions, you can:</p>
+<ul>
+<li>Build a keyword search engine from scratch</li>
+<li>Explain self-attention to a colleague</li>
+<li>Trace the full history of GPT</li>
+<li>Calculate token costs before calling an API</li>
+<li>Run an LLM on your own laptop, for free</li>
+<li>Optimise prompts automatically with DSPy</li>
+<li>Call any LLM provider with a single LangChain interface</li>
+</ul>
+<p><strong>That is not a small thing. Let's make sure it sticks.</strong></p>
+<hr>
+<h1 id="the-map%3A-what-we've-covered-together" tabindex="-1">The Map: What We've Covered Together</h1>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Title</th>
+<th>The Central Question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>S00</strong></td>
+<td>How Search Engines Work</td>
+<td>How does Google decide which result is most relevant?</td>
+</tr>
+<tr>
+<td><strong>S01</strong></td>
+<td>Text to Numbers</td>
+<td>How does a computer understand the <em>meaning</em> of a word?</td>
+</tr>
+<tr>
+<td><strong>S02</strong></td>
+<td>Transformer Architecture</td>
+<td>How does the same word mean different things in different sentences?</td>
+</tr>
+<tr>
+<td><strong>S03</strong></td>
+<td>GPT Evolution &amp; Alignment</td>
+<td>How did next-word prediction become ChatGPT?</td>
+</tr>
+<tr>
+<td><strong>S04</strong></td>
+<td>BPE + Sampling Parameters</td>
+<td>How does an LLM decide <em>which</em> word to generate next?</td>
+</tr>
+<tr>
+<td><strong>S05</strong></td>
+<td>Local LLMs &amp; API Providers</td>
+<td>How do we actually <em>use</em> a model, and own the infrastructure?</td>
+</tr>
+<tr>
+<td><strong>S06</strong></td>
+<td>Prompt Engineering + DSPy</td>
+<td>How do we optimise prompts automatically, instead of guessing?</td>
+</tr>
+<tr>
+<td><strong>S07</strong></td>
+<td>LangChain Fundamentals</td>
+<td>How do we write code that works with any LLM provider?</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<!-- _backgroundColor: #0c1a2e -->
+<h1 id="the-story-in-one-sentence" tabindex="-1">The Story in One Sentence</h1>
+<blockquote>
+<p><strong>Computers only understand numbers. We spent 70 years inventing better and better ways to turn language into numbers, and somewhere along the way, we accidentally built intelligence.</strong></p>
+</blockquote>
+<p>That is what S00 → S05 is about.</p>
+<p>Every session left one gap open. The next session filled it.</p>
+<hr>
+<h1 id="the-missing-chain%3A-how-each-session-connects" tabindex="-1">The MISSING Chain: How Each Session Connects</h1>
+<pre class="hljs"><code><div>S00  Keyword search (TF-IDF)
+      ⚠️  MISSING: "car crash" ≠ "automobile accident", same meaning, different words
+S01  Word embeddings (Word2Vec, GloVe, FastText)
+      ⚠️  MISSING: "bank" (river) and "bank" (money) get the SAME vector
+S02  Transformers + Self-Attention
+      ⚠️  MISSING: Training from scratch = weeks of GPU time, thousands of dollars
+S03  Pre-trained GPT → ChatGPT via RLHF
+      ⚠️  MISSING: What actually happens between "prompt" and "response"?
+S04  BPE tokens + Temperature + Top-K + Top-P
+      ⚠️  MISSING: API costs money, needs internet, can go down
+S05  Local LLMs (Ollama) + Multi-provider (OpenRouter)
+      ⚠️  MISSING: We're still writing prompts by hand, guessing what works
+S06  DSPy + Chain-of-Thought + Prompt Optimisers
+      ⚠️  MISSING: Every provider has a different SDK, auth, and response format
+S07  LangChain, one unified interface for every provider
+</div></code></pre>
+<hr>
+<!-- _backgroundColor: #071a0f -->
+<h1 id="chapter-1" tabindex="-1">Chapter 1</h1>
+<h2 id="%F0%9F%94%8D-how-search-engines-work" tabindex="-1">🔍 How Search Engines Work</h2>
+<h3 id="session-00%3A-the-foundation-of-everything" tabindex="-1">Session 00: The Foundation of Everything</h3>
+<blockquote>
+<p><em>"Before AI could understand you, it first had to find you."</em></p>
+</blockquote>
+<hr>
+<h1 id="the-problem%3A-computers-cannot-read" tabindex="-1">The Problem: Computers Cannot Read</h1>
+<p>A computer sees this sentence:</p>
+<p><code>"The cat sat on the mat"</code></p>
+<p>As this:</p>
+<p><code>[84, 104, 101, 32, 99, 97, 116, 32, 115, 97, 116, ...]</code></p>
+<p>Just bytes. No meaning. No structure. Just numbers.</p>
+<p><strong>First challenge in AI:</strong> How do we rank documents by relevance to a query, without any intelligence?</p>
+<hr>
+<h1 id="how-google-(used-to)-work%3A-the-inverted-index" tabindex="-1">How Google (Used to) Work: The Inverted Index</h1>
+<p>Every word in every document gets catalogued:</p>
+<pre class="hljs"><code><div>"python"  →  [doc_12, doc_47, doc_203, doc_891]
+"snake"   →  [doc_9,  doc_47, doc_891]
+"Django"  →  [doc_47, doc_203]
+</div></code></pre>
+<p>Search <code>"python Django"</code> → intersection → <strong>doc_47, doc_203</strong></p>
+<p>Fast. Scalable. <strong>But naive</strong>, every word counts equally.</p>
+<blockquote>
+<p>"the" and "python" get the same weight. That's a problem.</p>
+</blockquote>
+<hr>
+<h1 id="tf-idf%3A-the-first-smart-ranking" tabindex="-1">TF-IDF: The First Smart Ranking</h1>
+<p>Fix the naive count with two signals combined:</p>
+<p><strong>TF (Term Frequency)</strong>, how often does this word appear <em>in this document</em>?</p>
+<p><strong>IDF (Inverse Document Frequency)</strong>, how rare is this word <em>across all documents</em>?</p>
+<pre class="hljs"><code><div>TF-IDF = TF × log(Total docs / Docs containing word)
+
+"the"       → appears everywhere → IDF ≈ 0 → score ≈ 0
+"tensorflow" → rare → IDF is high  → score is high
+</div></code></pre>
+<blockquote>
+<p><strong>Key insight:</strong> A word that appears often in one document but rarely everywhere else is <em>the</em> signal word for that document.</p>
+</blockquote>
+<hr>
+<h1 id="where-tf-idf-breaks" tabindex="-1">Where TF-IDF Breaks</h1>
+<p>Search query: <strong>"automobile accident"</strong></p>
+<p>TF-IDF finds: documents containing "automobile" and "accident" ✅</p>
+<p>TF-IDF <strong>misses</strong>: <em>"The car crash happened on Highway 5 this morning"</em> ❌</p>
+<p>Same meaning. Completely different words. TF-IDF cannot bridge that gap.</p>
+<blockquote>
+<p>⚠️ <strong>This is the gap that Session 01 fills.</strong></p>
+</blockquote>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-00" tabindex="-1">🎯 Interview Questions: Session 00</h1>
+<p><strong>Q1: What is an inverted index and why does it make search fast?</strong></p>
+<blockquote>
+<p>A data structure that maps each unique word to the list of documents containing it. Instead of scanning every document per query, you look up the word directly and get the document list in sub-millisecond time. A query like "python training" looks up both words, gets their document lists, then intersects them. This is how Elasticsearch, Lucene, and every major search engine indexes content.</p>
+</blockquote>
+<p><strong>Q2: What does TF-IDF measure and how does it rank better than simple word count?</strong></p>
+<blockquote>
+<p>TF (Term Frequency) measures how often a word appears in one document. IDF = log(total docs / docs containing word). Words in every document like "the" get IDF close to 0 and contribute nothing. Rare words get high IDF scores. TF x IDF is high for relevant, rare words and near zero for common filler words. This gives automatic stopword filtering built into the math, no explicit stopword list needed.</p>
+</blockquote>
+<p><strong>Q3: What is the core limitation of TF-IDF and how was it solved?</strong></p>
+<blockquote>
+<p>TF-IDF is purely lexical: it matches exact character strings. "car" and "automobile" have zero computed relationship. No understanding of synonyms, context, or meaning. This semantic gap was solved by word embeddings (Word2Vec, GloVe), which map words to dense vectors where semantically similar words land geometrically close. Modern systems use hybrid search: BM25 for exact keyword recall plus vector search for semantic understanding.</p>
+</blockquote>
+<p><strong>Q4: What is BM25 and why do most search engines use it over raw TF-IDF?</strong></p>
+<blockquote>
+<p>BM25 extends TF-IDF with two fixes. Term saturation: raw TF-IDF grows linearly with word frequency, so a word appearing 100 times scores 10x higher than appearing 10 times. BM25 adds a saturation parameter k1 (typically 1.5) so additional occurrences have diminishing returns. Document length normalization: parameter b penalizes long documents, because finding a rare word in a short document is more significant than in a 50,000-word one. BM25 is the default in Elasticsearch and a strong baseline even against neural retrievers.</p>
+</blockquote>
+<p><strong>Q5: What is IDF when a word appears in every document? Why does this matter?</strong></p>
+<blockquote>
+<p>IDF = log(N/N) = log(1) = 0. The TF-IDF score becomes 0, so this word contributes nothing to ranking regardless of how often it appears. This is the automatic stopword filtering property: "the", "is", "a" appear in every document and score zero without needing an explicit stopword list. Conversely, a word appearing in 3 of 1000 documents gets IDF = log(333) ≈ 5.8, making it a very strong relevance signal.</p>
+</blockquote>
+<p><strong>Q6: Design a production search architecture. Where does the inverted index fit?</strong></p>
+<blockquote>
+<p>Ingestion pipeline: crawl documents, tokenize text, build the inverted index offline. At query time: tokenize the query, look up each token in the inverted index (O(1)), retrieve candidate lists, intersect them, score with BM25, return top-K results. For semantic search: add a vector index alongside and run approximate nearest-neighbor search. Use a reranker to improve precision on top results. This two-stage retrieve-then-rerank pattern is the same architecture used in production RAG systems.</p>
+</blockquote>
+<p><strong>Q7: What are the main limitations of bag-of-words models?</strong></p>
+<blockquote>
+<p>Bag-of-words completely discards word order, so "dog bites man" and "man bites dog" produce identical vectors. It creates sparse, high-dimensional representations with vocabulary sizes of 100,000 or more. It treats all words as independent: "good" and "excellent" are as unrelated as "good" and "airplane." The word "bank" gets the same representation regardless of context. These limitations led directly to word embeddings (semantic gap) and then to Transformers (context-dependence gap).</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #1a0f1f -->
+<h1 id="chapter-2" tabindex="-1">Chapter 2</h1>
+<h2 id="%F0%9F%94%A2-text-to-numbers" tabindex="-1">🔢 Text to Numbers</h2>
+<h3 id="session-01%3A-teaching-computers-to-understand-meaning" tabindex="-1">Session 01: Teaching Computers to Understand Meaning</h3>
+<blockquote>
+<p><em>"What if we could capture what a word means, not just what it says?"</em></p>
+</blockquote>
+<hr>
+<h1 id="five-methods%2C-six-decades-of-progress" tabindex="-1">Five Methods, Six Decades of Progress</h1>
+<pre class="hljs"><code><div>1954   Bag of Words        count words, ignore order
+1972   TF-IDF              weight rare words higher
+2013   Word2Vec            meaning from surrounding context
+2014   GloVe               meaning from global co-occurrence
+2016   FastText            meaning from character pieces (handles typos)
+</div></code></pre>
+<p>Each method fixed what the previous one got wrong.</p>
+<hr>
+<h1 id="bag-of-words%3A-the-simplest-possible-approach" tabindex="-1">Bag of Words: The Simplest Possible Approach</h1>
+<pre class="hljs"><code><div>Sentence: "I love Python. Python loves me."
+Vocab:    {I, love, Python, loves, me}
+Vector:   [1,  2,     2,     1,    1 ]
+</div></code></pre>
+<p>✅ Simple, fast, works for basic classification tasks</p>
+<p>❌ "<strong>Dog bites man</strong>" and "<strong>Man bites dog</strong>" → <strong>identical vector</strong>
+Word order is completely destroyed.</p>
+<p>❌ "good" and "excellent" → zero relationship in this model</p>
+<hr>
+<h1 id="word2vec%3A-the-2013-breakthrough" tabindex="-1">Word2Vec: The 2013 Breakthrough</h1>
+<p><strong>Core insight:</strong> <em>You shall know a word by the company it keeps.</em>, J.R. Firth, 1957</p>
+<p><strong>Training task:</strong> Given surrounding words, predict the missing one.</p>
+<pre class="hljs"><code><div>"The _____ ran across the road"   → model sees: cat, dog, child all fit
+"She deposited money at the ___"  → model sees: bank fits, not river
+</div></code></pre>
+<p>After training on billions of sentences, words with <strong>similar contexts</strong> end up with <strong>similar vectors</strong>.</p>
+<blockquote>
+<p>Result: geometry encodes meaning.</p>
+</blockquote>
+<hr>
+<h1 id="the-magic%3A-meaning-becomes-arithmetic" tabindex="-1">The Magic: Meaning Becomes Arithmetic</h1>
+<pre class="hljs"><code><div>king  - man + woman  ≈  queen       ✅
+Paris - France + Italy  ≈  Rome      ✅
+doctor - man + woman  ≈  nurse       ✅ (reflects training data bias)
+</div></code></pre>
+<p>You can <strong>add and subtract</strong> concepts.</p>
+<p>Cosine similarity score:</p>
+<ul>
+<li><code>("car", "automobile")</code> → ~0.92   (nearly identical)</li>
+<li><code>("car", "cloud")</code>      → ~0.12   (unrelated)</li>
+</ul>
+<blockquote>
+<p><strong>This is why RAG works. This is why semantic search works. Everything from M05 onwards relies on this.</strong></p>
+</blockquote>
+<hr>
+<h1 id="glove-and-fasttext%3A-what-came-next" tabindex="-1">GloVe and FastText: What Came Next</h1>
+<p><strong>GloVe (2014)</strong>, instead of a sliding window, use <em>global co-occurrence</em> statistics across the entire corpus. More stable, faster to train.</p>
+<p><strong>FastText (2016)</strong>, instead of whole words, train on <strong>character n-grams</strong>:</p>
+<pre class="hljs"><code><div>"playing" → ["pla", "lay", "ayi", "yin", "ing", "play", "layi", ...]
+</div></code></pre>
+<p>Advantage: handles typos and words not seen in training:</p>
+<pre class="hljs"><code><div>"playin" (typo) → still gets a reasonable vector from subword pieces ✅
+</div></code></pre>
+<hr>
+<h1 id="why-cosine-similarity%3A-not-euclidean-distance%3F" tabindex="-1">Why Cosine Similarity: Not Euclidean Distance?</h1>
+<p><strong>Short review:</strong> <em>"Good film"</em> vs <em>"A remarkably brilliant, absolutely wonderful, outstanding film that I thoroughly enjoyed"</em></p>
+<p>Euclidean distance: large, different vector lengths → far apart ❌</p>
+<p>Cosine similarity: high, same <em>direction</em> → same meaning ✅</p>
+<pre class="hljs"><code><div>Cosine measures the ANGLE between vectors, not the distance.
+Angle = meaning direction. Length = how many words you used.
+</div></code></pre>
+<blockquote>
+<p>Length doesn't determine meaning. Direction does.</p>
+</blockquote>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-01" tabindex="-1">🎯 Interview Questions: Session 01</h1>
+<p><strong>Q1: What is a word embedding and how is it different from one-hot encoding?</strong></p>
+<blockquote>
+<p>A word embedding maps each word to a dense vector (typically 100 to 300 dimensions) where semantic relationships are preserved as geometry. One-hot encoding maps each word to a sparse binary vector with a 1 at the vocabulary index and 0 everywhere else. Problems with one-hot: no semantic relationship between words, and a 100k vocabulary needs 100k-dimensional vectors. Word embeddings solve both: "king" and "queen" have high cosine similarity, and 300 dimensions represent the entire vocabulary meaningfully.</p>
+</blockquote>
+<p><strong>Q2: How does Word2Vec learn embeddings without human labels?</strong></p>
+<blockquote>
+<p>Word2Vec uses self-supervised learning on a prediction task derived from text structure. Skip-gram: given a center word, predict surrounding context words. CBOW: given context words, predict the center word. Words that appear in similar contexts end up with similar weight vectors. After training on billions of sentences, the network weights converge to vectors that encode usage patterns, which turn out to encode semantic meaning.</p>
+</blockquote>
+<p><strong>Q3: Why cosine similarity and not Euclidean distance for word vectors?</strong></p>
+<blockquote>
+<p>Word vectors have magnitudes that depend on word frequency during training. Common words end up with larger magnitudes. Euclidean distance is magnitude-sensitive: two vectors pointing in the same direction but with different lengths would score as different. Cosine similarity measures only the angle between vectors, ignoring magnitude. Same semantic meaning equals same direction equals high cosine similarity regardless of frequency. Range is -1 (opposite) to +1 (identical direction).</p>
+</blockquote>
+<p><strong>Q4: What is the difference between Skip-gram and CBOW, and which handles rare words better?</strong></p>
+<blockquote>
+<p>Skip-gram: given center word, predict surrounding context words. Each center word generates multiple training examples, so the model focuses deeply on each individual word. CBOW: given context words, predict the center word. CBOW is 3 to 5 times faster but averages context signals. Skip-gram performs better for rare words because each step focuses on one word's context relationships. CBOW works better for frequent words and when training speed matters. Skip-gram with Negative Sampling (SGNS) is the industry standard for high-quality embeddings.</p>
+</blockquote>
+<p><strong>Q5: What is negative sampling and why was it needed?</strong></p>
+<blockquote>
+<p>The naive Word2Vec update computes a gradient over the entire vocabulary (100k words) for each training step: O(vocabulary size) operations per step. Negative sampling replaces the full softmax with a binary classifier: is this (center word, context word) pair real or noise? For each real pair, sample k noise words (5 to 20), and train to distinguish real from noise. This reduces computation from O(vocabulary) to O(k) per update, a 5000 to 20000x speedup. The model still learns meaningful embeddings because distinguishing real context from random noise forces it to capture genuine co-occurrence patterns.</p>
+</blockquote>
+<p><strong>Q6: What is the critical limitation of Word2Vec and GloVe that Transformers solve?</strong></p>
+<blockquote>
+<p>Both Word2Vec and GloVe produce static embeddings: every word gets one fixed vector regardless of context. "Bank" gets the same vector whether it appears near "money" or "river." This polysemy problem is exactly what Transformers solve. Self-attention builds context-aware representations where the same word gets a different vector depending on its surrounding words. That is why BERT largely replaced Word2Vec for downstream NLP tasks.</p>
+</blockquote>
+<p><strong>Q7: What is FastText and when would you use it over Word2Vec?</strong></p>
+<blockquote>
+<p>FastText trains on character n-grams rather than whole words. "Playing" becomes ["pla", "lay", "ayi", "yin", "ing"]. This lets FastText generate a vector for words it never saw during training by composing character pieces. Use FastText when your data has typos or misspellings, you work with morphologically rich languages (German, Turkish), you have domain-specific technical vocabulary, or you work with code tokens. The cost is larger model size and slower inference. For most production tasks today, sentence-transformers (BERT-based) outperform FastText, but it remains a fast baseline with no GPU required.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #0f1a1a -->
+<h1 id="chapter-3" tabindex="-1">Chapter 3</h1>
+<h2 id="%E2%9A%A1-the-attention-revolution" tabindex="-1">⚡ The Attention Revolution</h2>
+<h3 id="session-02%3A-the-architecture-that-powers-everything-you-use-today" tabindex="-1">Session 02: The Architecture That Powers Everything You Use Today</h3>
+<blockquote>
+<p><em>"What if every word could look at every other word simultaneously, and decide what matters?"</em></p>
+</blockquote>
+<hr>
+<h1 id="the-context-problem-word2vec-left" tabindex="-1">The Context Problem Word2Vec Left</h1>
+<p><code>"I went to the bank to deposit money."</code></p>
+<p><code>"I sat on the bank of the river."</code></p>
+<p>Word2Vec gives <strong>"bank" the exact same vector</strong> in both sentences.</p>
+<p>It was trained as an average across all contexts. It has no ability to adapt.</p>
+<p>We need a model that builds a <strong>different</strong> representation for "bank" based on whether it's surrounded by "money" or "river".</p>
+<hr>
+<h1 id="why-rnns-failed-at-this" tabindex="-1">Why RNNs Failed at This</h1>
+<p>Before 2017, we used <strong>Recurrent Neural Networks</strong>:</p>
+<pre class="hljs"><code><div>word₁ → word₂ → word₃ → ···  → word₁₀₀ → output
+</div></code></pre>
+<p>Problems:</p>
+<ul>
+<li><strong>Sequential</strong>, can't parallelise → slow on modern GPUs</li>
+<li><strong>Vanishing gradient</strong>, by word 100, word 1 is largely forgotten</li>
+<li><strong>Fixed bottleneck</strong>, entire 100-word sentence compressed into one vector</li>
+</ul>
+<blockquote>
+<p>The solution wasn't to make RNNs better. It was to replace them entirely.</p>
+</blockquote>
+<hr>
+<h1 id="self-attention%3A-the-core-mechanism" tabindex="-1">Self-Attention: The Core Mechanism</h1>
+<p>For every word, ask: <strong>"Which other words in this sentence are most relevant to understanding <em>me</em>?"</strong></p>
+<pre class="hljs"><code><div>"The animal didn't cross the street because it was too tired."
+
+Question: What does "it" refer to?
+Self-attention says: "animal" (high weight), "street" (low weight)
+</div></code></pre>
+<p>This assignment happens <strong>automatically</strong>, learned from data.</p>
+<p>Every word in the sentence votes on how relevant every other word is, simultaneously.</p>
+<hr>
+<h1 id="query%2C-key%2C-value%3A-the-search-engine-inside-attention" tabindex="-1">Query, Key, Value: The Search Engine Inside Attention</h1>
+<p>Think of it as running a search engine <em>inside</em> the sentence:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>What It Represents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Query (Q)</strong></td>
+<td>"What am I looking for?", the current word's search</td>
+</tr>
+<tr>
+<td><strong>Key (K)</strong></td>
+<td>"What do I contain?", every other word announces itself</td>
+</tr>
+<tr>
+<td><strong>Value (V)</strong></td>
+<td>"What information do I carry?", the actual content</td>
+</tr>
+</tbody>
+</table>
+<p>Attention score = dot product of Q with each K (how relevant?)</p>
+<p>Output = weighted sum of all V, using attention scores as weights</p>
+<hr>
+<h1 id="multi-head-attention%3A-8-perspectives-at-once" tabindex="-1">Multi-Head Attention: 8 Perspectives at Once</h1>
+<p>Run self-attention <strong>8 times in parallel</strong>, each with different learned projections:</p>
+<pre class="hljs"><code><div>Head 1 → might learn: who does what (subject → verb)
+Head 2 → might learn: what describes what (noun → adjective)
+Head 3 → might learn: what refers to what (pronoun → antecedent)
+Head 4–8 → other patterns, discovered automatically during training
+</div></code></pre>
+<p><strong>Concatenate all 8 outputs → project down → richer representation</strong></p>
+<blockquote>
+<p>"One person reading the sentence 8 times with 8 different questions."</p>
+</blockquote>
+<hr>
+<h1 id="positional-encoding%3A-giving-the-model-a-sense-of-order" tabindex="-1">Positional Encoding: Giving the Model a Sense of Order</h1>
+<p>Self-attention looks at all words <strong>simultaneously</strong>, it has no built-in sense of word order.</p>
+<p>Without positional encoding:
+<code>"Dog bites man"</code> = <code>"Man bites dog"</code> (same words, same attention)</p>
+<p><strong>Solution:</strong> Add a unique positional signal to each word's embedding:</p>
+<pre class="hljs"><code><div>Position 1 → add [sin(1/10000⁰), cos(1/10000⁰), sin(1/10000²/⁵¹²), ...]
+Position 2 → add [sin(2/10000⁰), cos(2/10000⁰), sin(2/10000²/⁵¹²), ...]
+</div></code></pre>
+<p>Sine and cosine at different frequencies → each position gets a unique "fingerprint".</p>
+<hr>
+<h1 id="the-full-architecture%3A-what-you-built" tabindex="-1">The Full Architecture: What You Built</h1>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>InputEmbeddings</code></td>
+<td>Token → dense vector (d_model = 512)</td>
+</tr>
+<tr>
+<td><code>PositionalEncoding</code></td>
+<td>Adds position fingerprint to each embedding</td>
+</tr>
+<tr>
+<td><code>MultiHeadAttention</code></td>
+<td>8 heads, Q/K/V projections, scaled dot-product</td>
+</tr>
+<tr>
+<td><code>FeedForward</code></td>
+<td>Two-layer MLP applied to each position independently</td>
+</tr>
+<tr>
+<td><code>LayerNorm</code></td>
+<td>Stabilises training, prevents exploding/vanishing gradients</td>
+</tr>
+<tr>
+<td><code>ResidualConnection</code></td>
+<td>Skip connections, gradient highway through deep networks</td>
+</tr>
+<tr>
+<td><code>EncoderStack</code></td>
+<td>6 × (Attention + FFN), builds context-rich representations</td>
+</tr>
+<tr>
+<td><code>DecoderStack</code></td>
+<td>6 × (Masked Attention + Cross-Attention + FFN), generates output</td>
+</tr>
+</tbody>
+</table>
+<p><strong>You trained this on English → Italian translation.</strong></p>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-02" tabindex="-1">🎯 Interview Questions: Session 02</h1>
+<p><strong>Q1: Explain self-attention. Walk through Q, K, V.</strong></p>
+<blockquote>
+<p>Each token generates three learned linear projections: Query (what this token is searching for), Key (what this token offers as a label to others), and Value (the actual content this token contributes). Attention score = dot product of Q with each K, scaled by the square root of d_k to prevent softmax saturation, then softmax to get weights. Output = weighted sum of all V vectors using the attention weights. This runs in parallel for all tokens simultaneously, resolving contextual meaning in one pass.</p>
+</blockquote>
+<p><strong>Q2: What is the difference between BERT and GPT architecturally?</strong></p>
+<blockquote>
+<p>BERT uses encoder-only Transformer layers with bidirectional self-attention: every token can attend to every other token in both directions. Pre-trained with Masked Language Modeling. Strong for classification, extraction, and sentence similarity. GPT uses decoder-only Transformer layers with causal self-attention: each token attends only to previous tokens. Pre-trained on next-token prediction. In the era of conversational AI, generation wins: GPT, Claude, Gemini, LLaMA, and Mistral are all decoder-only.</p>
+</blockquote>
+<p><strong>Q3: Why does multi-head attention work better than single-head?</strong></p>
+<blockquote>
+<p>A single attention head must collapse all relationship types into one pattern. Multiple heads run in parallel, each with different learned weight matrices, so each head can simultaneously specialize. One head might track subject-verb dependencies, another pronoun-antecedent resolution, another semantic similarity. The outputs are concatenated and projected back down. Richer representations at the same computational cost as a single larger head.</p>
+</blockquote>
+<p><strong>Q4: Why divide by the square root of d_k in the attention formula?</strong></p>
+<blockquote>
+<p>As the embedding dimension d_k grows, dot products between Q and K grow in magnitude proportionally. Very large dot products push softmax into regions where one token gets probability close to 1 and all others close to 0. In this saturated regime, gradients drop to near zero and the model gets stuck. Dividing by the square root of d_k normalizes the scale, keeping softmax numerically stable with useful gradients.</p>
+</blockquote>
+<p><strong>Q5: Why does a Transformer need positional encoding?</strong></p>
+<blockquote>
+<p>Self-attention treats the input as a set with no inherent order. "The cat sat" and "sat cat The" would produce identical attention patterns without positional encoding. The original paper adds sinusoidal waves at different frequencies to each position. Modern models like Llama and Mistral use RoPE (Rotary Position Embedding), which rotates the Q and K vectors by position-dependent angles, encoding relative position directly into the attention computation and generalizing better to long sequences.</p>
+</blockquote>
+<p><strong>Q6: What does the Feed-Forward sublayer do in each Transformer block?</strong></p>
+<blockquote>
+<p>Each Transformer block has two sublayers. Multi-Head Self-Attention handles relationships between tokens. The Feed-Forward Network (FFN) is applied independently to each token. FFN(x) = max(0, xW1 + b1) x W2 + b2. The FFN is typically 4x wider than the embedding dimension. Research has traced factual knowledge (like "Paris is the capital of France") to specific FFN layer weights. Attention routes context across the sequence; FFN applies per-token transformations and retrieves memorized knowledge.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #1a0a0a -->
+<h1 id="chapter-4" tabindex="-1">Chapter 4</h1>
+<h2 id="%F0%9F%9A%80-how-gpt-changed-the-world" tabindex="-1">🚀 How GPT Changed the World</h2>
+<h3 id="session-03%3A-from-text-prediction-to-aligned-intelligence" tabindex="-1">Session 03: From Text Prediction to Aligned Intelligence</h3>
+<blockquote>
+<p><em>"A model trained on one task, predict the next word, accidentally learned how to reason, translate, code, and debate."</em></p>
+</blockquote>
+<hr>
+<h1 id="the-timeline-that-rewrote-the-rules" tabindex="-1">The Timeline That Rewrote the Rules</h1>
+<pre class="hljs"><code><div>2017  Attention Is All You Need   → The Transformer (Vaswani et al.)
+      │
+2018  GPT-1    117M params        → Pre-train + fine-tune works
+      BERT-base 110M params        → Bidirectional understanding
+      │
+2019  GPT-2    1.5B params        → Zero-shot. Too dangerous to release.
+      │
+2020  GPT-3    175B params        → Few-shot learning at unprecedented scale
+      │
+2022  InstructGPT  → RLHF  → ChatGPT (OpenAI)
+      HH-RLHF  → Constitutional AI  → Claude (Anthropic)
+      │
+2023  GPT-4 · LLaMA · Mistral · Gemini
+      │
+2024+ What you use every day
+</div></code></pre>
+<hr>
+<h1 id="gpt-1%3A-the-first-proof-(2018)" tabindex="-1">GPT-1: The First Proof (2018)</h1>
+<p><strong>The old way:</strong> Train a separate model for every task (translation, classification, Q&amp;A) from scratch. Needs thousands of labelled examples for each task.</p>
+<p><strong>GPT-1's insight:</strong> Pre-train on massive unlabelled text first. Language itself teaches the model grammar, facts, and reasoning. Then fine-tune on a small labelled dataset for your specific task.</p>
+<pre class="hljs"><code><div>Pre-training:  predict next word on 7000 books
+Fine-tuning:   show 500 labelled examples for sentiment analysis
+
+Result: beats task-specific models trained on 50,000 examples
+</div></code></pre>
+<blockquote>
+<p>"You don't need labels to learn language. Language is its own teacher."</p>
+</blockquote>
+<hr>
+<h1 id="gpt-2%3A-scale-breaks-expectations-(2019)" tabindex="-1">GPT-2: Scale Breaks Expectations (2019)</h1>
+<p><strong>1.5 Billion parameters.</strong> 40GB of internet text.</p>
+<p>Something unexpected happened: <strong>zero-shot task completion</strong>.</p>
+<p>No fine-tuning. Just a prompt:</p>
+<pre class="hljs"><code><div>Prompt: "Translate to French: The sky is blue"
+GPT-2:  "Le ciel est bleu"    ✅
+
+Prompt: "Summarise this article: ..."
+GPT-2:  Reasonable summary    ✅
+</div></code></pre>
+<p>OpenAI held back the full model for <strong>9 months</strong>, worried about misuse.</p>
+<blockquote>
+<p><strong>Scale is a feature.</strong> Emergent capabilities appear at certain parameter counts, not programmed in, just... there.</p>
+</blockquote>
+<hr>
+<h1 id="gpt-3%3A-the-world-stopped-(2020)" tabindex="-1">GPT-3: The World Stopped (2020)</h1>
+<p><strong>175 Billion parameters.</strong> 570GB of filtered text data (from 45TB of raw Common Crawl).</p>
+<p><strong>Few-shot learning, teach it in the prompt:</strong></p>
+<pre class="hljs"><code><div>Prompt:
+"Translate to French:
+  Hello → Bonjour
+  Thank you → Merci
+  Good morning → ???"
+
+GPT-3: "Bonjour"   ✅
+</div></code></pre>
+<p>No gradient updates. No retraining. <strong>The model learned from the prompt at inference time.</strong></p>
+<p>This is called <strong>in-context learning</strong>, and it changes everything about how we build AI systems.</p>
+<hr>
+<h1 id="the-alignment-problem" tabindex="-1">The Alignment Problem</h1>
+<p>GPT-3 was powerful. But it was <strong>not helpful</strong>.</p>
+<p>It would:</p>
+<ul>
+<li>Complete your sentence instead of answering your question</li>
+<li>Hallucinate facts confidently</li>
+<li>Occasionally produce harmful or offensive content</li>
+</ul>
+<blockquote>
+<p><strong>The alignment problem:</strong> A model trained to predict text is NOT the same as a model trained to be helpful, harmless, and honest.</p>
+</blockquote>
+<p>Training task (next-word prediction) ≠ Deployment goal (helpful assistant)</p>
+<p>This gap had to be closed. <strong>Enter RLHF.</strong></p>
+<hr>
+<h1 id="rlhf%3A-how-chatgpt-was-born" tabindex="-1">RLHF: How ChatGPT Was Born</h1>
+<p><strong>Reinforcement Learning from Human Feedback:</strong></p>
+<pre class="hljs"><code><div>Step 1  Supervised Fine-Tuning
+        Collect examples of ideal responses from human writers
+        Fine-tune GPT-3 on those responses
+
+Step 2  Train a Reward Model
+        Show human raters pairs of responses → "which is better?"
+        Train a model to predict human preference scores
+
+Step 3  Reinforcement Learning (PPO)
+        Update the LLM using the reward model as the "judge"
+        The LLM learns to produce responses that score high
+
+Step 4  Repeat, the reward model improves, the LLM improves
+</div></code></pre>
+<p>Result: a model that <strong>tries to help</strong> instead of just predicting text.</p>
+<hr>
+<h1 id="hallucination%3A-why-it-still-happens" tabindex="-1">Hallucination: Why It Still Happens</h1>
+<p>GPT is trained to predict the most <strong>probable</strong> next token.</p>
+<p>When training data contains confidently-written wrong statements, the model learns to sound confident, even when wrong.</p>
+<p>It has no internal "I don't know" signal.</p>
+<pre class="hljs"><code><div>Question: "Who invented the telephone?"
+GPT (unhelpful): "The telephone was invented by
+                  Elisha Gray in 1876."   ← confident, wrong
+</div></code></pre>
+<p>RLHF reduces hallucination but doesn't eliminate it.</p>
+<blockquote>
+<p>This is why <strong>RAG</strong> (Retrieval-Augmented Generation) exists, you give the model the right answer in the prompt so it doesn't have to guess.</p>
+</blockquote>
+<hr>
+<h1 id="bert-vs-gpt%3A-why-gpt-dominated" tabindex="-1">BERT vs GPT: Why GPT Dominated</h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>BERT (Google, 2018)</th>
+<th>GPT (OpenAI, 2018+)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Architecture</td>
+<td>Encoder only</td>
+<td>Decoder only</td>
+</tr>
+<tr>
+<td>Reads text</td>
+<td>Bidirectionally (left + right)</td>
+<td>Left to right only</td>
+</tr>
+<tr>
+<td>Training task</td>
+<td>Predict masked words</td>
+<td>Predict next word</td>
+</tr>
+<tr>
+<td>Best at</td>
+<td>Understanding (classification, Q&amp;A, NER)</td>
+<td>Generation (chat, code, writing)</td>
+</tr>
+<tr>
+<td>ChatGPT era winner</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>BERT understood text better. GPT generated text better. In the era of conversational AI, <strong>generation wins.</strong></p>
+</blockquote>
+<p>Today: GPT-4, Claude, Gemini, LLaMA, Mistral, all decoder-only.</p>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-03" tabindex="-1">🎯 Interview Questions: Session 03</h1>
+<p><strong>Q1: What is in-context learning and which model demonstrated it at scale?</strong></p>
+<blockquote>
+<p>In-context learning is the ability to perform new tasks from examples given in the prompt, with zero parameter updates. GPT-3 (2020, 175B parameters) demonstrated this at unprecedented scale. You give 2 to 3 input/output examples and the model generalizes to new inputs without any gradient updates. This was genuinely surprising: prior models needed explicit fine-tuning for every new task. In practice, it means you can turn a general-purpose LLM into a specialized classifier, extractor, or formatter purely through prompting, with no labeled training data or GPU training required.</p>
+</blockquote>
+<p><strong>Q2: Walk through RLHF step by step. What is the KL penalty for?</strong></p>
+<blockquote>
+<p>RLHF has three stages. Stage 1: Supervised Fine-Tuning (SFT), start from a base model and fine-tune on human-written demonstrations of good responses. Stage 2: Reward Model Training, generate multiple responses to the same prompt, have humans rank them, train a separate model on these preference comparisons. Stage 3: RL with PPO, use Proximal Policy Optimization to update the SFT model to maximize reward model scores. The KL penalty keeps the model from drifting too far from the SFT checkpoint and exploiting the reward model with degenerate outputs.</p>
+</blockquote>
+<p><strong>Q3: What is hallucination and what are the main mitigations?</strong></p>
+<blockquote>
+<p>Hallucination is when a model confidently states something factually false: a fabricated citation, a wrong date, a person who does not exist. It happens because LLMs are trained to predict plausible next tokens, not to verify factual accuracy. There is no built-in "I don't know" signal. Mitigations: RAG grounds answers in retrieved documents (the model must cite specific text), system prompts instruct the model to say it does not know rather than invent, low temperature reduces creative deviations for factual tasks, and validation LLM calls check if the answer is supported by retrieved context.</p>
+</blockquote>
+<p><strong>Q4: What is DPO and how does it differ from RLHF?</strong></p>
+<blockquote>
+<p>DPO (Direct Preference Optimization) achieves the same alignment goal as RLHF but eliminates both the reward model and the RL training loop. RLHF requires three separate training stages: SFT, reward model, then PPO. This is expensive and unstable. DPO's insight: the mathematically optimal RLHF policy has a closed-form solution. You can convert the RL problem directly into a classification task on preference pairs. Given (prompt, preferred response, rejected response), DPO trains the LM to increase the likelihood ratio of preferred over rejected. Simpler, more stable, computationally cheaper. Most modern open-source aligned models use DPO or its variants rather than RLHF.</p>
+</blockquote>
+<p><strong>Q5: What is Constitutional AI?</strong></p>
+<blockquote>
+<p>Constitutional AI (CAI, Anthropic 2022) addresses the scalability bottleneck of RLHF: human labelers must evaluate every output. CAI replaces human safety evaluators with the model itself, guided by a written "constitution" of principles. The model critiques its own response against these principles, generates a revised response, and these AI-generated preference pairs are used for training. Benefits: scales cheaply (principles applied to millions of examples automatically), and alignment criteria are explicit and auditable rather than implicit in human judgments. Claude's alignment training uses Constitutional AI as a core component.</p>
+</blockquote>
+<p><strong>Q6: What are emergent abilities in LLMs?</strong></p>
+<blockquote>
+<p>Emergent abilities appear suddenly at certain model scales, barely present in smaller models and then fully present in larger ones, without being explicitly trained for. A model at 7B parameters might score 5% on a task, and a 70B model suddenly scores 85%: not a gradual improvement but a phase transition. Examples: chain-of-thought reasoning, multi-step arithmetic, in-context learning. For engineers: you cannot predict capabilities by extrapolating from small models. A task that does not work at 7B may become trivial at 70B.</p>
+</blockquote>
+<p><strong>Q7: What were the key differences between GPT-1, GPT-2, and GPT-3?</strong></p>
+<blockquote>
+<p>GPT-1 (2018): 117M parameters, trained on roughly 1B tokens. Proved that unsupervised pre-training followed by fine-tuning works. Required fine-tuning for each downstream task. GPT-2 (2019): 1.5B parameters, trained on WebText (40GB of web text). Same architecture, dramatically bigger. Demonstrated zero-shot task completion: just a prompt, no fine-tuning. OpenAI initially withheld it over misuse concerns. GPT-3 (2020): 175B parameters, trained on 570GB of filtered internet text. Demonstrated in-context few-shot learning at scale: show 3 examples in the prompt and the model generalizes with zero gradient updates. One model could write code, translate, summarize, and answer questions from examples in the prompt alone. The pattern: scale (parameters plus data) was the primary lever, architecture barely changed.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #0f0f1a -->
+<h1 id="chapter-5" tabindex="-1">Chapter 5</h1>
+<h2 id="%E2%9A%99%EF%B8%8F-inside-the-pipeline" tabindex="-1">⚙️ Inside the Pipeline</h2>
+<h3 id="session-04%3A-bpe%2C-temperature%2C-top-k%2C-top-p" tabindex="-1">Session 04: BPE, Temperature, Top-K, Top-P</h3>
+<blockquote>
+<p><em>"You've been calling the API like a black box. Time to open it."</em></p>
+</blockquote>
+<hr>
+<h1 id="you-are-not-paying-per-word" tabindex="-1">You Are Not Paying Per Word</h1>
+<p>When you call an LLM API, the billing unit is not a word. It is a <strong>token</strong>.</p>
+<p>A token is a <strong>subword unit</strong>, not a character, not a full word.</p>
+<pre class="hljs"><code><div>"ChatGPT"       → ["Chat", "G", "PT"]          = 3 tokens
+"tokenization"  → ["token", "ization"]          = 2 tokens
+"unbelievable"  → ["un", "believ", "able"]      = 3 tokens
+"Hello!"        → ["Hello", "!"]                = 2 tokens
+"2024"          → ["20", "24"]                  = 2 tokens
+</div></code></pre>
+<blockquote>
+<p><strong>Rule of thumb:</strong> 1 token ≈ 0.75 English words</p>
+<p>A 10,000-word document ≈ 13,000 tokens. Miscalculate and you burn budget.</p>
+</blockquote>
+<hr>
+<h1 id="bpe%3A-how-tokens-are-built" tabindex="-1">BPE: How Tokens Are Built</h1>
+<p><strong>Byte Pair Encoding</strong>, used in GPT-2, GPT-3, GPT-4, LLaMA, Mistral, and nearly every modern LLM.</p>
+<p><strong>Algorithm:</strong></p>
+<pre class="hljs"><code><div>Start:   vocabulary = all individual characters
+         [h, e, l, l, o, " ", w, o, r, l, d]
+
+Round 1: Most frequent pair: "l" + "o" → merge into "lo"
+Round 2: Most frequent pair: "h" + "e" → merge into "he"
+Round 3: Most frequent pair: "w" + "o" → merge into "wo"
+...
+Repeat until vocabulary reaches target size (e.g. 50,000 tokens)
+</div></code></pre>
+<p>Common words → single tokens.
+Rare words → split into meaningful pieces.
+Unknown words → handled gracefully, never <code>&lt;UNK&gt;</code>.</p>
+<hr>
+<h1 id="temperature%3A-the-creativity-dial" tabindex="-1">Temperature: The Creativity Dial</h1>
+<p>After the Transformer runs, it produces raw scores called <strong>logits</strong> for every word in the vocabulary.</p>
+<p><strong>Temperature T</strong> divides all logits before converting to probabilities:</p>
+<pre class="hljs"><code><div>Prompt: "The sky is ___"
+
+T = 0.2  →  blue: 97%, grey: 2%, red: 1%   (almost always "blue")
+T = 0.7  →  blue: 65%, grey: 20%, red: 10%  (mostly "blue", some variety)
+T = 1.5  →  blue: 32%, grey: 25%, purple: 20%, ...  (creative/random)
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Temperature Range</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1 – 0.3</td>
+<td>Factual answers, structured data, SQL, code</td>
+</tr>
+<tr>
+<td>0.4 – 0.7</td>
+<td>Balanced chat, explanations</td>
+</tr>
+<tr>
+<td>0.8 – 1.4</td>
+<td>Creative writing, brainstorming, storytelling</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="top-k-sampling" tabindex="-1">Top-K Sampling</h1>
+<p>After applying temperature, <strong>filter to only the K most likely tokens</strong>:</p>
+<pre class="hljs"><code><div>Full vocabulary: 50,000 tokens
+Top-K = 5:       keep only top 5, zero the rest, renormalise, then sample
+
+"The capital of France is ___"
+K=5 keeps: Paris(78%), Lyon(8%), Nice(6%), Marseille(5%), Bordeaux(3%)
+</div></code></pre>
+<ul>
+<li>K = 1 → greedy decoding (always pick the top token, no randomness)</li>
+<li>K = 50 → common default, good balance</li>
+<li>K = vocabulary size → no filtering, pure sampling</li>
+</ul>
+<hr>
+<h1 id="top-p%3A-nucleus-sampling-(better-than-top-k)" tabindex="-1">Top-P: Nucleus Sampling (Better Than Top-K)</h1>
+<p>Sort tokens by probability (highest first). Keep adding to the "nucleus" until cumulative probability reaches <strong>P</strong>:</p>
+<pre class="hljs"><code><div>P = 0.9, keep the smallest set of tokens summing to ≥ 90% probability
+
+Confident model (one clear answer):
+  "Paris": 95% → nucleus = just ["Paris"] (tiny)
+
+Uncertain model (many valid words):
+  "happy", "sad", "curious", "excited", "nervous", ... → nucleus expands
+</div></code></pre>
+<p><strong>Why Top-P is better than Top-K:</strong>
+Top-K always keeps exactly K tokens regardless of confidence.
+Top-P adapts, small when the model is sure, large when uncertain.</p>
+<blockquote>
+<p>Production systems usually use temperature + top-P together.</p>
+</blockquote>
+<hr>
+<h1 id="the-correct-order%3A-a-common-interview-trap" tabindex="-1">The Correct Order: A Common Interview Trap</h1>
+<pre class="hljs"><code><div><span class="hljs-comment"># The ONLY correct order:</span>
+
+<span class="hljs-comment"># Step 1: Apply temperature</span>
+logits = logits / temperature          <span class="hljs-comment"># rescale raw scores</span>
+
+<span class="hljs-comment"># Step 2: Apply Top-K filter</span>
+<span class="hljs-comment"># Zero out everything outside the top K</span>
+
+<span class="hljs-comment"># Step 3: Apply Top-P filter</span>
+<span class="hljs-comment"># Zero out everything outside the nucleus</span>
+
+<span class="hljs-comment"># Step 4: Sample</span>
+next_token = sample_from(remaining_probabilities)
+</div></code></pre>
+<p><strong>Getting the order wrong is a real bug</strong>, and a common interview question.</p>
+<p>Temperature must come first because it reshapes the distribution before filtering.</p>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-04" tabindex="-1">🎯 Interview Questions: Session 04</h1>
+<p><strong>Q1: Walk through the BPE algorithm step by step.</strong></p>
+<blockquote>
+<p>Start with a character-level vocabulary. Count all adjacent character pairs across the training corpus. Merge the most frequent pair into a new token. Repeat until the vocabulary reaches the target size (typically 50,000 to 100,000 tokens). Why not word-level: any word not in training becomes UNK, and every inflected form needs its own entry. Why not character-level: sequences become extremely long and attention computation (O(n squared)) becomes 16 to 25 times more expensive. Byte-level BPE (GPT-2 onwards) operates on raw bytes, guaranteeing no unknown tokens ever.</p>
+</blockquote>
+<p><strong>Q2: What is the correct order: temperature, softmax, Top-K, Top-P, sample?</strong></p>
+<blockquote>
+<p>Temperature always comes first because it reshapes the distribution before filtering. Correct order: (1) run Transformer forward pass to get raw logits, (2) divide logits by temperature, (3) apply softmax to convert to probabilities, (4) apply Top-K filter by zeroing out everything below rank K, (5) apply Top-P filter by keeping only the smallest set reaching cumulative probability P, (6) renormalize and sample. Getting this order wrong is a common bug: applying temperature after softmax changes what it does mathematically.</p>
+</blockquote>
+<p><strong>Q3: GPT-4o charges $5 per 1M input tokens. A RAG system sends 3,000 tokens per query at 10,000 queries per day. What is the monthly input cost?</strong></p>
+<blockquote>
+<p>3,000 tokens x 10,000 queries = 30 million input tokens per day. At $5 per 1M tokens = $150 per day for input alone. Monthly: $150 x 30 = $4,500 in input costs. Add output (500 tokens x 10,000 queries = 5M output tokens per day, at $15 per 1M = $75 per day, $2,250 per month). Total: roughly $6,750 per month. Optimization: route simple queries to GPT-4o-mini (30 to 40 times cheaper), reduce context size by keeping top 3 retrieved chunks instead of 10, use prefix caching for repeated system prompts.</p>
+</blockquote>
+<p><strong>Q4: What is the difference between Top-K and Top-P sampling?</strong></p>
+<blockquote>
+<p>Top-K always keeps exactly K candidates. Problem: if the model is very confident (one token at 95%), K=40 still forces sampling from 40 tokens including near-zero probability noise. If the model is uncertain (20 tokens at 5% each), K=40 might be too restrictive. Top-P keeps the smallest set whose cumulative probability reaches P. When confident, Top-P might keep just 2 to 3 tokens. When uncertain, it adapts to keep more. Best practice: use both together (Top-K=40, Top-P=0.95).</p>
+</blockquote>
+<p><strong>Q5: What is the "lost in the middle" problem in RAG?</strong></p>
+<blockquote>
+<p>Research shows LLMs systematically under-attend to information in the middle of long context windows. They perform best on information at the beginning (primacy) and end (recency) of the context, with accuracy dropping for content in the middle. In RAG: if you retrieve 10 documents and the most relevant one lands in the middle, it may effectively be ignored. Mitigations: put the most important retrieved context first or last, limit to top 3 to 5 chunks rather than 10 to 15, use a reranker to ensure the most relevant chunk gets a priority position.</p>
+</blockquote>
+<p><strong>Q6: A model generates "Eiffel Tower is in Berlin" confidently. Is this hallucination or retrieval failure?</strong></p>
+<blockquote>
+<p>This is a factual hallucination: the model generates false information with confidence. Retrieval failure means the correct document was not found. Hallucination means even with the correct document retrieved, the model generates something not supported by it. How to diagnose: check if the correct fact was in the retrieved context. If yes, it is hallucination (the model ignored the grounding evidence). If no, it is retrieval failure (fix chunking, reranking, or the embedding model). They require different fixes: retrieval failure needs better search; hallucination needs stricter grounding prompts and citation enforcement.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #0f1a0f -->
+<h1 id="chapter-6" tabindex="-1">Chapter 6</h1>
+<h2 id="%F0%9F%92%BB-running-ai-yourself" tabindex="-1">💻 Running AI Yourself</h2>
+<h3 id="session-05%3A-local-llms-%26-api-providers" tabindex="-1">Session 05: Local LLMs &amp; API Providers</h3>
+<blockquote>
+<p><em>"What if you could run GPT-quality AI on your own laptop, for free, without sending a single byte to any company?"</em></p>
+</blockquote>
+<hr>
+<h1 id="why-not-just-use-openai-every-time%3F" tabindex="-1">Why Not Just Use OpenAI Every Time?</h1>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Real Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost</strong></td>
+<td>100,000 tokens/day adds up fast in production</td>
+</tr>
+<tr>
+<td><strong>Privacy</strong></td>
+<td>Your prompts, your users' data → goes to their servers</td>
+</tr>
+<tr>
+<td><strong>Reliability</strong></td>
+<td>API outage = your product is down</td>
+</tr>
+<tr>
+<td><strong>Vendor lock-in</strong></td>
+<td>They change pricing, terms, or models → you're stuck</td>
+</tr>
+<tr>
+<td><strong>Latency</strong></td>
+<td>Network round-trip adds 100–500ms every call</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The answer:</strong> Run locally for dev/privacy OR use a multi-provider strategy for production.</p>
+<hr>
+<h1 id="ollama%3A-llms-on-your-laptop" tabindex="-1">Ollama: LLMs on Your Laptop</h1>
+<pre class="hljs"><code><div><span class="hljs-comment"># Install (Mac / Linux)</span>
+curl -fsSL https://ollama.com/install.sh | sh
+
+<span class="hljs-comment"># Pull a model</span>
+ollama pull phi3          <span class="hljs-comment"># 2.7B params, runs on 8GB RAM, free</span>
+ollama pull llama3.2      <span class="hljs-comment"># 3B  params, runs on 8GB RAM, free</span>
+ollama pull mistral       <span class="hljs-comment"># 7B  params, needs 16GB RAM</span>
+
+<span class="hljs-comment"># Ask it a question</span>
+ollama run phi3
+&gt;&gt;&gt; <span class="hljs-string">"Explain transformers like I'm 10 years old"</span>
+</div></code></pre>
+<p>Ollama exposes an <strong>OpenAI-compatible REST API</strong> at <code>http://localhost:11434</code></p>
+<p>Your Python code doesn't change. Just swap the <code>base_url</code>.</p>
+<hr>
+<h1 id="the-universal-chat-format" tabindex="-1">The Universal Chat Format</h1>
+<p><strong>Every provider</strong>, OpenAI, Gemini, Anthropic, Ollama, Databricks, accepts this same structure:</p>
+<pre class="hljs"><code><div>messages = [
+    {
+        <span class="hljs-string">"role"</span>: <span class="hljs-string">"system"</span>,
+        <span class="hljs-string">"content"</span>: <span class="hljs-string">"You are a helpful assistant."</span>
+    },
+    {
+        <span class="hljs-string">"role"</span>: <span class="hljs-string">"user"</span>,
+        <span class="hljs-string">"content"</span>: <span class="hljs-string">"Explain the Transformer architecture in one paragraph."</span>
+    },
+    {
+        <span class="hljs-string">"role"</span>: <span class="hljs-string">"assistant"</span>,
+        <span class="hljs-string">"content"</span>: <span class="hljs-string">"The Transformer was introduced in..."</span>   <span class="hljs-comment"># previous turn</span>
+    },
+    {
+        <span class="hljs-string">"role"</span>: <span class="hljs-string">"user"</span>,
+        <span class="hljs-string">"content"</span>: <span class="hljs-string">"Now explain RLHF."</span>
+    }
+]
+</div></code></pre>
+<blockquote>
+<p><strong>This is the skeleton of every LLM application you will ever build.</strong></p>
+</blockquote>
+<hr>
+<h1 id="openrouter%3A-one-key%2C-100%2B-models" tabindex="-1">OpenRouter: One Key, 100+ Models</h1>
+<pre class="hljs"><code><div><span class="hljs-comment"># Identical code. Change one string. Different provider.</span>
+
+model = <span class="hljs-string">"openai/gpt-4o"</span>
+model = <span class="hljs-string">"anthropic/claude-3-5-sonnet"</span>
+model = <span class="hljs-string">"google/gemini-1.5-pro"</span>
+model = <span class="hljs-string">"meta-llama/llama-3-70b-instruct"</span>
+model = <span class="hljs-string">"mistralai/mistral-7b-instruct"</span>
+</div></code></pre>
+<p>No 5 different SDKs. No 5 API keys. One account, one key, transparent pricing.</p>
+<p><strong>When to use OpenRouter:</strong> Prototyping, model comparison, avoiding vendor lock-in.</p>
+<blockquote>
+<p><strong>Student tip:</strong> Start with Gemini (free tier). Use OpenRouter when you want to compare models.</p>
+</blockquote>
+<hr>
+<h1 id="map-reduce%3A-handling-documents-longer-than-the-context-window" tabindex="-1">Map-Reduce: Handling Documents Longer Than the Context Window</h1>
+<p>Every LLM has a context limit (8K, 32K, 128K tokens). What if your document is longer?</p>
+<pre class="hljs"><code><div>200-page PDF (300,000 tokens), won't fit
+          │
+    SPLIT into 20 chunks of ~15,000 tokens each
+          │
+    MAP: Summarise each chunk independently   ← 20 parallel LLM calls
+          │
+    REDUCE: Merge all 20 chunk summaries       ← 1 final LLM call
+          │
+    Final summary of the entire 200-page document
+</div></code></pre>
+<p>Same pattern used in document intelligence pipelines (M11), research assistants (M14), and any production RAG system handling large documents.</p>
+<hr>
+<h1 id="local-vs-cloud%3A-the-decision-table" tabindex="-1">Local vs Cloud: The Decision Table</h1>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Local (Ollama / LM Studio)</th>
+<th>Cloud (Gemini / OpenRouter)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost</strong></td>
+<td>Free forever</td>
+<td>Pay per token</td>
+</tr>
+<tr>
+<td><strong>Privacy</strong></td>
+<td>100%, nothing leaves machine</td>
+<td>Data sent to provider</td>
+</tr>
+<tr>
+<td><strong>Model capability</strong></td>
+<td>Limited by your RAM</td>
+<td>Access to GPT-4, Claude 3</td>
+</tr>
+<tr>
+<td><strong>Speed</strong></td>
+<td>Depends on your GPU/CPU</td>
+<td>Fast, consistent</td>
+</tr>
+<tr>
+<td><strong>Internet</strong></td>
+<td>Not required</td>
+<td>Required</td>
+</tr>
+<tr>
+<td><strong>Setup time</strong></td>
+<td>10 minutes</td>
+<td>Instant (just API key)</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Dev, learning, private data, offline</td>
+<td>Production, large models, teams</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-05" tabindex="-1">🎯 Interview Questions: Session 05</h1>
+<p><strong>Q1: What is GGUF format and what does Q4_K_M mean?</strong></p>
+<blockquote>
+<p>GGUF is the standard format for quantized LLM weights created by the llama.cpp project. All model weights, hyperparameters, tokenizer, and metadata are packed into one portable file with no separate config files needed. Q4_K_M breaks down as: Q4 = 4-bit quantization (each weight stored in 4 bits instead of 32), K = K-quant method (groups of roughly 32 weights share a scale factor to minimize quantization error), M = medium size variant (balances accuracy vs speed). Q4_K_M achieves roughly 3% perplexity increase vs FP16, imperceptible in most applications, while reducing a 7B model from 14GB to about 4GB.</p>
+</blockquote>
+<p><strong>Q2: What are the three message roles in the universal chat format?</strong></p>
+<blockquote>
+<p>The universal format is a list of {role, content} dicts supported by every major provider. System: sets overall behavior, persona, and constraints for the entire conversation. User: represents a human turn. Assistant: represents a model turn. Including prior assistant turns is how you inject conversation history for multi-turn dialogue. Every provider (OpenAI, Anthropic, Google, Ollama) accepts this same format, which is why your conversation history logic works across providers without changes.</p>
+</blockquote>
+<p><strong>Q3: What are the limitations of OpenRouter for production use?</strong></p>
+<blockquote>
+<p>OpenRouter is a proxy, not a first-party provider. Limitations: (1) additional latency from the proxy hop (typically 50 to 200ms), (2) you depend on OpenRouter's uptime on top of the underlying provider's uptime, (3) pricing includes a small markup over direct API pricing, (4) some advanced features like fine-tuned model endpoints may not be available through the proxy, (5) enterprise SLAs come from OpenRouter, not the underlying providers. Use it for prototyping, development, and model comparison. For high-throughput production, connect directly to the provider.</p>
+</blockquote>
+<p><strong>Q4: How does INT4 quantization reduce memory while preserving quality?</strong></p>
+<blockquote>
+<p>FP32 weights use 32 bits per parameter. INT4 uses 4 bits, an 8 times reduction. A 7B model goes from roughly 28GB (FP32) to roughly 3.5GB (INT4). The accuracy tradeoff: quantization rounds each weight to the nearest representable value in the 16-step INT4 range. For most weights, this rounding error is small because weight distributions are bell-shaped and concentrated near zero. K-quant methods use per-group scale factors to minimize this error further. The result is models that fit in consumer RAM while performing close to full-precision.</p>
+</blockquote>
+<p><strong>Q5: How much RAM do you need to run a 7B model locally?</strong></p>
+<blockquote>
+<p>A 7B model at Q4_K_M requires roughly 4GB for weights plus 1 to 2GB for KV cache and overhead. Practical minimum: 6 to 8GB available RAM. Guide: 8GB RAM (MacBook Air M1/M2) runs 7B comfortably at 15 to 25 tokens per second using Apple Metal. 16GB handles 7B well or 13B at Q4_K_M. 32GB allows 13B comfortably or a try at 30B. 64GB handles 70B at Q4_K_M (roughly 40GB). Key rule: the model must fit entirely in RAM or VRAM for interactive speeds. Paging to disk is too slow for real use.</p>
+</blockquote>
+<p><strong>Q6: Compare Ollama, LM Studio, and OpenRouter: when would you choose each?</strong></p>
+<blockquote>
+<p>Ollama: CLI-first tool, runs a REST server at localhost:11434 with an OpenAI-compatible API. Best for developers, scripting, Jupyter notebooks, and production local inference. LM Studio: desktop GUI with drag-and-drop model loading, built-in chat interface, and a local OpenAI-compatible server. Best for non-developers and students exploring models visually. OpenRouter: cloud API gateway, no local install. Best for accessing frontier models through one API key, model comparison studies, or when your hardware cannot run the required model size. Decision: need privacy or offline use → Ollama or LM Studio. Need frontier model quality → OpenRouter or direct provider. Building production code → Ollama (stable REST API, Docker-friendly).</p>
+</blockquote>
+<p><strong>Q7: How does map-reduce work for documents that exceed the context window?</strong></p>
+<blockquote>
+<p>A single context window cannot fit a full book or large codebase. Map-reduce splits the document into chunks (map step), processes each chunk independently with the LLM, then combines results (reduce step). For summarization: map generates a summary of each chunk, reduce merges summaries into a final coherent output. For Q&amp;A: map extracts relevant passages, reduce synthesizes the final answer. An alternative is the refine strategy: process chunk 1, pass its output plus chunk 2 to the LLM for refinement, repeat until done. Refine maintains cross-chunk coherence but is sequential and slower. Map-reduce is faster because chunks are processed in parallel. In LangChain: load_summarize_chain(chain_type="map_reduce").</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #1a1a0a -->
+<h1 id="chapter-7" tabindex="-1">Chapter 7</h1>
+<h2 id="%F0%9F%A7%A0-prompt-engineering-%2B-dspy" tabindex="-1">🧠 Prompt Engineering + DSPy</h2>
+<h3 id="session-06%3A-stop-guessing.-start-optimising." tabindex="-1">Session 06: Stop Guessing. Start Optimising.</h3>
+<blockquote>
+<p><em>"What if instead of writing the perfect prompt yourself, you let code find it for you?"</em></p>
+</blockquote>
+<hr>
+<h1 id="how-to-write-a-good-prompt" tabindex="-1">How to Write a Good Prompt</h1>
+<p>A well-written prompt has five parts. You don't need all five every time, but knowing them helps you debug when the model gives you the wrong answer.</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What It Does</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Role</strong></td>
+<td>Who should the AI be?</td>
+<td>"You are a senior data analyst"</td>
+</tr>
+<tr>
+<td><strong>Task</strong></td>
+<td>What exactly do you want?</td>
+<td>"Summarize this into 3 bullet points"</td>
+</tr>
+<tr>
+<td><strong>Context</strong></td>
+<td>What background does it need?</td>
+<td>"The audience is non-technical managers"</td>
+</tr>
+<tr>
+<td><strong>Examples</strong></td>
+<td>What does a good answer look like?</td>
+<td>Show 2-3 input/output pairs</td>
+</tr>
+<tr>
+<td><strong>Output format</strong></td>
+<td>How should it structure the response?</td>
+<td>"Reply only in JSON. No markdown."</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="zero-shot%3A-the-gap-between-vague-and-specific" tabindex="-1">Zero-Shot: The Gap Between Vague and Specific</h1>
+<p><strong>Bad prompt:</strong></p>
+<pre class="hljs"><code><div>Summarize this.
+</div></code></pre>
+<p>The model doesn't know: how long? What style? What to focus on?</p>
+<p><strong>Good prompt:</strong></p>
+<pre class="hljs"><code><div>You are a business analyst.
+Summarize the following customer feedback in exactly 3 bullet points.
+Each bullet: main complaint + why it matters to the business.
+
+Feedback: "The checkout took 10 minutes and the payment kept
+failing. I had to try 4 times. Really frustrating."
+</div></code></pre>
+<p>Role + task + output format. The model has no room for misunderstanding.</p>
+<hr>
+<h1 id="role-prompting%3A-give-the-ai-a-job" tabindex="-1">Role Prompting: Give the AI a Job</h1>
+<p>The same question produces completely different answers depending on the role you set.</p>
+<p><strong>Without role:</strong></p>
+<pre class="hljs"><code><div>Prompt: "Explain recursion."
+Result: A dry textbook definition.
+</div></code></pre>
+<p><strong>With role:</strong></p>
+<pre class="hljs"><code><div>Prompt: "You are a patient tutor teaching a 16-year-old
+who knows Python basics but has never heard of recursion.
+Start with a real-world analogy. Then show the simplest
+possible code example. Keep it under 150 words."
+
+Result: An analogy about a camera inside a mirror, then
+5 lines of Python, in exactly the right tone and length.
+</div></code></pre>
+<p>Why does this work? The model has seen millions of examples of teaching-style writing. Saying "patient tutor" activates those patterns.</p>
+<hr>
+<h1 id="few-shot%3A-show%2C-don't-tell" tabindex="-1">Few-Shot: Show, Don't Tell</h1>
+<p>You give 2-3 examples of input and output before asking your real question. The model learns the exact format and labels you want.</p>
+<p><strong>Without examples (zero-shot), the model picks its own format:</strong></p>
+<pre class="hljs"><code><div>Review: "Arrived late but product is great."
+→ "Mixed sentiment" or "Neutral" or "3/5 stars" (you get something different every time)
+</div></code></pre>
+<p><strong>With examples (the model locks into your format):</strong></p>
+<pre class="hljs"><code><div>Review: "Fast delivery, great quality."       → Positive
+Review: "Product broke after one day."        → Negative
+Review: "Good price but slow shipping."       → Mixed
+Review: "Arrived late but product is great."  → 
+</div></code></pre>
+<p>The model now knows: exactly three labels, one word, no explanation. You don't have to say any of that, because the examples show it.</p>
+<hr>
+<h1 id="chain-of-thought%3A-make-it-show-its-working" tabindex="-1">Chain-of-Thought: Make It Show Its Working</h1>
+<p><strong>Without CoT (the model guesses on reasoning tasks):</strong></p>
+<pre class="hljs"><code><div>Q: Train A leaves at 9am at 80km/h, Train B at 10am at 100km/h,
+   stations are 210km apart. When do they meet?
+
+A: "10:45am"   ← often wrong
+</div></code></pre>
+<p><strong>With CoT (just add "think step by step"):</strong></p>
+<pre class="hljs"><code><div>Q: Same question. Think step by step.
+
+A: At 10am, Train A has traveled 80km. Distance remaining: 130km.
+   Combined closing speed = 80 + 100 = 180 km/h.
+   Time to close 130km = 130/180 = 0.72h = 43 minutes.
+   They meet at 10:43am.   ✓
+</div></code></pre>
+<p>Generating intermediate steps gives the model more context for each next token. It is especially powerful for math, logic, and classification with subtle distinctions. In DSPy, <code>dspy.ChainOfThought</code> adds this automatically.</p>
+<hr>
+<h1 id="output-format%3A-tell-it-exactly-what-you-want" tabindex="-1">Output Format: Tell It Exactly What You Want</h1>
+<p>If the response needs to go into your code, always lock down the format.</p>
+<p><strong>Unstructured (your code cannot reliably parse this):</strong></p>
+<pre class="hljs"><code><div>Analyze this review and tell me the sentiment, the main topics,
+and whether the customer would recommend it.
+
+→ "The customer seems fairly happy overall, mentioning
+   delivery speed and product quality. They would likely..."
+</div></code></pre>
+<p><strong>Structured (your code does <code>json.loads(response)</code> and it works):</strong></p>
+<pre class="hljs"><code><div>Reply with ONLY this JSON. No markdown. No explanation.
+{
+  "sentiment": "positive" | "negative" | "mixed",
+  "topics": ["list", "of", "topics"],
+  "would_recommend": true | false
+}
+</div></code></pre>
+<p>One rule: if the LLM output goes into code downstream, always control the format.</p>
+<hr>
+<h1 id="the-problem-with-hand-written-prompts" tabindex="-1">The Problem with Hand-Written Prompts</h1>
+<p>You've been writing prompts like this:</p>
+<pre class="hljs"><code><div>"You are a helpful assistant. Classify the intent of this customer message.
+ Message: {text}
+ Intent options: {labels}
+ Answer:"
+</div></code></pre>
+<p>Then tweaking it manually. Testing. Tweaking again.</p>
+<p><strong>This does not scale.</strong> You have no way to know if your prompt is optimal. You're guessing.</p>
+<blockquote>
+<p><strong>DSPy's answer:</strong> Define what you want in code. Let optimisers find the best prompt automatically.</p>
+</blockquote>
+<hr>
+<h1 id="dspy%3A-programmatic-prompt-engineering" tabindex="-1">DSPy: Programmatic Prompt Engineering</h1>
+<p><strong>DSPy (Stanford NLP)</strong> treats prompts as learnable parameters, not hand-written strings.</p>
+<p><strong>Key concepts:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>What It Is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dspy.Signature</code></td>
+<td>Defines the input/output schema for an LLM call</td>
+</tr>
+<tr>
+<td><code>dspy.ChainOfThought</code></td>
+<td>Predictor that adds step-by-step reasoning before answering</td>
+</tr>
+<tr>
+<td><strong>Optimizer</strong></td>
+<td>Automatically finds the best prompt/examples for your task</td>
+</tr>
+<tr>
+<td><strong>Metric</strong></td>
+<td>How you measure "better", e.g. <code>answer_exact_match</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="dspy-signatures%3A-define-the-task%2C-not-the-prompt" tabindex="-1">DSPy Signatures: Define the Task, Not the Prompt</h1>
+<pre class="hljs"><code><div><span class="hljs-keyword">class</span> <span class="hljs-title class_">Classification</span>(dspy.Signature):
+    <span class="hljs-string">"""Classify the customer message into one of the intent labels."""</span>
+
+    customer_message = dspy.InputField(
+        desc=<span class="hljs-string">"Customer message during customer service interaction"</span>
+    )
+    intent_labels = dspy.InputField(
+        desc=<span class="hljs-string">"Labels that represent customer intent"</span>
+    )
+    answer = dspy.OutputField(
+        desc=<span class="hljs-string">"A label best matching the customer's intent"</span>
+    )
+
+<span class="hljs-comment"># Chain-of-Thought: think step by step before answering</span>
+cot_predictor = dspy.ChainOfThought(Classification)
+</div></code></pre>
+<p>The docstring becomes the instruction. The fields become the prompt structure.</p>
+<p><strong>You define the task. DSPy writes the prompt.</strong></p>
+<hr>
+<h1 id="the-three-optimisers%3A-from-simple-to-powerful" tabindex="-1">The Three Optimisers: From Simple to Powerful</h1>
+<table>
+<thead>
+<tr>
+<th>Optimiser</th>
+<th>What It Does</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LabeledFewShot</strong></td>
+<td>Injects k random training examples into the prompt</td>
+<td>Quickest baseline, no real optimisation</td>
+</tr>
+<tr>
+<td><strong>BootstrapFewShot</strong></td>
+<td>Generates additional examples, tests them, keeps only those that pass your metric</td>
+<td>When you have some labelled data and want better examples</td>
+</tr>
+<tr>
+<td><strong>BootstrapFewShot WithRandomSearch</strong></td>
+<td>Runs BootstrapFewShot multiple times with different random seeds, picks best program</td>
+<td>When you need maximum accuracy and have compute budget</td>
+</tr>
+<tr>
+<td><strong>MIPROv2</strong></td>
+<td>Optimises the instruction text itself, not just examples</td>
+<td>Most powerful, changes the actual prompt wording</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="what-bootstrapfewshot-actually-does" tabindex="-1">What BootstrapFewShot Actually Does</h1>
+<pre class="hljs"><code><div>Your labelled training data
+         │
+   Run the LLM on each training example
+         │
+   Check: does the LLM's output pass the metric?
+         │
+   YES → keep this (input, output) pair as a demo
+   NO  → discard
+         │
+   Inject only the PASSING demos into the final prompt
+</div></code></pre>
+<blockquote>
+<p><strong>The key insight:</strong> Instead of hand-picking examples, DSPy runs your metric against the model's own generations and keeps the good ones automatically.</p>
+</blockquote>
+<hr>
+<h1 id="miprov2%3A-optimise-the-instruction-itself" tabindex="-1">MIPROv2: Optimise the Instruction Itself</h1>
+<p>The most powerful DSPy optimiser: it searches over the <strong>instruction wording</strong>, not just the examples.</p>
+<pre class="hljs"><code><div><span class="hljs-comment">// From MiproV2Prompt.json, the optimised instruction found automatically</span>
+<span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"predict"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">"signature"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">"instructions"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Classify the customer's airline service query into
+                       the correct intent category. Analyze the message
+                       carefully to identify the primary action or
+                       information need expressed..."</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<p>Nobody wrote that instruction. The optimiser found it by testing thousands of phrasings against the validation set.</p>
+<hr>
+<h1 id="chain-of-thought%3A-why-%22think-step-by-step%22-works" tabindex="-1">Chain-of-Thought: Why "Think Step by Step" Works</h1>
+<p>Standard prompting:</p>
+<pre class="hljs"><code><div>Q: "I need to change my flight booking"
+A: "flight_change"
+</div></code></pre>
+<p>Chain-of-Thought:</p>
+<pre class="hljs"><code><div>Q: "I need to change my flight booking"
+Reasoning: "The customer is asking to modify an existing reservation.
+            The key words are 'change' and 'flight booking'.
+            This is a modification request, not a cancellation."
+A: "flight_change"
+</div></code></pre>
+<p>CoT forces the model to show its work. Errors in reasoning are visible and correctable. Accuracy improves significantly on complex classification and reasoning tasks.</p>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-06" tabindex="-1">🎯 Interview Questions: Session 06</h1>
+<p><strong>Q1: What are the five parts of a well-written prompt and why does each matter?</strong></p>
+<blockquote>
+<p>Role (who the AI should be): activates relevant writing patterns from training. "You are a senior data analyst" produces very different output than the same task with no role. Task (what exactly to do): be specific, for example "summarize in 3 bullet points" not just "summarize." Context (background it needs): "the audience has no technical background" changes every word choice. Examples (2 to 3 input/output pairs): the most powerful lever for locking in format and label names, the model copies your exact output structure. Output format: critical when code must parse the output, use "Reply ONLY with valid JSON, no markdown, no explanation." Most bad prompts fail because only the task is included.</p>
+</blockquote>
+<p><strong>Q2: What is Chain-of-Thought prompting and why does forcing reasoning help?</strong></p>
+<blockquote>
+<p>CoT prompting forces the model to generate intermediate reasoning steps before producing the final answer. Adding "think step by step" produces explicit reasoning tokens that give the model more context for each subsequent decision. Classic example: "Is 9.11 &gt; 9.9?" Without CoT: "Yes" (wrong). With CoT: "9.11 means 0.11 after the decimal. 9.9 means 0.90. 0.11 &lt; 0.90, so 9.11 &lt; 9.9. No." (correct). CoT helps on multi-step math, logic puzzles, nuanced classification, and code generation. Does not help on simple factual lookups.</p>
+</blockquote>
+<p><strong>Q3: What is DSPy and how does it differ from writing prompts manually?</strong></p>
+<blockquote>
+<p>DSPy (Stanford NLP) treats prompts as learnable parameters rather than hand-written strings. You define a Signature (input/output schema with field descriptions), a metric (function that scores output quality), and a training dataset. An optimizer automatically searches for the best prompt, instruction wording, and few-shot examples. The model never sees your raw prompt: DSPy assembles the optimal one from your signature and the optimized instructions. Manual prompting requires expert iteration; DSPy automates it and is reproducible across model versions.</p>
+</blockquote>
+<p><strong>Q4: What is the difference between LabeledFewShot and BootstrapFewShot?</strong></p>
+<blockquote>
+<p>LabeledFewShot randomly picks k examples from your training set and injects them as few-shot demonstrations. No actual optimization: just in-context learning with randomly selected examples. Quality depends on which k examples happen to be picked. BootstrapFewShot runs the model on training examples, evaluates each prediction against your metric, and keeps only examples where the model was correct. The injected demos are guaranteed to pass your validation criterion, not random samples. This produces significantly higher quality signal than random selection. BootstrapFewShot requires no human-labeled outputs, only human-labeled inputs with a metric to evaluate outputs.</p>
+</blockquote>
+<p><strong>Q5: What can MIPROv2 optimize that BootstrapFewShot cannot?</strong></p>
+<blockquote>
+<p>BootstrapFewShot selects which demonstrations to include but cannot modify the instruction text itself. MIPROv2 searches over both the instruction wording AND the few-shot examples simultaneously. It uses Bayesian optimization to generate and evaluate candidate instruction variants, focusing the search on promising phrasings. MIPROv2 may find "let's work through this step by step to ensure accuracy" outperforms your hand-written "answer the following question" by several points in F1. Use BootstrapFewShot first; upgrade to MIPROv2 when you need further gains and have labeled validation data.</p>
+</blockquote>
+<p><strong>Q6: Give a concrete example where few-shot is strictly necessary over zero-shot.</strong></p>
+<blockquote>
+<p>Format consistency for downstream code parsing. Zero-shot "Classify sentiment as positive, negative, or mixed" produces "Positive", "positive", "POSITIVE", "The sentiment is positive", "I believe this is positive": all different strings, none reliably parseable by code. Few-shot with 3 examples ("Love it!" → "positive", "Awful!" → "negative") forces the model to lock into exactly one of three strings you control. Your if answer == "positive" check works 100% of the time. Rule: whenever downstream code must parse the output or you need consistent label strings for a classifier, few-shot is not optional. It is the only reliable approach.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #0a0a1a -->
+<h1 id="chapter-8" tabindex="-1">Chapter 8</h1>
+<h2 id="%F0%9F%94%97-langchain-fundamentals" tabindex="-1">🔗 LangChain Fundamentals</h2>
+<h3 id="session-07%3A-one-interface.-every-provider." tabindex="-1">Session 07: One Interface. Every Provider.</h3>
+<blockquote>
+<p><em>"You've called OpenAI. You've called Gemini. You've called Ollama. Why are you writing three different codebases?"</em></p>
+</blockquote>
+<hr>
+<h1 id="the-problem-before-langchain" tabindex="-1">The Problem Before LangChain</h1>
+<p>Every provider has different:</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># OpenAI</span>
+response = client.chat.completions.create(model=..., messages=[...])
+answer = response.choices[<span class="hljs-number">0</span>].message.content
+
+<span class="hljs-comment"># Anthropic / Claude</span>
+response = client.messages.create(model=..., messages=[...])
+answer = response.content[<span class="hljs-number">0</span>].text
+
+<span class="hljs-comment"># Gemini</span>
+response = client.models.generate_content(model=..., contents=...)
+answer = response.text
+</div></code></pre>
+<p>Different authentication, different response shapes, different streaming APIs.</p>
+<p><strong>Every provider switch = rewrite a significant chunk of code.</strong></p>
+<hr>
+<h1 id="langchain%3A-one-interface-for-everything" tabindex="-1">LangChain: One Interface for Everything</h1>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> langchain_openai <span class="hljs-keyword">import</span> ChatOpenAI
+<span class="hljs-keyword">from</span> langchain_anthropic <span class="hljs-keyword">import</span> ChatAnthropic
+<span class="hljs-keyword">from</span> langchain_google_genai <span class="hljs-keyword">import</span> ChatGoogleGenerativeAI
+<span class="hljs-keyword">from</span> langchain_ollama <span class="hljs-keyword">import</span> ChatOllama
+
+<span class="hljs-comment"># ALL return an AIMessage with .content: identical interface</span>
+models = {
+    <span class="hljs-string">"openai"</span>:  ChatOpenAI(model=<span class="hljs-string">"gpt-4o-mini"</span>),
+    <span class="hljs-string">"claude"</span>:  ChatAnthropic(model=<span class="hljs-string">"claude-haiku-4-5-20251001"</span>),
+    <span class="hljs-string">"gemini"</span>:  ChatGoogleGenerativeAI(model=<span class="hljs-string">"gemini-2.5-flash-lite"</span>),
+    <span class="hljs-string">"llama"</span>:   ChatOllama(model=<span class="hljs-string">"llama3.2:3b"</span>),
+}
+
+<span class="hljs-keyword">for</span> name, model <span class="hljs-keyword">in</span> models.items():
+    response = model.invoke([<span class="hljs-string">"Explain neural networks simply"</span>])
+    <span class="hljs-built_in">print</span>(<span class="hljs-string">f"<span class="hljs-subst">{name}</span>: <span class="hljs-subst">{response.content}</span>"</span>)
+</div></code></pre>
+<p><strong>Change one variable. Same code. Every provider.</strong></p>
+<hr>
+<h1 id="chatprompttemplate%3A-structured-prompts" tabindex="-1">ChatPromptTemplate: Structured Prompts</h1>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> langchain_core.prompts <span class="hljs-keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+
+prompt = ChatPromptTemplate.from_messages([
+    (<span class="hljs-string">"system"</span>, <span class="hljs-string">"You are a helpful assistant."</span>),
+    (<span class="hljs-string">"human"</span>, <span class="hljs-string">"{question}"</span>),
+    MessagesPlaceholder(variable_name=<span class="hljs-string">"history"</span>)
+])
+</div></code></pre>
+<p><code>MessagesPlaceholder</code>, injects the full conversation history at that position automatically.</p>
+<p>Build the prompt once. Reuse it across any model, any session.</p>
+<hr>
+<h1 id="conversation-history%3A-inmemorychatmessagehistory" tabindex="-1">Conversation History: InMemoryChatMessageHistory</h1>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> langchain_core.chat_history <span class="hljs-keyword">import</span> InMemoryChatMessageHistory
+
+<span class="hljs-comment"># Each user session gets its own history object</span>
+history = InMemoryChatMessageHistory()
+
+<span class="hljs-comment"># Messages are added automatically as the conversation progresses</span>
+history.add_user_message(<span class="hljs-string">"What is self-attention?"</span>)
+history.add_ai_message(<span class="hljs-string">"Self-attention is a mechanism that..."</span>)
+history.add_user_message(<span class="hljs-string">"How is it different from RNNs?"</span>)
+
+<span class="hljs-comment"># history.messages → passed into MessagesPlaceholder in the prompt</span>
+</div></code></pre>
+<p>The model sees the full conversation every turn, this is how chatbots remember.</p>
+<hr>
+<h1 id="streaming%3A-token-by-token" tabindex="-1">Streaming: Token by Token</h1>
+<pre class="hljs"><code><div><span class="hljs-comment"># Without streaming: user waits for full response</span>
+response = model.invoke([<span class="hljs-string">"Write me a short essay on AI"</span>])
+
+<span class="hljs-comment"># With streaming: user sees tokens appear in real time</span>
+<span class="hljs-keyword">for</span> chunk <span class="hljs-keyword">in</span> model.stream([<span class="hljs-string">"Write me a short essay on AI"</span>]):
+    <span class="hljs-built_in">print</span>(chunk.content, end=<span class="hljs-string">""</span>, flush=<span class="hljs-literal">True</span>)
+</div></code></pre>
+<p><strong>Why streaming matters in production:</strong></p>
+<ul>
+<li>Perceived latency drops dramatically, users see output immediately</li>
+<li>First token in ~300ms vs waiting 5–10s for full response</li>
+<li>Every major chat app (ChatGPT, Claude.ai) uses streaming</li>
+</ul>
+<hr>
+<h1 id="the-lcel-chain%3A-pipe-operator" tabindex="-1">The LCEL Chain: Pipe Operator</h1>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> langchain_core.output_parsers <span class="hljs-keyword">import</span> StrOutputParser
+
+<span class="hljs-comment"># Build a chain: prompt → model → parse to string</span>
+chain = prompt | model | StrOutputParser()
+
+<span class="hljs-comment"># Invoke it</span>
+answer = chain.invoke({
+    <span class="hljs-string">"question"</span>: <span class="hljs-string">"What is LangChain?"</span>,
+    <span class="hljs-string">"history"</span>: history.messages
+})
+</div></code></pre>
+<p><code>|</code> pipes the output of one component into the next.</p>
+<p>This is <strong>LCEL</strong> (LangChain Expression Language), composable, readable, provider-agnostic.</p>
+<hr>
+<h1 id="%F0%9F%8E%AF-interview-questions%3A-session-07" tabindex="-1">🎯 Interview Questions: Session 07</h1>
+<p><strong>Q1: What is LCEL and what does the pipe operator do technically?</strong></p>
+<blockquote>
+<p>LCEL (LangChain Expression Language) is a declarative way to compose LangChain components into pipelines using the | operator. Every component implements the Runnable interface. The | operator chains Runnables: output of the left component becomes input to the right. A chain like <code>prompt | llm | StrOutputParser()</code> means: (1) prompt formats the input dict into a messages list, (2) llm sends the messages to the provider and returns an AIMessage, (3) StrOutputParser extracts the .content string. The chain itself is also a Runnable, so you can pipe it into more components. Switching providers means replacing only the llm component without touching prompt or parser.</p>
+</blockquote>
+<p><strong>Q2: What is ChatPromptTemplate and what is MessagesPlaceholder used for?</strong></p>
+<blockquote>
+<p>ChatPromptTemplate defines the message structure sent to the LLM as a template with typed variable slots. It takes a list of message tuples: [("system", "You are a {persona}"), ("human", "{question}")]. At runtime, .format_messages() fills in the variables and produces the final messages list. MessagesPlaceholder is a special slot for injecting a dynamic list of messages, specifically used for conversation history. Instead of manually building message dicts for every prior turn, you define MessagesPlaceholder("history") once in the template and pass the history object at runtime. This cleanly separates template definition from runtime data.</p>
+</blockquote>
+<p><strong>Q3: How does streaming work in LangChain and why is it critical for production?</strong></p>
+<blockquote>
+<p><code>chain.stream(input)</code> returns a Python generator that yields text chunks as the LLM produces them, typically word by word. <code>chain.invoke(input)</code> waits for the complete response. Why streaming matters: users see the first word in under 1 second instead of waiting 5 to 20 seconds for a blank screen. Perceived speed is 5 to 10 times better even if total generation time is the same. Users can stop generation early if the response is going in the wrong direction. In Streamlit: <code>st.write_stream(chain.stream(...))</code> handles the UI update automatically. The same .stream() call works across all providers: LangChain normalizes provider-specific streaming APIs.</p>
+</blockquote>
+<p><strong>Q4: What is the Runnable interface and what are its 5 core methods?</strong></p>
+<blockquote>
+<p>The Runnable interface is the standard protocol every LangChain component implements, enabling composition with |. Five core methods: (1) .invoke(input): synchronous single call, use for simple scripts. (2) .stream(input): synchronous streaming, yields output chunks, use for real-time UIs. (3) .batch(inputs): processes a list of inputs efficiently, often in parallel, use for bulk processing. (4) .ainvoke(input): async version of invoke, use in FastAPI. (5) .astream(input): async streaming generator, use in async web servers. Every component that implements these methods works with |: prompts, LLMs, parsers, and custom RunnableLambda wrappers.</p>
+</blockquote>
+<p><strong>Q5: How would you switch a production chain from GPT-4 to Claude with minimal changes?</strong></p>
+<blockquote>
+<p>Because all LLM wrappers implement the same Runnable interface, you change exactly one line: replace ChatOpenAI with ChatAnthropic and update the model name. The chain <code>prompt | llm | parser</code> is unchanged. For production-grade switchability, define a factory function that reads from an environment variable: <code>def get_llm(provider=None)</code>. Then switching in production means changing one environment variable, no code deployment needed. Caveat: models differ in context length, function calling format, and system message handling. Always test your specific use case after switching.</p>
+</blockquote>
+<p><strong>Q6: What is RunnableWithMessageHistory and how does it simplify multi-user chat?</strong></p>
+<blockquote>
+<p>Manual approach: maintain a message list, append each user and AI message, pass the full list to the chain on every turn. Works but requires boilerplate for every app, and multi-user isolation needs manual session keying. RunnableWithMessageHistory wraps any LCEL chain to automate all of this. You provide a <code>get_session_history_fn</code> that maps session_id to a history store. On each call, it retrieves history for the session, injects it into the MessagesPlaceholder, runs the chain, and appends the new turn automatically. Multi-user isolation: pass <code>config={"configurable": {"session_id": user_id}}</code>. Each user ID gets completely isolated history. Session persistence across restarts requires a Redis or database backend.</p>
+</blockquote>
+<hr>
+<!-- _backgroundColor: #020617 -->
+<h1 id="the-full-picture%3A-one-diagram" tabindex="-1">The Full Picture: One Diagram</h1>
+<pre class="hljs"><code><div>Raw Text
+   │  "How does Google find a result?"
+   ▼
+S00  Inverted Index + TF-IDF        Keyword matching and ranking
+   │  ⚠️ "car" ≠ "automobile"
+   ▼
+S01  Word Embeddings                 Semantic meaning in vector space
+   │  ⚠️ "bank" one vector, context ignored
+   ▼
+S02  Transformers + Self-Attention   Context-aware representations
+   │  ⚠️ Training from scratch = weeks + $$$$
+   ▼
+S03  Pre-trained GPT → RLHF          Aligned, helpful intelligence
+   │  ⚠️ How does token-by-token generation actually work?
+   ▼
+S04  BPE + Temperature + Top-K/P    Inside the generation pipeline
+   │  ⚠️ Cloud APIs cost money and require internet
+   ▼
+S05  Ollama + OpenRouter             You own the infrastructure
+   │  ⚠️ We're still writing prompts by hand, guessing what works
+   ▼
+S06  DSPy + CoT + BootstrapFewShot  Prompts become learnable parameters
+   │  ⚠️ Every provider needs different code to call
+   ▼
+S07  LangChain                       One interface. Every provider.
+</div></code></pre>
+<p><strong>Every line is a problem. Every arrow is a solution.</strong></p>
+<hr>
+<h1 id="the-interview-cheat-sheet%3A-one-slide" tabindex="-1">The Interview Cheat Sheet: One Slide</h1>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>10-Second Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TF-IDF</strong></td>
+<td>Rare words that appear often in one doc = important</td>
+</tr>
+<tr>
+<td><strong>Word2Vec</strong></td>
+<td>Predict context words → similar words get similar vectors</td>
+</tr>
+<tr>
+<td><strong>Cosine similarity</strong></td>
+<td>Angle between vectors, direction = meaning, not length</td>
+</tr>
+<tr>
+<td><strong>Self-attention</strong></td>
+<td>Every word votes on how relevant every other word is</td>
+</tr>
+<tr>
+<td><strong>Positional encoding</strong></td>
+<td>Sine/cosine signals so Transformer knows word order</td>
+</tr>
+<tr>
+<td><strong>Multi-head attention</strong></td>
+<td>8 attention runs in parallel, each captures different relationships</td>
+</tr>
+<tr>
+<td><strong>GPT vs BERT</strong></td>
+<td>GPT generates (decoder), BERT understands (encoder)</td>
+</tr>
+<tr>
+<td><strong>RLHF</strong></td>
+<td>Humans rank responses → reward model → RL to align the LLM</td>
+</tr>
+<tr>
+<td><strong>Hallucination</strong></td>
+<td>No "I don't know" signal, model predicts probable text, not truth</td>
+</tr>
+<tr>
+<td><strong>BPE</strong></td>
+<td>Iteratively merge frequent character pairs into subword tokens</td>
+</tr>
+<tr>
+<td><strong>Temperature</strong></td>
+<td>Low = deterministic/factual. High = creative/random</td>
+</tr>
+<tr>
+<td><strong>Top-P</strong></td>
+<td>Keep smallest token set summing to P, adapts to model confidence</td>
+</tr>
+<tr>
+<td><strong>Ollama</strong></td>
+<td>Run open-source LLMs locally, OpenAI-compatible API</td>
+</tr>
+<tr>
+<td><strong>Map-Reduce</strong></td>
+<td>Split → summarise each chunk → merge summaries</td>
+</tr>
+<tr>
+<td><strong>DSPy Signature</strong></td>
+<td>Define input/output schema, DSPy writes the prompt</td>
+</tr>
+<tr>
+<td><strong>ChainOfThought</strong></td>
+<td>Step-by-step reasoning before answering</td>
+</tr>
+<tr>
+<td><strong>BootstrapFewShot</strong></td>
+<td>Auto-generate demos, keep only those that pass your metric</td>
+</tr>
+<tr>
+<td><strong>MIPROv2</strong></td>
+<td>Optimise the instruction text itself automatically</td>
+</tr>
+<tr>
+<td><strong>LangChain</strong></td>
+<td>One <code>.invoke()</code> for every LLM provider</td>
+</tr>
+<tr>
+<td><strong>ChatPromptTemplate</strong></td>
+<td>Typed prompt with variable + history placeholders</td>
+</tr>
+<tr>
+<td><strong>LCEL chain</strong></td>
+<td>Compose prompt → model → parser with the <code>|</code> pipe operator</td>
+</tr>
+<tr>
+<td><strong>Streaming</strong></td>
+<td><code>.stream()</code> yields tokens as generated, instant perceived response</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="what's-coming-next" tabindex="-1">What's Coming Next</h1>
+<h3 id="already-covered%3A-all-8-sessions-complete" tabindex="-1">Already Covered: All 8 Sessions Complete</h3>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Topic</th>
+<th>Key Skill</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>S06</strong></td>
+<td>Prompt Engineering + DSPy + CoT</td>
+<td>Optimise prompts automatically with code</td>
+</tr>
+<tr>
+<td><strong>S07</strong></td>
+<td>LangChain</td>
+<td>One interface for every LLM provider</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what's-coming-with-mohamed" tabindex="-1">What's Coming with Mohamed</h3>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>What You'll Build</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Memory &amp; Chatbots</strong></td>
+<td>LLMs that remember across conversations</td>
+</tr>
+<tr>
+<td><strong>RAG Basics</strong></td>
+<td>LLMs that answer from <em>your</em> data</td>
+</tr>
+<tr>
+<td><strong>Production RAG</strong></td>
+<td>Hybrid search, reranking, evaluation</td>
+</tr>
+<tr>
+<td><strong>LangChain Agents</strong></td>
+<td>LLMs that take actions in the world</td>
+</tr>
+<tr>
+<td><strong>LangGraph</strong></td>
+<td>Stateful, controlled multi-step agent workflows</td>
+</tr>
+<tr>
+<td><strong>CrewAI</strong></td>
+<td>Teams of agents working together</td>
+</tr>
+<tr>
+<td><strong>MCP</strong></td>
+<td>Connecting agents to real tools and systems</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<!-- _backgroundColor: #020617 -->
+<!-- _class: lead -->
+<h1 id="you-are-not-beginners-anymore" tabindex="-1">You Are Not Beginners Anymore</h1>
+<p>Eight sessions ago you asked: <em>"How does Google find a result?"</em></p>
+<p>Now you can explain:</p>
+<ul>
+<li>How a search engine scores and ranks documents</li>
+<li>How a neural network learns that "car" and "automobile" mean the same thing</li>
+<li>How Transformers read context that RNNs could not</li>
+<li>How GPT went from predicting text to passing the bar exam</li>
+<li>How tokens are built and how sampling controls generation</li>
+<li>How to run GPT-quality AI on your own machine for free</li>
+<li>How to let code write and optimise prompts instead of guessing</li>
+<li>How to call any LLM with the same code using LangChain</li>
+</ul>
+<blockquote>
+<p><strong>This foundation is permanent. Every LLM system in the world, no matter how advanced, sits on exactly these concepts. You understand the ground floor.</strong></p>
+</blockquote>
+<p><em>Next session, we build higher.</em></p>
+
+    </div>
+
+
+</body></html>

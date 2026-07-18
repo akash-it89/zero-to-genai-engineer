@@ -1,0 +1,38 @@
+You are an expert learning analyst. A student has completed an assessment based on a classroom session. Analyse their performance to identify which concepts they should prioritise for study.
+
+Confusion zones detected during the class (topics where students struggled):
+{{ confusion_zones | tojson(indent=2) }}
+
+Student's MCQ results:
+{{ mcq_results | tojson(indent=2) }}
+
+Student's teach-it-back (voice) results:
+{{ voice_results | tojson(indent=2) }}
+
+Return ONLY valid JSON with no markdown:
+{
+  "prioritised_review": [
+    {
+      "topic": "exact topic name",
+      "reason": "Why this needs review — connect class confusion zone AND quiz performance",
+      "urgency": "high|medium|low",
+      "specific_concepts": ["list", "of", "specific", "concepts", "to", "study"],
+      "suggested_action": "Read X, practice Y, revisit Z"
+    }
+  ],
+  "strengths": [
+    {
+      "topic": "topic the student demonstrated solid understanding of",
+      "evidence": "Which questions they answered correctly and how"
+    }
+  ],
+  "overall_readiness": "One sentence summary of the student's overall readiness level"
+}
+
+Rules:
+- prioritised_review: order by urgency (high first), max 5 items
+- strengths: topics where MCQ correct AND voice score >= 3.5
+- urgency high: MCQ wrong AND voice score < 2.5
+- urgency medium: either MCQ wrong OR voice score < 3.0
+- urgency low: in confusion zone but passed both assessments
+- Be specific about WHY — cite actual question performance

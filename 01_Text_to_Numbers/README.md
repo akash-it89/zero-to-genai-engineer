@@ -130,12 +130,11 @@ See [movie_recommender/README.md](movie_recommender/README.md) for full setup in
 
 ## Slides
 
-PowerPoint slides for classroom use are in the [`slides/`](slides/) folder.
+Session slides are in the [`slides/`](slides/) folder.
 
 | File | Contents |
 |---|---|
-| [S01_text_to_numbers.pptx](slides/S01_text_to_numbers.pptx) | Text to Numbers — BoW, TF-IDF, Word2Vec, GloVe, FastText |
-| [S01_text_to_numbers_updated.pptx](slides/S01_text_to_numbers_updated.pptx) | Updated version with additional examples |
+| [M00-S01.pdf](slides/M00-S01.pdf) | Text to Numbers — BoW, TF-IDF, Word2Vec, GloVe, FastText |
 
 ---
 

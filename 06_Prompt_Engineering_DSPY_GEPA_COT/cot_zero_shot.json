@@ -1,0 +1,36 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Classify the customer message into one of the intent labels.\nThe output should be only the predicted class as a single intent label.",
+      "fields": [
+        {
+          "prefix": "Customer Message:",
+          "description": "Customer message during customer service interaction"
+        },
+        {
+          "prefix": "Intent Labels:",
+          "description": "Labels that represent customer intent"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "a label best matching customer's intent "
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.2.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+transformers
+torch
+sentencepiece
+scikit-learn
+sentence-transformers
+bump2version
+jupyter
+datasets
+pandas
+dspy-ai
+openai

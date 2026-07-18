@@ -1,0 +1,124 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ─── Secrets ─────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+credentials.json
+service_account.json
+
+# ─── Node / Frontend ─────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Build output
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# ─── Data & Databases ────────────────────────────────────────────────────────
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+**/data/*.db
+**/data/*.sqlite
+**/data/*.sqlite3
+*.db-shm
+*.db-wal
+
+# ─── ML Models & Large Files ─────────────────────────────────────────────────
+*.whisper
+*.pt
+*.bin
+*.gguf
+*.safetensors
+# Only ignore top-level models/ (downloaded weights) — not backend/models/ (source code)
+/models/
+
+# ─── Testing & Coverage ──────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+.nox/
+junit.xml
+test-results/
+
+# ─── Linting & Formatting ────────────────────────────────────────────────────
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ─── IDE & Editors ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ─── macOS ───────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.log.*
+
+# ─── Jupyter (if any notebooks sneak in) ────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─── Docker ──────────────────────────────────────────────────────────────────
+.docker/
+
+# ─── Temporary files ─────────────────────────────────────────────────────────
+*.tmp
+*.temp
+tmp/
+temp/
+config.yaml

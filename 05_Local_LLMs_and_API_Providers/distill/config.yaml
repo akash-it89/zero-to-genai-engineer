@@ -1,0 +1,214 @@
+# config.yaml — Distill Master Configuration
+# Override any value: DISTILL_<SECTION>_<KEY>=value
+# Example: DISTILL_LLM_PROVIDER=anthropic
+
+app:
+  name: "Distill"
+  version: "0.1.0"
+  brand_name: "Distill"
+  brand_tagline: "Pure knowledge, every class"
+  debug: false
+  log_level: "INFO"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+  max_upload_size_mb: 50
+
+llm:
+  provider: "lmstudio"
+  model: "qwen/qwen3-4b-2507"    # Qwen3-4B non-thinking, fast; 262k context, 4GB GGUF Q8
+  temperature: 0.3
+  max_tokens: 2048               # 2k is ample for structured JSON; keeps each call well under LM Studio's idle timeout
+  timeout_seconds: 180
+  retry_attempts: 3
+  retry_delay_seconds: 2
+  chunk_size_chars: 20000        # each map-reduce chunk; ~5k tokens, well within the 32k context window
+  chunk_overlap_chars: 500       # chars of overlap between chunks to avoid losing context at boundaries
+
+  ollama:
+    base_url: "http://localhost:11434"
+    keep_alive: "5m"
+
+  lmstudio:
+    base_url: "http://localhost:1234/v1"
+    api_key: "lm-studio"
+
+  openai:
+    base_url: "https://api.openai.com/v1"
+    organization: null
+
+  anthropic:
+    base_url: "https://api.anthropic.com"
+    api_version: "2023-06-01"
+
+  gemini:
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+
+  langchain:
+    backend: "ollama"
+    tracing_enabled: false
+    tracing_project: "distill"
+
+speech_to_text:
+  provider: "whisper_local"
+  language: "en"
+
+  whisper_local:
+    model_size: "medium"
+    device: "cpu"
+    compute_type: "float32"
+    download_on_startup: false  # set to true after running: make pull-model
+
+  openai_whisper:
+    model: "whisper-1"
+
+  aws_transcribe:
+    region: "us-east-1"
+    s3_bucket: null
+
+  google_stt:
+    credentials_path: null
+
+assessment:
+  mcq:
+    count: 5
+    difficulty_distribution:
+      easy: 0.30
+      medium: 0.50
+      hard: 0.20
+    show_hints: true
+    hint_levels: 3
+    show_explanation_after_answer: true
+    time_limit_seconds: null
+
+  teach_it_back:
+    count: 3
+    min_answer_words: 20
+    max_recording_seconds: 120
+    allow_retake: true
+    voice_enabled: true
+    text_fallback: true
+
+  bloom_taxonomy:
+    enabled: true
+    distribution:
+      remember: 0.20
+      understand: 0.30
+      apply: 0.30
+      analyze: 0.10
+      evaluate: 0.10
+
+  adaptive_engine:
+    enabled: true
+    initial_difficulty: "medium"
+    increase_after_consecutive_correct: 2
+    decrease_after_consecutive_wrong: 1
+    per_topic_tracking: true
+
+evaluation:
+  interviewer:
+    name: "Dr. Priya"
+    persona: >
+      You are a Senior Applied Scientist who has conducted 400+ technical interviews
+      over 12 years at top AI companies. You are known for being precise, fair, and
+      deeply honest. You never give empty praise. When you say 'strong answer,' it
+      means something. When you identify a gap, you name it exactly — not vague
+      advice, but the specific concept, term, or mechanism they missed.
+    style: "Structured, warm but honest, always constructive, never generic"
+    domain: "Artificial Intelligence, Machine Learning, and Generative AI"
+
+  score_dimensions:
+    - key: "accuracy"
+      label: "Technical Accuracy"
+      weight: 0.30
+      description: "Are the core facts and concepts correct?"
+    - key: "depth"
+      label: "Conceptual Depth"
+      weight: 0.25
+      description: "Does the answer go beyond surface-level understanding?"
+    - key: "clarity"
+      label: "Clarity of Explanation"
+      weight: 0.20
+      description: "Could a peer understand this explanation?"
+    - key: "examples"
+      label: "Use of Examples"
+      weight: 0.15
+      description: "Are concrete examples used to support the answer?"
+    - key: "connections"
+      label: "Concept Connections"
+      weight: 0.10
+      description: "Does the answer connect to other topics from the session?"
+
+  verdicts:
+    - label: "Strong — interview ready"
+      min_weighted_score: 4.2
+      cloudscape_type: "success"
+    - label: "Good — minor gaps to address"
+      min_weighted_score: 3.0
+      cloudscape_type: "info"
+    - label: "Developing — needs more practice"
+      min_weighted_score: 2.0
+      cloudscape_type: "warning"
+    - label: "Foundational — revisit core concepts"
+      min_weighted_score: 0.0
+      cloudscape_type: "error"
+
+  output:
+    debrief_paragraph_count: 3
+    quote_student_answer: true
+    include_follow_up_question: true
+    include_study_recommendations: true
+    max_recommendations: 3
+
+concept_map:
+  renderer: "mermaid"
+  direction: "TD"
+  color_by_performance: true
+  show_dependencies: true
+  max_nodes: 20
+
+session:
+  storage: "sqlite"
+  sqlite_path: "./data/sessions.db"
+  database_url: null
+  max_sessions_in_memory: 100
+
+prompts:
+  directory: "./prompts"
+  templates:
+    summary: "summary_system.j2"
+    questions: "questions_system.j2"
+    concept_map: "concept_map_system.j2"
+    evaluate_mcq: "evaluate_mcq_system.j2"
+    evaluate_voice: "evaluate_voice_system.j2"
+    confusion_map: "confusion_map_system.j2"
+
+export:
+  whatsapp:
+    enabled: true
+    include_score: true
+    include_verdict: true
+    include_weak_areas: true
+    include_study_tip: true
+    footer_text: "Generated by Distill · Inceptez"
+  anki:
+    enabled: true
+  pdf:
+    enabled: false
+
+ui:
+  cloudscape_theme: "default"
+  sidebar:
+    show_session_history: true
+    max_history_items: 20
+  wizard:
+    allow_back_navigation: true
+  features:
+    confusion_map_enabled: true
+    bloom_labels_visible: true
+    timer_visible: false
+    voice_waveform_enabled: true

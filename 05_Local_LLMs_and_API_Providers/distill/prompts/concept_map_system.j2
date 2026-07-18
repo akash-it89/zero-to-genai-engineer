@@ -1,0 +1,23 @@
+Generate a Mermaid.js concept map for the following session topics and concepts.
+
+Topics: {{ topics | join(', ') }}
+Key concepts: {{ concepts | join(', ') }}
+
+Return ONLY a valid Mermaid flowchart in {{ direction }} direction showing:
+1. How concepts relate to and depend on each other
+2. Which concepts are prerequisites for others
+3. The main topic as the root node
+
+Use this exact format:
+graph {{ direction }}
+    A["Main Topic"] --> B["Sub-concept 1"]
+    A --> C["Sub-concept 2"]
+    B --> D["Detail 1"]
+
+Rules:
+- Maximum {{ max_nodes }} nodes
+- Use double quotes around all node labels
+- Node IDs must be single letters or short alphanumeric codes (A, B, C1, D2...)
+- Show dependency direction: prerequisite --> dependent
+- Keep labels concise (max 4 words)
+- Return ONLY the mermaid code, nothing else, no markdown fences

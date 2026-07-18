@@ -1,0 +1,107 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "customer_message": "what flights are there arriving in chicago after 9 pm on continental",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "This customer message is asking for flights arriving in Chicago after 9 pm on a specific continent (continental). The system needs to interpret \"continental\" as a reference to the North American continent, which involves geographical and sometimes ambiguous interpretations. \n\nAdditionally, without clear airport codes or city names specified, it's challenging for the AI to directly identify the relevant flights that meet the criteria.",
+        "answer": "flight"
+      },
+      {
+        "augmented": true,
+        "customer_message": "i would like the time of all flights from san francisco to pittsburgh on sunday",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer message is asking for the flight time of all flights from San Francisco to Pittsburgh on Sunday.",
+        "answer": "flight_time"
+      },
+      {
+        "augmented": true,
+        "customer_message": "all right what i 'd like to do is find the cheapest one way fare from boston to denver",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer message is asking to find the cheapest one-way fare from Boston to Denver.",
+        "answer": "airfare"
+      },
+      {
+        "augmented": true,
+        "customer_message": "show me round trip fares from san jose to salt lake city",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "Not supplied for this particular example.",
+        "answer": "airfare"
+      },
+      {
+        "augmented": true,
+        "customer_message": "what types of aircraft can i get a first class ticket from philadelphia to dallas",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer message is asking about the types of aircraft that can be used for a first class ticket from Philadelphia to Dallas, which suggests looking into business or first class seating options on specific aircraft.",
+        "answer": "aircraft"
+      },
+      {
+        "augmented": true,
+        "customer_message": "what aircraft is used on delta flight 1222 from kansas city to salt lake city",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer message is asking for specific information about a Delta flight, which requires searching or lookup.",
+        "answer": "aircraft"
+      },
+      {
+        "augmented": true,
+        "customer_message": "is ground transportation available in philadelphia",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "The customer message is asking about ground transportation in Philadelphia, but the intent labels do not have a specific option for this type of query.",
+        "answer": "ground_service"
+      },
+      {
+        "augmented": true,
+        "customer_message": "ground san francisco",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "Not supplied for this particular example.",
+        "answer": "ground_service"
+      },
+      {
+        "augmented": true,
+        "customer_message": "houston airports",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "Not supplied for this particular example.",
+        "answer": "airport"
+      },
+      {
+        "augmented": true,
+        "customer_message": "what 's the airport at orlando",
+        "intent_labels": "flight%flight_time%airfare%aircraft%ground_service%airport%airline%distance%abbreviation%ground_fare%quantity%city%flight_no%capacity%flight+airfare%meal%restriction%airline+flight_no%ground_service+ground_fare%airfare+flight_time%cheapest%aircraft+flight+flight_no",
+        "reasoning": "airport",
+        "answer": "airport"
+      }
+    ],
+    "signature": {
+      "instructions": "Classify the customer message into one of the intent labels.\nThe output should be only the predicted class as a single intent label.",
+      "fields": [
+        {
+          "prefix": "Customer Message:",
+          "description": "Customer message during customer service interaction"
+        },
+        {
+          "prefix": "Intent Labels:",
+          "description": "Labels that represent customer intent"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "a label best matching customer's intent "
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.2.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

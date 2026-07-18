@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI Training Recap: Sessions 00–07</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Claude-space warm palette */
+  --bg:            #FAF9F6;
+  --bg-2:          #F5F1EB;
+  --surface:       #FFFFFF;
+  --surface-2:     #FDFCFA;
+  --border:        #E8E2DA;
+  --border-light:  #F0EDE7;
+
+  /* Claude brand : warm coral amber */
+  --brand:         #CF6932;
+  --brand-light:   #F5D5C0;
+  --brand-dim:     rgba(207,105,50,0.1);
+  --brand-glow:    rgba(207,105,50,0.25);
+
+  /* Legacy compat */
+  --orange:        #CF6932;
+  --orange-light:  #E8956A;
+  --blue-primary:  #2563EB;
+  --blue-dark:     #1E3A8A;
+  --blue-light:    #EFF6FF;
+
+  --nav-bg:        rgba(250,249,246,0.95);
+  --nav-border:    #E8E2DA;
+
+  /* Text : warm, not cold */
+  --text-h:        #1C1917;
+  --text-body:     #44403C;
+  --text-muted:    #78716C;
+  --text-subtle:   #A8A29E;
+
+  /* Status */
+  --green:         #166534;
+  --green-bg:      #F0FDF4;
+  --yellow:        #92400E;
+  --yellow-bg:     #FFFBEB;
+  --red:           #B91C1C;
+  --red-bg:        #FEF2F2;
+
+  /* Session accents : rich but not neon */
+  --s00: #D97706;
+  --s01: #2563EB;
+  --s02: #7C3AED;
+  --s03: #059669;
+  --s04: #DC2626;
+  --s05: #0891B2;
+  --s06: #4F46E5;
+  --s07: #DB2777;
+
+  --nav-h: 54px;
+  --bar-h: 3px;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(207,105,50,0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(207,105,50,0.5); }
+
+/* ─── SCROLL-SNAP ROOT ─── */
+html { height: 100%; overflow: hidden; }
+body {
+  height: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text-body);
+}
+/* Very subtle warm ambient glow : top-right and bottom-left corners */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 45% at 92% 8%,  rgba(207,105,50,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 45% at 8%  92%, rgba(207,105,50,0.04) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ─── NAV BAR ─── */
+#top-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center;
+  z-index: 600;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; height: 100%;
+  border-right: 1px solid var(--nav-border);
+  min-width: 200px;
+}
+.nav-logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--brand), #E8956A);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(207,105,50,0.3);
+}
+.nav-logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+.nav-logo-text .primary   { color: var(--text-h);    font-weight: 700; font-size: 13px; }
+.nav-logo-text .secondary { color: var(--text-muted); font-size: 10px; letter-spacing: 0.3px; }
+
+.nav-breadcrumb {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+  padding: 0 20px; color: var(--text-muted); font-size: 12px;
+}
+.nav-breadcrumb .sep     { color: var(--border); }
+.nav-breadcrumb .current { color: var(--text-h); font-weight: 600; }
+
+.nav-right {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 18px; height: 100%;
+  border-left: 1px solid var(--nav-border);
+}
+.nav-counter {
+  background: var(--brand-dim);
+  border: 1px solid var(--brand-light);
+  color: var(--brand);
+  font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+  min-width: 68px; text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+#fs-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 5px 9px; border-radius: 6px;
+  cursor: pointer; font-size: 13px;
+  transition: all 0.2s;
+}
+#fs-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+/* ─── PROGRESS BAR ─── */
+#progress-bar {
+  position: fixed; top: var(--nav-h); left: 0; right: 0;
+  height: var(--bar-h); background: var(--border-light); z-index: 590;
+}
+#progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), #E8956A, #F5C4A0);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 6px rgba(207,105,50,0.4);
+}
+
+/* ─── SLIDE DOTS ─── */
+#slide-dots {
+  position: fixed; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 7px;
+  z-index: 500;
+}
+.slide-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.slide-dot.active {
+  background: var(--brand);
+  width: 7px; height: 7px; margin-left: -1px;
+  box-shadow: 0 0 8px var(--brand-glow);
+}
+.slide-dot:hover { background: rgba(207,105,50,0.5); }
+
+/* ─── DECK & SLIDES ─── */
+#deck { position: relative; z-index: 1; }
+
+.slide {
+  height: 100vh; overflow-y: auto;
+  scroll-snap-align: start;
+  padding-top: calc(var(--nav-h) + var(--bar-h));
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.slide.in-view { opacity: 1; transform: translateY(0); }
+
+.slide::-webkit-scrollbar { width: 3px; }
+.slide::-webkit-scrollbar-thumb { background: rgba(207,105,50,0.2); border-radius: 3px; }
+
+/* ─── PAGE STRUCTURE ─── */
+.page-header {
+  padding: 14px 32px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+}
+.breadcrumb-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-muted); margin-bottom: 7px;
+}
+.breadcrumb-row .bc-link    { color: var(--brand); cursor: pointer; }
+.breadcrumb-row .bc-sep     { color: var(--border); }
+.breadcrumb-row .bc-current { color: var(--text-h); font-weight: 500; }
+
+.page-title {
+  font-size: 21px; font-weight: 700; color: var(--text-h);
+  line-height: 1.25; padding-bottom: 13px;
+  display: flex; align-items: center; gap: 12px;
+}
+.page-title .session-pill {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+  color: #fff; flex-shrink: 0;
+}
+
+.page-body { padding: 14px 32px 22px; display: flex; flex-direction: column; gap: 12px; }
+
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: start; }
+.cols-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+
+/* ─── CARDS ─── */
+.cs-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.cs-card:hover {
+  border-color: rgba(207,105,50,0.25);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(207,105,50,0.08);
+}
+.cs-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface-2);
+}
+.cs-card-title { font-size: 12.5px; font-weight: 700; color: var(--text-h); display: flex; align-items: center; gap: 8px; }
+.cs-card-body { padding: 16px 18px; }
+.cs-card-body.tight { padding: 9px 18px; }
+
+/* ─── INFO PANELS ─── */
+.info-panel {
+  padding: 10px 14px; border-left: 3px solid;
+  border-radius: 0 8px 8px 0;
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 12px; line-height: 1.6;
+}
+.info-panel.info    { border-color: var(--blue-primary); background: var(--blue-light);  color: var(--blue-dark); }
+.info-panel.success { border-color: var(--green);        background: var(--green-bg);     color: #14532D; }
+.info-panel.warning { border-color: var(--brand);        background: #FFF7F2;             color: #7C3E1A; }
+.info-panel.danger  { border-color: var(--red);          background: var(--red-bg);       color: #7F1D1D; }
+.info-panel .panel-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+/* ─── BADGES ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: 20px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap;
+}
+.badge.blue   { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+.badge.green  { background: var(--green-bg);  color: #166534; border: 1px solid #BBF7D0; }
+.badge.orange { background: #FFF7ED; color: #B45309; border: 1px solid #FED7AA; }
+.badge.purple { background: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE; }
+.badge.red    { background: var(--red-bg);    color: #991B1B; border: 1px solid #FECACA; }
+.badge.gray   { background: #F9FAFB; color: #374151; border: 1px solid #D1D5DB; }
+.badge.teal   { background: #F0FDFA; color: #0F766E; border: 1px solid #99F6E4; }
+.badge.pink   { background: #FDF2F8; color: #9D174D; border: 1px solid #FBCFE8; }
+
+.status { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── TABLES ─── */
+.cs-table-wrap { overflow-x: auto; }
+.cs-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cs-table thead { border-bottom: 2px solid var(--border); }
+.cs-table th {
+  padding: 8px 13px; text-align: left;
+  font-weight: 700; font-size: 11px; letter-spacing: 0.3px;
+  color: var(--text-h); background: var(--surface-2); white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.cs-table td {
+  padding: 9px 13px; color: var(--text-body);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top; line-height: 1.5;
+}
+.cs-table tr:last-child td { border-bottom: none; }
+.cs-table tbody tr:hover td { background: #FDFCFA; }
+.cs-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue-dark); }
+
+/* ─── CODE BLOCKS ─── */
+.cs-code {
+  background: #F6F8FA;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.75;
+  padding: 13px 15px; overflow-x: auto; color: #24292E;
+  position: relative; white-space: pre;
+}
+.cs-code .kw  { color: #CF222E; font-weight: 600; }
+.cs-code .fn  { color: #6639BA; }
+.cs-code .str { color: #0550AE; }
+.cs-code .cm  { color: #6E7781; font-style: italic; }
+.cs-code .num { color: #953800; }
+.cs-code .cls { color: #116329; font-weight: 600; }
+
+/* ─── LISTS ─── */
+.cs-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.cs-list li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 12.5px; line-height: 1.55; color: var(--text-body);
+}
+.cs-list li::before {
+  content: '';
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--brand); flex-shrink: 0; margin-top: 6px;
+}
+
+/* ─── KV PAIRS ─── */
+.kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+.kv-item { display: block; }
+.kv-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.kv-value { font-size: 13.5px; font-weight: 700; color: var(--text-h); }
+.kv-value.large { font-size: 26px; font-weight: 800; color: var(--brand); }
+.kv-value.code  { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--blue-dark); }
+.kv-value.blue  { color: var(--blue-primary); }
+
+/* ─── Q&A ACCORDION ─── */
+.qa-item {
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+  margin-bottom: 5px;
+  background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.qa-item:hover { border-color: rgba(207,105,50,0.3); }
+.qa-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 15px; background: transparent; border: none;
+  cursor: pointer; text-align: left; gap: 12px; transition: background 0.15s;
+}
+.qa-trigger:hover { background: #FDFAF7; }
+.qa-trigger .q-text { font-size: 12px; font-weight: 600; color: var(--text-h); line-height: 1.45; }
+.qa-trigger .q-icon { font-size: 15px; flex-shrink: 0; color: var(--brand); transition: transform 0.25s; }
+.qa-trigger.open .q-icon { transform: rotate(90deg); }
+.qa-answer {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease;
+  background: #FDF8F4;
+  border-top: 1px solid rgba(207,105,50,0.12);
+}
+.qa-answer.open { max-height: 700px; }
+.qa-answer-inner { padding: 13px 15px; font-size: 12px; line-height: 1.8; color: var(--text-body); }
+
+/* ─── CHAPTER HERO ─── */
+.chapter-hero {
+  min-height: 165px;
+  display: flex; align-items: center;
+  padding: 0 34px; position: relative; overflow: hidden; border-radius: 12px;
+}
+.chapter-hero::before {
+  content: ''; position: absolute; right: -60px; top: -60px;
+  width: 280px; height: 280px; border-radius: 50%;
+  opacity: 0.12; background: #fff; filter: blur(40px);
+}
+.hero-icon {
+  width: 60px; height: 60px; border-radius: 14px;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-right: 22px; flex-shrink: 0;
+  backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.3);
+}
+.hero-text .session-tag { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 5px; }
+.hero-text h1 { font-size: 23px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 7px; }
+.hero-text p  { font-size: 13px; color: rgba(255,255,255,0.78); max-width: 540px; line-height: 1.6; }
+
+/* ─── TITLE SLIDE : warm Claude gradient ─── */
+.title-hero {
+  background: linear-gradient(145deg, #2C1810 0%, #4D2810 35%, #7C3D18 65%, #A85420 100%);
+  min-height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 60px; text-align: center; position: relative;
+}
+.title-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 25%, rgba(245,165,106,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 85% 75%, rgba(207,105,50,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ─── MISSING CHAIN ─── */
+.chain-row { display: flex; gap: 0; align-items: stretch; margin-bottom: 8px; }
+.chain-connector { display: flex; flex-direction: column; align-items: center; width: 30px; flex-shrink: 0; }
+.chain-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; flex-shrink: 0; margin-top: 4px; background: var(--surface); }
+.chain-line { flex: 1; width: 2px; background: var(--border); margin: 2px 0; }
+.chain-content { flex: 1; padding: 0 0 11px 8px; }
+.chain-session { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+.chain-desc { font-size: 13px; font-weight: 600; color: var(--text-h); }
+.chain-missing { font-size: 11px; color: var(--red); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+
+/* ─── TIMELINE ─── */
+.timeline { display: flex; gap: 0; position: relative; }
+.timeline::before { content: ''; position: absolute; top: 20px; left: 20px; right: 20px; height: 2px; background: var(--border); }
+.tl-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; padding: 0 8px; }
+.tl-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 16px; position: relative; z-index: 1; margin-bottom: 8px; }
+.tl-year  { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 2px; }
+.tl-label { font-size: 11.5px; font-weight: 700; color: var(--text-h); text-align: center; }
+.tl-sub   { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 3px; line-height: 1.4; }
+
+/* ─── TOKENS ─── */
+.token-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.token { padding: 3px 9px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; border: 1px solid; }
+
+/* ─── COMPARE ─── */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare-panel { border-radius: 8px; overflow: hidden; border: 1px solid; }
+.compare-panel-header { padding: 7px 13px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.compare-panel-body   { padding: 11px 13px; font-size: 12.5px; line-height: 1.65; }
+.compare-panel.before .compare-panel-header { background: #FFF2F2; color: #B91C1C; border-bottom: 1px solid #FECACA; }
+.compare-panel.before { border-color: #FCA5A5; }
+.compare-panel.before .compare-panel-body   { background: #FFFAFA; color: var(--text-body); }
+.compare-panel.after  .compare-panel-header { background: #F0FDF4; color: #166534; border-bottom: 1px solid #BBF7D0; }
+.compare-panel.after  { border-color: #86EFAC; }
+.compare-panel.after  .compare-panel-body   { background: #FAFFFE; color: var(--text-body); }
+
+/* ─── PROVIDER CARDS ─── */
+.provider-card { display: flex; align-items: center; gap: 13px; padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.provider-icon-box { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.provider-name { font-weight: 700; font-size: 12.5px; color: var(--text-h); }
+.provider-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+/* ─── DIAGRAMS ─── */
+.diagram-wrap { background: var(--surface-2); border: 1px solid var(--border-light); border-radius: 8px; padding: 14px; display: flex; justify-content: center; align-items: center; }
+
+/* ─── OPTIMIZER CARDS ─── */
+.optimizer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 13px 15px; position: relative; overflow: hidden; }
+.optimizer-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.optimizer-card.level-1::before { background: #D1D5DB; }
+.optimizer-card.level-2::before { background: var(--blue-primary); }
+.optimizer-card.level-3::before { background: var(--brand); }
+.optimizer-card.level-4::before { background: var(--s06); }
+.optimizer-title { font-weight: 700; font-size: 12.5px; color: var(--text-h); margin-bottom: 4px; }
+.optimizer-desc  { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+
+/* ─── STEP NUMBER ─── */
+.step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; color: #fff; }
+
+/* ─── STAT BOXES (title slide : keeps dark bg context) ─── */
+.stat-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 18px 28px; text-align: center; }
+.stat-num   { font-size: 34px; font-weight: 900; color: #F5C4A0; }
+.stat-value { font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.stat-label { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; margin-top: 4px; }
+
+/* ─── SCROLL HINT ─── */
+@keyframes bounce-down {
+  0%, 100% { transform: translateX(-50%) translateY(0);  opacity: 0.45; }
+  50%       { transform: translateX(-50%) translateY(6px); opacity: 0.85; }
+}
+.scroll-hint {
+  position: absolute; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  color: rgba(255,255,255,0.45); font-size: 10.5px; letter-spacing: 1.2px;
+  text-transform: uppercase; animation: bounce-down 2.2s ease infinite;
+}
+.scroll-hint-arrow { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP NAVIGATION BAR ─── -->
+<nav id="top-nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">🧠</div>
+    <div class="nav-logo-text">
+      <span class="primary">GenAI Training</span>
+      <span class="secondary">Sessions 00–07</span>
+    </div>
+  </div>
+
+  <div class="nav-breadcrumb">
+    <span>Recap</span>
+    <span class="sep">›</span>
+    <span class="current" id="nav-session">Overview</span>
+    <span class="sep">›</span>
+    <span id="nav-topic" style="color:#9ca3af;">Introduction</span>
+  </div>
+
+  <div class="nav-right">
+    <span class="nav-counter" id="counter">01 / 26</span>
+    <button id="fs-btn" title="Fullscreen">⛶</button>
+  </div>
+</nav>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="slide-dots"></div>
+
+<!-- ─── SLIDE DECK ─── -->
+<div id="deck">
+
+
+<!-- ══════════════ SLIDE 1: TITLE ══════════════ -->
+<div class="slide active" data-session="Overview" data-topic="Welcome">
+  <div class="title-hero">
+    <div style="margin-bottom:32px;font-size:56px;">🧠</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
+      <span class="badge orange">Sessions 00–07</span>
+      <span class="badge blue">Full Recap</span>
+      <span class="badge green">8 Sessions · 1 Story</span>
+    </div>
+    <h1 style="font-size:42px;font-weight:900;color:#fff;text-align:center;margin-bottom:12px;line-height:1.15;">
+      Zero to <span style="color:var(--orange);">GenAI Engineer</span>
+    </h1>
+    <p style="font-size:15px;color:rgba(255,255,255,0.65);text-align:center;max-width:560px;line-height:1.75;margin-bottom:40px;">
+      One continuous story, from how search engines rank documents to how we automate prompt engineering. Every session solved a gap left by the previous one.
+    </p>
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
+      <div class="stat-box"><div class="stat-num">8</div><div class="stat-label">Sessions</div></div>
+      <div class="stat-box"><div class="stat-num">30+</div><div class="stat-label">Concepts</div></div>
+      <div class="stat-box"><div class="stat-num">48</div><div class="stat-label">Interview Q&As</div></div>
+      <div class="stat-box"><div class="stat-num">1</div><div class="stat-label">Career Goal</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span class="scroll-hint-arrow">↓</span>scroll to explore</div>
+</div>
+
+
+<!-- ══════════════ SLIDE 2: MISSING CHAIN ══════════════ -->
+<div class="slide" data-session="Overview" data-topic="The Missing Chain">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-current">The Missing Chain</span></div>
+    <div class="page-title">Every session exists because the previous one left a <span style="color:var(--red);">gap</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📊 Session Dependency Map</div><span class="badge orange">8 sessions</span></div>
+      <div class="cs-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px;">
+        <!-- Left col -->
+        <div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s00);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s00);">S00 · Foundation</div><div class="chain-desc">🔍 Keyword Search, TF-IDF, Inverted Index</div><div class="chain-missing">⚠ "car" and "automobile" are completely unrelated to TF-IDF</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s01);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s01);">S01 · Semantics</div><div class="chain-desc">🧭 Word Embeddings, Word2Vec, GloVe, Cosine Similarity</div><div class="chain-missing">⚠ Words have meaning but no long-range context</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s02);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s02);">S02 · Architecture</div><div class="chain-desc">🧠 Transformers, Attention, Multi-Head, Encoder/Decoder</div><div class="chain-missing">⚠ Great architecture, but only trained to predict text</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s03);"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s03);">S03 · Intelligence</div><div class="chain-desc">🚀 GPT Evolution, RLHF, ChatGPT, Alignment, Hallucination</div><div class="chain-missing">⚠ Powerful, but how do we use it efficiently and cheaply?</div></div></div>
+        </div>
+        <!-- Right col -->
+        <div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s04);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s04);">S04 · Mechanics</div><div class="chain-desc">🔢 BPE Tokenization, Temperature, Top-K, Top-P</div><div class="chain-missing">⚠ Cloud APIs cost money and send your data to third parties</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s05);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s05);">S05 · Infrastructure</div><div class="chain-desc">💻 Local LLMs, Ollama, LM Studio, OpenRouter</div><div class="chain-missing">⚠ We can run models but we're still guessing at good prompts</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s06);"></div><div class="chain-line"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s06);">S06 · Optimization</div><div class="chain-desc">✍️ Prompt Engineering + DSPy + CoT + MIPROv2</div><div class="chain-missing">⚠ Different providers have different SDKs, too much boilerplate</div></div></div>
+          <div class="chain-row"><div class="chain-connector"><div class="chain-dot" style="border-color:var(--s07);"></div></div><div class="chain-content"><div class="chain-session" style="color:var(--s07);">S07 · Unification</div><div class="chain-desc">🔗 LangChain, One interface for every model provider</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ BEFORE WE START ══════════════ -->
+<div class="slide" data-session="Overview" data-topic="Before We Start">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-current">Before We Start</span></div>
+    <div class="page-title">🛑 One month of sessions. Let's make sure it sticks.</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">✅ After 8 sessions, you can</div></div>
+        <div class="cs-card-body tight">
+          <ul class="cs-list">
+            <li>Build a keyword search engine from scratch</li>
+            <li>Explain self-attention to a colleague</li>
+            <li>Trace the full history of GPT from 2017 to today</li>
+            <li>Calculate token costs before calling an API</li>
+            <li>Run an LLM on your own laptop, for free</li>
+            <li>Optimise prompts automatically with DSPy</li>
+            <li>Call any LLM provider with a single LangChain interface</li>
+          </ul>
+          <div class="info-panel success" style="margin-top:12px;"><span class="panel-icon">💡</span><div>That is not a small thing. Let's make sure it sticks.</div></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🧠 The story in one line</div></div>
+        <div class="cs-card-body tight">
+          <p style="font-size:12px;color:var(--text-muted);line-height:2.0;margin-bottom:8px;">
+            <strong style="color:var(--s00);">S00</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s01);">S01</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s02);">S02</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s03);">S03</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s04);">S04</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s05);">S05</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s06);">S06</strong><span style="color:var(--text-muted);"> → </span>
+            <strong style="color:var(--s07);">S07</strong>
+          </p>
+          <table class="cs-table">
+            <thead><tr><th>Session</th><th>Central Question</th></tr></thead>
+            <tbody>
+              <tr><td class="mono" style="color:var(--s00);">S00</td><td>How does Google decide which result to show?</td></tr>
+              <tr><td class="mono" style="color:var(--s01);">S01</td><td>How does a computer understand the meaning of a word?</td></tr>
+              <tr><td class="mono" style="color:var(--s02);">S02</td><td>How does the same word mean different things in context?</td></tr>
+              <tr><td class="mono" style="color:var(--s03);">S03</td><td>How did next-word prediction become ChatGPT?</td></tr>
+              <tr><td class="mono" style="color:var(--s04);">S04</td><td>How does an LLM decide which word to generate next?</td></tr>
+              <tr><td class="mono" style="color:var(--s05);">S05</td><td>How do we run and own the infrastructure ourselves?</td></tr>
+              <tr><td class="mono" style="color:var(--s06);">S06</td><td>How do we stop guessing at good prompts?</td></tr>
+              <tr><td class="mono" style="color:var(--s07);">S07</td><td>How do we call any LLM with the same code?</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S00 CHAPTER ══════════════ -->
+<div class="slide" data-session="S00 · Foundation" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #92400e, #d97706);">
+    <div class="hero-icon">🔍</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 00 · Foundation</div>
+      <h1>The Foundation of Everything</h1>
+      <p>Before embeddings. Before Transformers. Before ChatGPT. This is how computers understood text for 50 years, and why it wasn't enough.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📋 What you'll recall in this section</div></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>Concept</th><th>What It Is</th><th>Why It Matters</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">Inverted Index</td><td>Word → list of documents map</td><td>Makes search sub-millisecond</td></tr>
+            <tr><td class="mono">TF-IDF</td><td>Word importance score per document</td><td>Ranks documents by relevance</td></tr>
+            <tr><td class="mono">Semantic Gap</td><td>"car" ≠ "automobile" in this model</td><td>The gap that led to embeddings</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="info-panel warning"><span class="panel-icon">⚠️</span><div><strong>The MISSING:</strong> TF-IDF is purely lexical, it matches exact words only. No understanding of synonyms, context, or meaning. This gap is what S01 solves.</div></div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S00 CONCEPT ══════════════ -->
+<div class="slide" data-session="S00 · Foundation" data-topic="TF-IDF and Inverted Index">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-link">Session 00</span><span class="bc-sep">›</span><span class="bc-current">TF-IDF and Inverted Index</span></div>
+    <div class="page-title">🔍 How search engines ranked documents for 50 years</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">📂 Inverted Index</div></div>
+        <div class="cs-card-body tight">
+          <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px;">Instead of scanning every document per query, pre-build a lookup: <strong>word → document list</strong>. O(1) retrieval regardless of corpus size.</p>
+          <table class="cs-table">
+            <thead><tr><th>Word</th><th>Documents containing it</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">"python"</td><td>Doc 1, Doc 5, Doc 12, Doc 20</td></tr>
+              <tr><td class="mono">"neural"</td><td>Doc 3, Doc 7, Doc 12</td></tr>
+              <tr><td class="mono">"model"</td><td>Doc 1, Doc 3, Doc 7, Doc 9</td></tr>
+              <tr><td class="mono">"training"</td><td>Doc 5, Doc 9, Doc 20</td></tr>
+            </tbody>
+          </table>
+          <div class="info-panel info" style="margin-top:12px;"><span class="panel-icon">ℹ️</span><div>Query "python training" → intersect lists → Doc 5, Doc 20. Sub-millisecond.</div></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">📊 TF-IDF Scoring</div></div>
+        <div class="cs-card-body">
+          <div class="kv-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
+            <div class="kv-item">
+              <div class="kv-label">TF: Term Frequency</div>
+              <div class="kv-value" style="font-size:12px;font-weight:500;margin-top:4px;">How often does the word appear <em>in this document</em>?</div>
+            </div>
+            <div class="kv-item">
+              <div class="kv-label">IDF: Inverse Doc Frequency</div>
+              <div class="kv-value" style="font-size:12px;font-weight:500;margin-top:4px;">How rare is the word <em>across all documents</em>?</div>
+            </div>
+          </div>
+          <div class="cs-code">
+TF-IDF(word, doc) = TF(word, doc) × IDF(word)
+
+<span class="cm">-- "the" → TF=high, IDF≈0 → score near 0 (too common)</span>
+<span class="cm">-- "GAN" → TF=medium, IDF=high → high score (rare, relevant)</span></div>
+          <div class="info-panel danger" style="margin-top:12px;"><span class="panel-icon">⚠️</span><div><strong>Hard limit:</strong> "automobile" and "car" are completely unrelated in TF-IDF. Exact word matching only, no semantic understanding.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header">
+        <div class="cs-card-title">📊 IDF in Practice: why common words score near zero</div>
+        <span class="badge gray">IDF = log(total docs / docs containing word)</span>
+      </div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:200px;font-family:Inter,sans-serif;">
+          <rect width="680" height="200" fill="#f8fafc" rx="8"/>
+          <!-- Y-axis -->
+          <line x1="60" y1="10" x2="60" y2="155" stroke="#d1d5db" stroke-width="1"/>
+          <!-- X-axis -->
+          <line x1="60" y1="155" x2="660" y2="155" stroke="#d1d5db" stroke-width="1"/>
+          <!-- Y-axis label -->
+          <text x="18" y="90" text-anchor="middle" fill="#6b7280" font-size="10" transform="rotate(-90,18,90)">IDF Score</text>
+          <!-- Y-axis ticks -->
+          <text x="55" y="158" text-anchor="end" fill="#9ca3af" font-size="9">0.0</text>
+          <text x="55" y="130" text-anchor="end" fill="#9ca3af" font-size="9">1.0</text>
+          <text x="55" y="102" text-anchor="end" fill="#9ca3af" font-size="9">2.0</text>
+          <text x="55" y="74" text-anchor="end" fill="#9ca3af" font-size="9">3.0</text>
+          <text x="55" y="46" text-anchor="end" fill="#9ca3af" font-size="9">4.0</text>
+          <text x="55" y="18" text-anchor="end" fill="#9ca3af" font-size="9">5.0</text>
+          <!-- Grid lines -->
+          <line x1="60" y1="130" x2="660" y2="130" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="60" y1="102" x2="660" y2="102" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="60" y1="74" x2="660" y2="74" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="60" y1="46" x2="660" y2="46" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- BAR 1: "the" → IDF≈0.0 (height=1px, effectively 0) -->
+          <rect x="80" y="154" width="70" height="1" fill="#ef4444" rx="2"/>
+          <text x="115" y="149" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="700">≈0.0</text>
+          <text x="115" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"the"</text>
+          <text x="115" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">in every doc</text>
+          <!-- BAR 2: "is" → IDF≈0.1 (height=3px) -->
+          <rect x="185" y="152" width="70" height="3" fill="#f97316" rx="2"/>
+          <text x="220" y="147" text-anchor="middle" fill="#f97316" font-size="10" font-weight="700">≈0.1</text>
+          <text x="220" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"is"</text>
+          <text x="220" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">very common</text>
+          <!-- BAR 3: "python" → IDF≈1.4 (height=42px) -->
+          <rect x="290" y="113" width="70" height="42" fill="#eab308" rx="2"/>
+          <text x="325" y="108" text-anchor="middle" fill="#ca8a04" font-size="10" font-weight="700">≈1.4</text>
+          <text x="325" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"python"</text>
+          <text x="325" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">tech docs only</text>
+          <!-- BAR 4: "neural" → IDF≈2.3 (height=69px) -->
+          <rect x="395" y="86" width="70" height="69" fill="#22c55e" rx="2"/>
+          <text x="430" y="81" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">≈2.3</text>
+          <text x="430" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"neural"</text>
+          <text x="430" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">ML docs only</text>
+          <!-- BAR 5: "transformer" → IDF≈3.6 (height=108px) -->
+          <rect x="500" y="47" width="70" height="108" fill="#3b82f6" rx="2"/>
+          <text x="535" y="42" text-anchor="middle" fill="#1d4ed8" font-size="10" font-weight="700">≈3.6</text>
+          <text x="535" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"transformer"</text>
+          <text x="535" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">rare in corpus</text>
+          <!-- BAR 6: "RLHF" → IDF≈4.9 (height=147px) -->
+          <rect x="605" y="8" width="50" height="147" fill="#8b5cf6" rx="2"/>
+          <text x="630" y="5" text-anchor="middle" fill="#6d28d9" font-size="10" font-weight="700">≈4.9</text>
+          <text x="630" y="169" text-anchor="middle" fill="#374151" font-size="10" font-weight="600">"RLHF"</text>
+          <text x="630" y="180" text-anchor="middle" fill="#9ca3af" font-size="8">very rare</text>
+        </svg>
+        <p style="font-size:12px;line-height:1.6;color:var(--text-muted);margin-top:10px;padding:0 4px;">
+          <strong>TF-IDF = TF × IDF.</strong> "the" appears in 200 of 200 docs → IDF = log(200/200) = 0 → score = 0, no matter how often it appears.
+          "RLHF" appears in 3 of 200 docs → IDF = log(200/3) ≈ 4.9 → strong relevance signal.
+          This is why stopwords automatically get filtered out without an explicit stopword list.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S00 Q&A ══════════════ -->
+<div class="slide" data-session="S00 · Foundation" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 00</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s00);">S00</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge orange">7 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is an inverted index and why does it make search fast?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">A data structure that maps each unique word to the list of documents containing it. Instead of scanning every document for every query, you look up the word directly and get the document list instantly, sub-millisecond lookup regardless of corpus size. Query "python training" → look up "python" (Docs 1,5,12,20) and "training" (Docs 5,9,20) → intersect → [Doc 5, Doc 20]. This is the core of how Elasticsearch, Lucene, and every search engine indexes content. Inverted indexes are the foundation of every major search engine; Google added PageRank on top to score results by link authority.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What does TF-IDF measure and why does it rank better than simple word count?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">TF (Term Frequency) measures how often a word appears in a specific document. IDF (Inverse Document Frequency) = log(total_docs / docs_containing_word). Words in every document (like "the") get IDF = log(1) = 0 and are automatically filtered. Rare words get high IDF scores. TF × IDF is high for relevant, rare words and near zero for common filler words. Example: "neural" appears 5 times in Doc A and once in Doc B. Doc A is more relevant for the query "neural." But "the" appearing 500 times is irrelevant because IDF crushes the score to near zero.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: What is the core limitation of TF-IDF? How was it eventually solved?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">TF-IDF is purely lexical: it matches exact character strings. "car" and "automobile" have zero computed relationship. It has no understanding of synonyms, context, or meaning. This "semantic gap" was solved by word embeddings (Word2Vec, GloVe) which map words to dense vectors in a high-dimensional space where semantically similar words land geometrically close to each other. Modern production systems use hybrid search: BM25 for exact keyword recall plus vector search for semantic understanding, because each catches what the other misses.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is BM25 and why is it used instead of raw TF-IDF in Elasticsearch?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">BM25 (Best Match 25) extends TF-IDF with two critical fixes: (1) Term saturation: in raw TF-IDF, a word appearing 100× scores 10× higher than appearing 10×, which is misleading. BM25 adds a saturation parameter k1 (typically 1.5). Beyond a certain frequency, additional occurrences have diminishing returns. (2) Document length normalization: parameter b (typically 0.75) penalizes long documents, because finding "python" once in a 100-word document is more significant than finding it once in a 50,000-word document. BM25 is the default algorithm in Elasticsearch and Lucene and remains a strong baseline even against neural retrievers. In modern RAG systems, BM25 + vector search together outperform either alone. This is called hybrid search.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What is the IDF of a word that appears in every document, and why does this make sense?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">IDF = log(N / df), where N = total documents and df = documents containing the word. If a word appears in every document: IDF = log(N / N) = log(1) = 0. The word contributes nothing to ranking regardless of how many times it appears. This is exactly correct: "the", "is", "a" carry zero discriminating information about what a document is about. This property means TF-IDF has automatic stopword filtering built into the math, with no explicit stopword list needed. Conversely, a word appearing in 3 of 1000 documents has IDF = log(1000/3) ≈ 5.8, making it a very strong relevance signal. This is why "RLHF" or "quantization" would dominate a TF-IDF ranking in a general corpus.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: In a real interview, if asked to design a search system from scratch, where does the inverted index fit in the architecture?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">A complete search system architecture: (1) Ingestion pipeline: crawl or receive documents → tokenize text → build/update the inverted index offline (write-heavy, can be batched). (2) Query time: receive user query → tokenize → look up each token in the inverted index (O(1)) → retrieve candidate document lists → intersect/union them → score candidates with BM25 or TF-IDF → return top-K ranked results. (3) Improvements: add vector index alongside inverted index for semantic search (ANN search using FAISS or Pinecone), rerank top-N results using a cross-encoder for precision, cache frequent queries. Real systems like Elasticsearch combine the inverted index with a distributed storage layer for horizontal scaling. This two-stage "retrieve then rerank" pattern is the same architecture used in modern RAG pipelines.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q7: What are the main limitations of bag-of-words and why did they lead to word embeddings?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Bag-of-words completely discards word order, so "dog bites man" and "man bites dog" produce identical vectors. It creates sparse, high-dimensional representations with vocabulary sizes of 100,000 or more, expensive to store and compute. It treats all words as independent: "good" and "excellent" are as unrelated as "good" and "airplane." The word "bank" gets the same representation whether the context is financial or geographic. These limitations mean bag-of-words handles recall (finding documents containing the right words) but fails at understanding meaning. Word embeddings solve the semantic gap by mapping words to dense vectors where similar meanings cluster together. Transformers then solved the context-dependence gap by making representations sensitive to surrounding words.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S01 CHAPTER ══════════════ -->
+<div class="slide" data-session="S01 · Semantics" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #1e40af, #0972d3);">
+    <div class="hero-icon">🧭</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 01 · Semantics</div>
+      <h1>Words as Numbers</h1>
+      <p>What if every word had a location in a 300-dimensional space, and words with similar meanings lived close together? Meaning becomes arithmetic.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">📐 The Famous Equation</div></div>
+        <div class="cs-card-body">
+          <div class="cs-code" style="font-size:18px;text-align:center;padding:20px;">
+king <span class="kw">−</span> man <span class="cls">+</span> woman <span class="cm">=</span> <span class="str">queen</span></div>
+          <p style="font-size:12.5px;color:var(--text-muted);margin-top:12px;line-height:1.6;">No rules were hand-coded. The model learned this purely from text co-occurrence. Meaning is captured as geometry, relationships become vector arithmetic.</p>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">📋 Three Algorithms</div></div>
+        <div class="cs-card-body tight">
+          <table class="cs-table">
+            <thead><tr><th>Model</th><th>Year</th><th>Key Idea</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">Word2Vec</td><td>2013</td><td>Learns from a sliding context window. "Know a word by its company."</td></tr>
+              <tr><td class="mono">GloVe</td><td>2014</td><td>Learns from global co-occurrence matrix across entire corpus (not local context window). Strong on word analogy tasks like king−man+woman=queen.</td></tr>
+              <tr><td class="mono">FastText</td><td>2016</td><td>Trains on character n-grams. Handles typos and unknown words.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🗺️ Word Vector Space: similar meanings cluster together</div><span class="badge gray">Conceptual visualization</span></div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:290px;font-family:Inter,sans-serif;">
+          <defs>
+            <marker id="garr2" markerWidth="7" markerHeight="7" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#a855f7"/>
+            </marker>
+            <marker id="garr3" markerWidth="7" markerHeight="7" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#60a5fa"/>
+            </marker>
+          </defs>
+          <rect width="720" height="290" fill="#f8fafc" rx="8"/>
+
+          <!-- ── ROYALTY CLUSTER (top-left) ── -->
+          <rect x="12" y="8" width="310" height="170" rx="10" fill="#fdf4ff" stroke="#e9d5ff" stroke-width="1.5"/>
+          <text x="167" y="26" text-anchor="middle" fill="#7c3aed" font-size="9" font-weight="700">🏰 ROYALTY CLUSTER</text>
+
+          <!-- king -->
+          <rect x="30" y="40" width="100" height="34" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+          <text x="80" y="62" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="700">👑 king</text>
+          <!-- queen -->
+          <rect x="190" y="40" width="110" height="34" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+          <text x="245" y="62" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="700">👑 queen</text>
+          <!-- gender axis arrow king→queen -->
+          <line x1="131" y1="57" x2="188" y2="57" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#garr2)"/>
+          <text x="159" y="50" text-anchor="middle" fill="#9333ea" font-size="8">gender axis</text>
+
+          <!-- man -->
+          <rect x="30" y="110" width="100" height="34" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+          <text x="80" y="132" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="700">🧔 man</text>
+          <!-- woman -->
+          <rect x="190" y="110" width="110" height="34" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+          <text x="245" y="132" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="700">👩 woman</text>
+          <!-- gender axis arrow man→woman -->
+          <line x1="131" y1="127" x2="188" y2="127" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#garr2)"/>
+          <text x="159" y="120" text-anchor="middle" fill="#9333ea" font-size="8">gender axis</text>
+
+          <!-- Vertical "royalty" arrows: king↓man, queen↓woman -->
+          <line x1="80" y1="75" x2="80" y2="108" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="245" y1="75" x2="245" y2="108" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Equation box -->
+          <rect x="18" y="158" width="298" height="15" rx="4" fill="#ede9fe"/>
+          <text x="167" y="169" text-anchor="middle" fill="#5b21b6" font-size="9" font-weight="600">king − man + woman ≈ queen  ✓  (pure vector arithmetic!)</text>
+
+          <!-- ── ANIMAL CLUSTER (bottom-center) ── -->
+          <rect x="250" y="195" width="230" height="82" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+          <text x="365" y="213" text-anchor="middle" fill="#1d4ed8" font-size="9" font-weight="700">🐾 ANIMAL CLUSTER</text>
+          <!-- puppy (top center) -->
+          <rect x="297" y="218" width="90" height="30" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="342" y="237" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">🐶 puppy</text>
+          <!-- dog (bottom-left) -->
+          <rect x="258" y="254" width="82" height="30" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="299" y="273" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">🐕 dog</text>
+          <!-- cat (bottom-right) -->
+          <rect x="348" y="254" width="82" height="30" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="389" y="273" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">🐈 cat</text>
+
+          <!-- ── TECH CLUSTER (right) ── -->
+          <rect x="500" y="20" width="210" height="175" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+          <text x="605" y="38" text-anchor="middle" fill="#15803d" font-size="9" font-weight="700">💻 TECH CLUSTER</text>
+          <!-- python (note: 💻 not 🐍) -->
+          <rect x="518" y="48" width="174" height="34" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="605" y="70" text-anchor="middle" fill="#15803d" font-size="12" font-weight="700">💻 python</text>
+          <!-- pytorch -->
+          <rect x="518" y="100" width="174" height="34" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="605" y="122" text-anchor="middle" fill="#15803d" font-size="12" font-weight="700">🔥 pytorch</text>
+          <!-- numpy -->
+          <rect x="518" y="152" width="174" height="34" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="605" y="174" text-anchor="middle" fill="#15803d" font-size="12" font-weight="700">🔢 numpy</text>
+
+          <!-- Bottom disclaimer -->
+          <rect x="12" y="270" width="480" height="16" rx="4" fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+          <text x="252" y="281" text-anchor="middle" fill="#92400e" font-size="8.5" font-weight="600">⚠️ Individual dimensions are NOT interpretable. "king" is not "high on dimension 1." Only cluster geometry and distances have meaning.</text>
+        </svg>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📏 Cosine Similarity vs Euclidean Distance</div></div>
+      <div class="cs-card-body tight">
+        <div class="compare-grid">
+          <div class="compare-panel before">
+            <div class="compare-panel-header">❌ Euclidean Distance</div>
+            <div class="compare-panel-body">Measures the straight-line distance between two points. Problem: a word appearing 1000× vs 10× creates different vector magnitudes, but the <em>meaning</em> is the same. Euclidean distance calls them different.</div>
+          </div>
+          <div class="compare-panel after">
+            <div class="compare-panel-header">✅ Cosine Similarity</div>
+            <div class="compare-panel-body">Measures only the <strong>angle</strong> between two vectors. Ignores magnitude entirely. "cat" appearing 10× or 1000× still points in the same direction, same meaning. Range: -1 (opposite) to +1 (identical).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S01 Q&A ══════════════ -->
+<div class="slide" data-session="S01 · Semantics" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 01</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s01);">S01</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge blue">7 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is a word embedding and how is it different from one-hot encoding?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">A word embedding maps each word to a dense vector (e.g. 300 dimensions) where semantic relationships are preserved as geometry. One-hot encoding maps each word to a sparse binary vector, with a 1 at the word's vocabulary index and 0 everywhere else. Problems with one-hot: (1) No semantic relationship: "king" and "queen" are as far apart as "king" and "banana." (2) Dimensionality explosion: a 100k-word vocabulary needs 100k-dimensional vectors. Word embeddings solve both: "king" and "queen" have high cosine similarity, and 300 dimensions can represent the entire vocabulary meaningfully. Pre-trained embeddings (word2vec, GloVe) transfer learned meaning to downstream tasks without retraining from scratch.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: How does Word2Vec learn embeddings without human labels?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Word2Vec uses self-supervised learning on a prediction task derived from the text structure itself, no human annotation needed. Skip-gram: given the center word "brown" in "the quick brown fox jumps," predict the surrounding context words. CBOW: given context words, predict the center word. The model trains a shallow neural network on billions of such examples. Words that appear in similar contexts (e.g., "dog" and "cat" often appear near "pet," "food," "vet") end up with similar weight vectors. The key insight from Wittgenstein's philosophy: "the meaning of a word is its use in the language." The network weights converge to vectors that encode usage patterns, which turn out to encode meaning.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: Why cosine similarity and not Euclidean distance for word vectors?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Word vectors have magnitudes that depend on word frequency during training. A very common word like "dog" will have larger weights than a rare word like "dachshund," even if they're semantically related. Euclidean distance is magnitude-sensitive: two vectors pointing in the same direction (identical meaning) but with different lengths would be measured as different. Cosine similarity measures only the angle between vectors, completely ignoring magnitude. Two words with the same semantic meaning (same directional orientation) have cosine similarity = 1.0 regardless of their frequencies. Formula: cos(A,B) = (A·B) / (|A||B|). Range: -1 (opposite meaning) to +1 (identical direction/meaning). In practice: "dog" and "puppy" → cosine ≈ 0.85, "dog" and "quantum" → cosine ≈ 0.1.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is the difference between Skip-gram and CBOW in Word2Vec, and which performs better?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Skip-gram: given the center word (e.g., "brown"), predict the surrounding context words (e.g., "quick", "fox"). Each center word generates multiple training examples. CBOW (Continuous Bag of Words): given the context words, predict the center word, the inverse task. Performance difference: Skip-gram performs better for rare words, because each training step focuses deeply on one word's context relationships. CBOW is 3-5× faster to train and performs better for frequent words, because it averages many context signals. In practice: Skip-gram with Negative Sampling (SGNS) is the industry standard for high-quality embeddings and produces the famous analogy results (king − man + woman ≈ queen). CBOW is used when training speed matters more than quality on rare vocabulary.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What is negative sampling in Word2Vec and why is it needed?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">The naive Skip-gram training objective requires a softmax over the entire vocabulary (50k-100k words) for every training step: P(context_word | center_word) = exp(v_o · v_c) / Σ exp(v_w · v_c). That denominator sum over all vocabulary words makes each update extremely expensive (O(vocab_size) operations). Negative sampling replaces the full softmax with a binary classification task: for each real (center, context) pair, randomly sample k "noise" words (typically k=5-20) that should NOT be predicted. Train a binary classifier: is this pair real or noise? This reduces computation from O(vocabulary) to O(k) per update, a 5000-20000x speedup. The model still learns meaningful embeddings because distinguishing real context from random noise forces it to capture genuine co-occurrence patterns.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: What is GloVe and how does it differ from Word2Vec in how it uses training data?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">GloVe (Global Vectors, Stanford 2014) pre-computes a global co-occurrence matrix: for every word pair (i, j), count how many times they appear within a context window across the entire corpus. Then train vectors so that v_i · v_j ≈ log(X_ij), the log co-occurrence count. Word2Vec learns from local context windows one sentence at a time. It sees global patterns only indirectly through many local examples. GloVe explicitly encodes global corpus statistics. Result: GloVe tends to perform particularly well on word analogy benchmarks (king − man + woman = queen) because it explicitly models the ratio of co-occurrence probabilities. Pre-trained GloVe vectors (glove.6B.300d, trained on Wikipedia + Gigaword, 840B tokens) are freely available and widely used as a strong baseline. In practice, both Word2Vec and GloVe have been largely superseded by contextual embeddings (BERT) for most tasks.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q7: What is FastText and when should you use it instead of Word2Vec?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">FastText (Facebook, 2016) trains on character n-grams rather than whole words. "Playing" becomes ["pla", "lay", "ayi", "yin", "ing"]. The word vector is the sum of its subword piece vectors. Key advantage: FastText generates a vector for words it never saw during training by composing character pieces. Word2Vec assigns an unknown vector to "playin" (a typo); FastText recognizes the subword overlap and produces a reasonable embedding. Use FastText when: your data has typos or misspellings, you work with morphologically rich languages (German, Turkish, Finnish), you have domain-specific jargon that won't appear in a general pre-trained vocabulary, or you work with code tokens. Trade-offs: larger model size (stores subword vectors), slower inference. For most production tasks today, sentence-transformers (BERT-based) outperform both FastText and Word2Vec, but FastText remains a fast, strong baseline with no GPU required.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S02 CHAPTER ══════════════ -->
+<div class="slide" data-session="S02 · Architecture" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #3730a3, #6d28d9);">
+    <div class="hero-icon">🧠</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 02 · Architecture</div>
+      <h1>The Transformer Architecture</h1>
+      <p>"Attention Is All You Need" (2017) introduced self-attention, which lets every word look at every other word simultaneously. This changed everything.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🔑 Self-Attention: Q, K, V</div></div>
+        <div class="cs-card-body tight">
+          <table class="cs-table">
+            <thead><tr><th>Component</th><th>Analogy</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge purple">Query (Q)</span></td><td>Your search question to the library</td><td>What this token is looking for</td></tr>
+              <tr><td><span class="badge blue">Key (K)</span></td><td>The label on each library book</td><td>What this token offers to others</td></tr>
+              <tr><td><span class="badge orange">Value (V)</span></td><td>The book's actual content</td><td>What this token contributes when attended to</td></tr>
+            </tbody>
+          </table>
+          <div class="cs-code" style="margin-top:12px;">
+Attention = softmax(<span class="fn">Q·Kᵀ</span> / √d<sub>k</sub>) <span class="kw">×</span> <span class="str">V</span>
+<span class="cm">-- d_k = head dimension (e.g. 512-dim model ÷ 8 heads = d_k 64)
+-- Score = how well Q matches each K
+-- Output = weighted average of V values</span></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🏗️ BERT vs GPT</div></div>
+        <div class="cs-card-body tight">
+          <div class="compare-grid">
+            <div class="compare-panel before" style="border-color:#ddd6fe;">
+              <div class="compare-panel-header" style="background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe;">🔵 BERT (Encoder only)</div>
+              <div class="compare-panel-body" style="background:#faf5ff;">Reads the whole sentence at once (bidirectional). Good at understanding, classification, named entity recognition. Cannot auto-regressively generate text: the bidirectional mask processes all tokens simultaneously, making sequential left-to-right generation architecturally undefined.</div>
+            </div>
+            <div class="compare-panel after">
+              <div class="compare-panel-header">🟢 GPT (Decoder only)</div>
+              <div class="compare-panel-body">Reads left-to-right only (masked). Good at generation, text, code, answers. Cannot see future tokens while predicting.</div>
+            </div>
+          </div>
+          <div class="info-panel info" style="margin-top:12px;"><span class="panel-icon">ℹ️</span><div><strong>Positional Encoding:</strong> Self-attention has no built-in sense of order. PE injects position info using sine/cosine functions so the model knows which token came first.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header">
+          <div class="cs-card-title">🏗️ Transformer Architecture (Original Paper)</div>
+          <span class="badge gray">Vaswani et al. 2017 · Wikimedia CC BY-SA</span>
+        </div>
+        <div class="cs-card-body" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;">
+          <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/The-Transformer-model-architecture.png"
+               alt="Transformer encoder-decoder architecture diagram from Attention Is All You Need"
+               style="max-height:320px;width:auto;max-width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;padding:6px;"
+               onerror="this.parentNode.querySelector('.img-fallback').style.display='block';this.style.display='none';">
+          <div class="img-fallback" style="display:none;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-muted);text-align:center;">
+            📊 <a href="https://commons.wikimedia.org/wiki/File:The-Transformer-model-architecture.png" style="color:var(--blue-primary);">View on Wikimedia Commons</a>
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px;">Left = Encoder (BERT). Right = Decoder (GPT). The Nx means these blocks are stacked N times.</p>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header">
+          <div class="cs-card-title">⚙️ Single Attention Head: Q/K/V in Detail</div>
+          <span class="badge gray">Wikimedia CC BY-SA 4.0</span>
+        </div>
+        <div class="cs-card-body" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;">
+          <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Process_of_a_Single_Attention_Head_in_a_Transformer_Model.jpg"
+               alt="Process of a single attention head showing Q K V transformation and weighted output"
+               style="max-height:300px;width:auto;max-width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;padding:6px;"
+               onerror="this.parentNode.querySelector('.img-fallback').style.display='block';this.style.display='none';">
+          <div class="img-fallback" style="display:none;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-muted);text-align:center;">
+            📊 <a href="https://commons.wikimedia.org/wiki/File:Process_of_a_Single_Attention_Head_in_a_Transformer_Model.jpg" style="color:var(--blue-primary);">View on Wikimedia Commons</a>
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px;">Each token projects to Q, K, V vectors. Attention = softmax(QKᵀ/√d) × V.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S02 Q&A ══════════════ -->
+<div class="slide" data-session="S02 · Architecture" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 02</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s02);">S02</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge purple">6 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: Explain self-attention using the Q/K/V analogy. Walk through the math.</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Every token generates three learned linear projections: Q (Query) = what this token is searching for. K (Key) = what this token offers as a label to others. V (Value) = the actual content this token contributes when attended to. Math: (1) Compute raw scores: score_ij = Q_i · K_j (dot product, O(n²) pairs). (2) Scale: divide by √d_k (head dimension) to prevent softmax saturation. (3) Softmax to get attention weights (sum to 1). (4) Weighted sum of V vectors: output_i = Σ softmax_ij × V_j. In the sentence "The bank by the river," the word "bank" attends strongly to "river" (clarifying it means riverbank, not financial institution). This is attention in action, resolving ambiguity through context.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What is the difference between BERT and GPT architecturally? When would you use each?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">BERT uses the Transformer Encoder only. Every token attends to all other tokens (bidirectional). Trained with Masked Language Modeling: 15% of tokens are masked, the model predicts them. Excellent contextual understanding: "bank" in "river bank" vs. "bank account" gets different embeddings. Cannot auto-regressively generate text: the bidirectional mask processes all tokens simultaneously, making sequential left-to-right generation architecturally undefined. Use BERT for: classification, NER, extractive Q&amp;A, sentence similarity. GPT uses the Decoder with causal (masked) self-attention, where each token attends only to previous tokens. Trained with next-token prediction. Autoregressive generation: one token at a time, each output fed back as input. Use GPT for: text generation, code, chat, summarization.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: What is multi-head attention and why is it better than single-head?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Multi-head attention runs h independent attention computations in parallel (GPT-3: 96 heads, BERT-base: 12 heads, GPT-2: 12 heads). Each head gets a projected subspace of Q, K, V (dimension d_k = d_model / h). All heads run independently and their outputs are concatenated and linearly projected back to d_model. Why it helps: a single attention head must collapse all relationship types into one pattern. Multiple heads can simultaneously specialize. One might track syntactic dependencies ("subject → verb"), another semantic similarity, another coreferences ("it → the model"). The key insight: multi-head attention has the same compute cost as single-head (each head is proportionally smaller), yet provides qualitatively richer representations by attending to multiple relationship types simultaneously.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: Why divide Q·Kᵀ by √d_k in the attention formula?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">The dot product Q·K is the sum of d_k multiplications of random variables. As d_k grows, the expected variance of the dot products grows proportionally to d_k. For large d_k (e.g., 64), raw dot products become very large in magnitude. When large values enter softmax, it saturates: one element gets probability ≈1, all others get ≈0. In this saturated regime, gradients drop to near zero. The model gets stuck. Dividing by √d_k normalizes the dot products to approximately unit variance regardless of d_k, keeping softmax numerically stable with flowing gradients. This is the "scaled" in "Scaled Dot-Product Attention" from the original paper (Vaswani et al. 2017). For a 512-dim model with 8 heads: d_k = 64, √64 = 8, so divide all scores by 8.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What is positional encoding and why does the Transformer need it while RNNs did not?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Self-attention treats the input as a set, so "The cat sat" and "sat cat The" would produce identical attention patterns because attention is permutation-invariant. RNNs process tokens sequentially (one by one), so position is implicit in the order of processing. Transformers process all tokens in parallel, so position must be injected explicitly. The original paper adds sine/cosine waves: PE(pos, 2i) = sin(pos / 10000^(2i/d_model)), PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model)). Modern variants: BERT uses learned positional embeddings (trainable, one per position). Llama/Mistral/GPT-NeoX use RoPE (Rotary Position Embedding), which rotates Q and K vectors by position-dependent angles during attention, rather than adding PE to embeddings. RoPE generalizes better to sequence lengths not seen during training.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: What is the Feed-Forward sublayer in a Transformer block and what role does it play?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Each Transformer block has two sublayers: (1) Multi-Head Self-Attention, which handles relationships between tokens. (2) Feed-Forward Network (FFN), applied independently to each token. FFN(x) = max(0, xW₁ + b₁)W₂ + b₂. The inner hidden dimension is typically 4× the model dimension (512 → 2048 → 512). While attention routes information across the sequence, the FFN is where most factual knowledge is believed to be stored. Research ("Locating Factual Associations in GPT", 2022) traced factual claims like "Paris is the capital of France" to specific FFN layer weights. The two sublayers are complementary: attention gathers context from the whole sequence, FFN applies position-wise transformations and retrieves memorized knowledge. Both are wrapped with LayerNorm and residual connections.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S03 CHAPTER ══════════════ -->
+<div class="slide" data-session="S03 · Intelligence" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #064e3b, #059669);">
+    <div class="hero-icon">🚀</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 03 · Intelligence</div>
+      <h1>From Text Predictor to ChatGPT</h1>
+      <p>The same Transformer architecture. Trained on more data. Then fine-tuned with human feedback. That's the complete story of how we got ChatGPT.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📅 GPT Evolution Timeline</div></div>
+      <div class="cs-card-body">
+        <div class="timeline" style="padding:12px 0 20px;">
+          <div class="tl-step"><div class="tl-dot" style="border-color:var(--s01);"><span>🌱</span></div><div class="tl-year">2018</div><div class="tl-label">GPT-1</div><div class="tl-sub">117M params. Proved pre-train + fine-tune works.</div></div>
+          <div class="tl-step"><div class="tl-dot" style="border-color:var(--s02);"><span>📝</span></div><div class="tl-year">2019</div><div class="tl-label">GPT-2</div><div class="tl-sub">1.5B params. "Too dangerous to release."</div></div>
+          <div class="tl-step"><div class="tl-dot" style="border-color:var(--s04);"><span>⚡</span></div><div class="tl-year">2020</div><div class="tl-label">GPT-3</div><div class="tl-sub">175B params. In-context learning at scale.</div></div>
+          <div class="tl-step"><div class="tl-dot" style="border-color:var(--orange);"><span>🎯</span></div><div class="tl-year">2022</div><div class="tl-label">InstructGPT</div><div class="tl-sub">RLHF added. Follows instructions, not just predicts.</div></div>
+          <div class="tl-step"><div class="tl-dot" style="border-color:var(--green);"><span>💬</span></div><div class="tl-year">Nov 2022</div><div class="tl-label">ChatGPT</div><div class="tl-sub">100M users in 2 months. The product is born.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🔄 RLHF Explained</div></div>
+        <div class="cs-card-body tight">
+          <ul class="cs-list">
+            <li>Generate multiple responses to the same prompt</li>
+            <li>Human rankers order them from best to worst</li>
+            <li>Train a reward model on those human rankings</li>
+            <li>Use RL (PPO) to update GPT to maximise the reward, with a KL-divergence penalty against the original model to prevent reward hacking and output collapse</li>
+            <li>Result: a model that's helpful, harmless, and honest</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">⚠️ The Alignment Problem</div></div>
+        <div class="cs-card-body tight">
+          <div class="info-panel danger"><span class="panel-icon">⚠️</span><div><strong>Hallucination:</strong> Base GPT optimises for "predict next token", not "say true things." It generates plausible-sounding text regardless of factual accuracy.</div></div>
+          <div class="info-panel warning" style="margin-top:8px;"><span class="panel-icon">🛡️</span><div><strong>Mitigations:</strong> RLHF, Constitutional AI, DPO, RAG (provide ground truth in the prompt), fine-tuning on factual data.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header">
+        <div class="cs-card-title">🔄 RLHF Process Diagram: how human feedback reshapes the model</div>
+        <span class="badge gray">Wikimedia Commons · CC BY-SA 4.0</span>
+      </div>
+      <div class="cs-card-body" style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/RLHF_diagram.svg"
+             alt="RLHF diagram showing the three-stage process: supervised fine-tuning, reward model training, and RL optimization"
+             style="max-width:480px;width:100%;border:1px solid var(--border);border-radius:6px;background:#fff;padding:8px;"
+             onerror="this.parentNode.querySelector('.img-fallback').style.display='block';this.style.display='none';">
+        <div class="img-fallback" style="display:none;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-muted);">
+          📊 <a href="https://commons.wikimedia.org/wiki/File:RLHF_diagram.svg" style="color:var(--blue-primary);">View RLHF Diagram on Wikimedia</a>
+        </div>
+        <div style="flex:1;min-width:180px;">
+          <p style="font-size:13px;line-height:1.7;color:var(--text-body);margin-bottom:8px;"><strong>Stage 1:</strong> Supervised fine-tuning on human-written responses.</p>
+          <p style="font-size:13px;line-height:1.7;color:var(--text-body);margin-bottom:8px;"><strong>Stage 2:</strong> Train a reward model, humans rank multiple responses from best to worst. The reward model learns to predict human preference.</p>
+          <p style="font-size:13px;line-height:1.7;color:var(--text-body);"><strong>Stage 3:</strong> RL (PPO) fine-tunes the language model to maximise the reward model's score. This is what makes GPT say "I don't know" instead of making something up.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S03 Q&A ══════════════ -->
+<div class="slide" data-session="S03 · Intelligence" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 03</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s03);">S03</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge green">7 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is in-context learning and which model demonstrated it at scale?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">In-context learning is the ability to perform new tasks from examples given directly in the prompt, with zero parameter updates or fine-tuning. GPT-3 (2020, 175B parameters) demonstrated this at scale for the first time. You give 2-3 input/output examples (few-shot) and the model generalizes to new inputs without any gradient updates. This was genuinely surprising. Prior models needed explicit fine-tuning for every new task. The emergent behavior is believed to come from the model effectively doing implicit gradient descent in its forward pass over the provided examples. Practical implications: you can turn a general-purpose LLM into a specialized classifier, extractor, or formatter purely through prompting, with no labeled training data or GPU training required. This is the foundation of prompt engineering as a discipline.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: Explain RLHF step by step. What problem does each stage solve?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">RLHF (Reinforcement Learning from Human Feedback) aligns model outputs with human preference. Three stages. Stage 1: Supervised Fine-Tuning (SFT): start from a base GPT, fine-tune on high-quality human-written demonstrations of good responses. Produces a model that follows instructions but imperfectly. Stage 2: Reward Model Training: generate multiple responses to the same prompt, have human raters rank them from best to worst. Train a separate model (the reward model) on these preference comparisons. The reward model learns to predict human preference scores. Stage 3: RL with PPO: use Proximal Policy Optimization to update the SFT model to maximize the reward model's score, with a KL-divergence penalty against the original SFT model to prevent reward hacking and output collapse (the model learns to produce absurd text that tricks the reward model). This transforms GPT-3 → InstructGPT → ChatGPT. The KL penalty is critical: without it, the model exploits reward model weaknesses.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: What is hallucination and why does it happen in LLMs?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Hallucination is when a model confidently states something factually false: a fabricated citation, a wrong date, a person who doesn't exist. It happens because LLMs are trained to predict the most likely next token, not to verify factual accuracy. They have no mechanism to distinguish "I know this" from "I'm generating a plausible-sounding completion." Three types: (1) Factual hallucination: wrong facts stated with confidence. (2) Temporal hallucination: events or information outside the training cutoff presented as current. (3) Intrinsic hallucination: claims contradicted by the source document in the prompt. Main mitigations: RAG (ground answers in retrieved documents, force the model to cite sources), Constitutional AI (training-time constraints that reduce confident false claims), fact-checking pipelines, and calibrated uncertainty expressions in system prompts ("If you don't know, say you don't know").</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is DPO (Direct Preference Optimization) and how does it differ from RLHF?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">DPO (2023, Stanford) achieves the same alignment goal as RLHF but eliminates both the reward model and the RL training loop. RLHF requires 3 separate training stages: SFT → reward model → PPO. This is expensive, unstable, and requires careful hyperparameter tuning of the RL phase. DPO's key insight: the mathematically optimal RLHF policy has a closed-form solution. You can reparameterize the reward in terms of the language model itself, converting the RL problem directly into a supervised classification problem on preference pairs. Given (prompt, preferred_response, rejected_response), DPO trains the LM to increase the likelihood ratio of preferred/rejected responses with a built-in KL constraint. DPO is: simpler (no separate reward model to train), more stable (no RL instability), computationally cheaper, and achieves comparable alignment quality to RLHF. Most modern open-source aligned models (Llama 2-3 Chat, Mistral Instruct, Phi-3) use DPO or its variants (IPO, SimPO) rather than RLHF.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What is Constitutional AI and how does it enable scalable alignment?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Constitutional AI (CAI, Anthropic 2022) addresses the scalability bottleneck of RLHF: human labelers must evaluate every output. CAI replaces human safety evaluators with the model itself, guided by a written "constitution" of principles. Process: (1) Generate a potentially harmful response from an unaligned model. (2) Use the same LLM (or a stronger one) to critique its own response against constitutional principles: "Is this response harmful? How could it be revised to avoid harm?" (3) Generate a revised response based on the self-critique. (4) Use these (prompt, revision) pairs as SFT training data, and preference pairs for reward model training. This enables scalable supervision: principles like "avoid assisting with illegal activities," "don't provide instructions for creating weapons," and "be honest about uncertainty" can be applied to millions of examples without human evaluation of each one. Claude's alignment training uses Constitutional AI as a core component.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: What are "emergent abilities" in LLMs and why do they matter for AI engineering?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Emergent abilities are capabilities that appear suddenly at a certain model scale, absent in smaller models and present in larger ones, without being explicitly trained for. Examples: Chain-of-thought reasoning (appears around 100B parameters), three-digit arithmetic, multi-step word problems. The defining feature is non-linearity: a model at 7B parameters might score 5% on a task, and a 70B model suddenly scores 85%, not a gradual improvement. Why it matters for engineers: (1) You cannot predict capabilities by extrapolating from smaller model benchmarks. (2) A company with only 7B models cannot know whether the 70B model can solve their problem. (3) Scaling laws predict loss, but not capability emergence. The "emergent abilities" paper (Wei et al. 2022) is controversial. Some argue emergence is an artifact of measuring with discontinuous metrics. For practical ML engineering: when a task doesn't work with a 7B model, try a larger model before concluding LLMs can't solve it. Many "unsolvable" tasks at 7B become trivial at 70B.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q7: What were the key differences between GPT-1, GPT-2, and GPT-3?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">GPT-1 (2018): 117M parameters, 12 Transformer decoder layers, trained on roughly 1B tokens from 7,000 books. Proved that unsupervised pre-training followed by fine-tuning works. Required explicit fine-tuning for each downstream task. GPT-2 (2019): 1.5B parameters (13x larger), trained on WebText (40GB of curated web text, roughly 10x more data). Same decoder-only architecture, just much bigger. Demonstrated zero-shot task completion with no fine-tuning: just a prompt. OpenAI initially withheld the full model over misuse concerns, then released it 9 months later. GPT-3 (2020): 175B parameters (117x GPT-1's size), trained on 570GB of filtered internet text. 96 Transformer layers, 96 attention heads. In-context few-shot learning became a core capability: show 3 examples in the prompt and the model generalizes with zero gradient updates. One model could write code, translate, summarize, and answer questions from prompt examples alone. The pattern across all three: scale (parameters plus data) was the primary lever. Architecture barely changed; capabilities emerged from scale.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S04 CHAPTER ══════════════ -->
+<div class="slide" data-session="S04 · Mechanics" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #991b1b, #dc2626);">
+    <div class="hero-icon">🔢</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 04 · Mechanics</div>
+      <h1>Tokens, Temperature, and Sampling</h1>
+      <p>How text becomes token IDs, how IDs become probabilities, and how probabilities become the next word. This controls cost, randomness, and output quality.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🔤 BPE Tokenization</div></div>
+        <div class="cs-card-body">
+          <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px;">BPE starts with characters and repeatedly merges the most frequent adjacent pairs into a vocabulary of ~50k-100k subwords.</p>
+          <div class="cs-code">
+<span class="cm">-- "unbelievable" → 3 tokens (GPT-4 cl100k_base)</span>
+"un" + "believ" + "able"  →  [3456, 12890, 7823]
+
+<span class="cm">-- Cost formula (approximate)</span>
+~4 chars = 1 token
+1000 tokens ≈ 750 words
+cost = (input_tokens + output_tokens) × price</div>
+          <div style="margin-top:14px;">
+            <div class="kv-label" style="margin-bottom:8px;">Token visualisation of "Hello, how are you?"</div>
+            <div class="token-row">
+              <div class="token" style="background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;">Hello</div>
+              <div class="token" style="background:#f3e8ff;border-color:#c084fc;color:#7c3aed;">,</div>
+              <div class="token" style="background:#dcfce7;border-color:#86efac;color:#15803d;">&nbsp;how</div>
+              <div class="token" style="background:#fff7ed;border-color:#fdba74;color:#c2410c;">&nbsp;are</div>
+              <div class="token" style="background:#fef2f2;border-color:#fca5a5;color:#b91c1c;">&nbsp;you</div>
+              <div class="token" style="background:#f0fdf4;border-color:#86efac;color:#166534;">?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🌡️ Temperature and Sampling</div></div>
+        <div class="cs-card-body tight">
+          <table class="cs-table">
+            <thead><tr><th>Parameter</th><th>What It Does</th><th>Typical Value</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge red">Temperature</span></td><td>Scales logits before softmax. Low = focused. High = creative.</td><td>0 → greedy, 0.7 → balanced</td></tr>
+              <tr><td><span class="badge blue">Top-K</span></td><td>Keep only the K most likely tokens. Cuts off the long tail.</td><td>40 or 50 typical</td></tr>
+              <tr><td><span class="badge purple">Top-P (Nucleus)</span></td><td>Keep tokens until cumulative probability ≥ P. Dynamic cut-off.</td><td>0.9 or 0.95</td></tr>
+            </tbody>
+          </table>
+          <div class="info-panel info" style="margin-top:12px;">
+            <span class="panel-icon">ℹ️</span>
+            <div><strong>Correct order:</strong> Apply Temperature → Softmax → Top-K → Top-P → Sample. Reversing Top-P and Temperature gives wrong results.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🌡️ How Temperature Changes the Probability Distribution</div><span class="badge gray">Visual diagram</span></div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:200px;font-family:Inter,sans-serif;">
+          <rect width="700" height="200" fill="#f8fafc" rx="8"/>
+          <!-- Title row -->
+          <text x="116" y="20" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="700">Temp = 0 (greedy)</text>
+          <text x="350" y="20" text-anchor="middle" fill="#d97706" font-size="11" font-weight="700">Temp = 0.7 (balanced)</text>
+          <text x="584" y="20" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="700">Temp = 2.0 (creative)</text>
+          <!-- Dividers -->
+          <line x1="234" y1="25" x2="234" y2="190" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="467" y1="25" x2="467" y2="190" stroke="#e5e7eb" stroke-width="1"/>
+          <!-- Temp=0: one tall bar -->
+          <rect x="72" y="60" width="36" height="110" fill="#dc2626" rx="3"/>
+          <rect x="118" y="148" width="36" height="22" fill="#fca5a5" rx="3"/>
+          <rect x="158" y="160" width="36" height="10" fill="#fca5a5" rx="3"/>
+          <text x="90" y="56" text-anchor="middle" fill="#dc2626" font-size="10" font-weight="700">95%</text>
+          <text x="136" y="144" text-anchor="middle" fill="#9ca3af" font-size="9">3%</text>
+          <text x="176" y="156" text-anchor="middle" fill="#9ca3af" font-size="9">2%</text>
+          <text x="116" y="185" text-anchor="middle" fill="#4b5563" font-size="9">"The" → "quick" → always</text>
+          <!-- Temp=0.7: moderate spread -->
+          <rect x="299" y="80" width="36" height="90" fill="#d97706" rx="3"/>
+          <rect x="345" y="110" width="36" height="60" fill="#fbbf24" rx="3"/>
+          <rect x="385" y="135" width="36" height="35" fill="#fde68a" rx="3"/>
+          <text x="317" y="76" text-anchor="middle" fill="#d97706" font-size="10" font-weight="700">58%</text>
+          <text x="363" y="106" text-anchor="middle" fill="#d97706" font-size="10">30%</text>
+          <text x="403" y="131" text-anchor="middle" fill="#9ca3af" font-size="9">12%</text>
+          <text x="350" y="185" text-anchor="middle" fill="#4b5563" font-size="9">Usually likely, sometimes varies</text>
+          <!-- Temp=2.0: flat spread -->
+          <rect x="522" y="115" width="36" height="55" fill="#7c3aed" rx="3"/>
+          <rect x="568" y="120" width="36" height="50" fill="#a78bfa" rx="3"/>
+          <rect x="610" y="118" width="36" height="52" fill="#c4b5fd" rx="3"/>
+          <text x="540" y="111" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="700">36%</text>
+          <text x="586" y="116" text-anchor="middle" fill="#7c3aed" font-size="10">33%</text>
+          <text x="628" y="114" text-anchor="middle" fill="#7c3aed" font-size="10">31%</text>
+          <text x="584" y="185" text-anchor="middle" fill="#4b5563" font-size="9">Any option equally likely, unpredictable</text>
+          <!-- Token labels -->
+          <text x="90" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"quick"</text>
+          <text x="136" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"fast"</text>
+          <text x="176" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"slow"</text>
+          <text x="317" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"quick"</text>
+          <text x="363" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"fast"</text>
+          <text x="403" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"slow"</text>
+          <text x="540" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"quick"</text>
+          <text x="586" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"fast"</text>
+          <text x="628" y="180" text-anchor="middle" fill="#6b7280" font-size="8">"slow"</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S04 Q&A ══════════════ -->
+<div class="slide" data-session="S04 · Mechanics" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 04</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s04);">S04</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge red">6 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is BPE tokenization and why is it preferred over word-level or character-level?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">BPE (Byte-Pair Encoding) starts with individual characters and iteratively merges the most frequent adjacent pair until reaching a target vocabulary size (~50k-100k subwords). Why not word-level: (1) unknown word problem: any word not seen in training becomes [UNK]; (2) morphological explosion: every inflected form needs a separate entry. Why not character-level: produces sequence lengths 4-5× longer, making attention computation (O(n²)) 16-25× more expensive. BPE's advantage: handles new words through composition ("unbelievable" → ["un", "believ", "able"]), works across all languages without language-specific rules, and balances sequence length vs. vocabulary size. GPT-4 uses ~100k BPE tokens. Byte-level BPE (GPT-2 onwards) operates on raw bytes, guaranteeing no unknown tokens. Every possible byte sequence can be represented.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What does temperature control and what is the correct order: temperature → softmax → Top-K → Top-P → sample?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Temperature T scales raw logits before softmax: logit_i / T. High T (>1.0) flattens the distribution, more tokens get comparable probabilities, output is more creative/diverse. Low T (<1.0) sharpens it: the top token dominates, output is more focused/deterministic. T=0 is greedy decoding: always pick argmax(logits), deterministic, no sampling. Correct pipeline order: (1) Divide logits by T to scale. (2) Softmax → convert to probabilities summing to 1. (3) Top-K → zero out all but the K most probable tokens (e.g., K=40). (4) Top-P → further filter: keep the smallest set of tokens whose cumulative probability ≥ P (e.g., P=0.95). (5) Renormalize remaining probabilities. (6) Sample from the filtered, renormalized distribution. Reversing Top-P and Top-K, or applying temperature after softmax, gives incorrect results. Most production APIs accept temperature + top_p + top_k and apply them in this order internally.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: Token cost problem: GPT-4o charges $5 per 1M input tokens. Your RAG system sends 3,000 tokens per query at 10,000 queries/day. What's the monthly bill?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">3,000 tokens/query × 10,000 queries/day = 30,000,000 input tokens/day. At $5 per 1M tokens = $150/day for input tokens alone. × 30 days = $4,500/month in input costs. Add output tokens (say 500 tokens/query × 10k/day = 5M output tokens/day, GPT-4o output = $15/1M → $75/day → $2,250/month). Total: ~$6,750/month. Optimization strategies: (1) Reduce context size: compress retrieved chunks, keep only top-3 results. (2) Cache repeated system prompt with prefix caching (OpenAI offers ~50% discount on cached prompt tokens). (3) Route simple queries to GPT-4o-mini ($0.15/$0.60 per 1M in/out vs $5/$15 for GPT-4o), 30-40x cheaper. (4) Use batch API for non-real-time queries (50% discount). Lesson: in production, token budgeting directly determines whether a product is economically viable.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is the difference between Top-K and Top-P (nucleus) sampling, and which is better?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Top-K always keeps exactly K candidates. Problem: if the model is very confident (one token at 95% probability), K=40 still forces sampling from 40 tokens, introducing unnecessary randomness. If the model is very uncertain (20 tokens all at ~5%), K=40 might be too restrictive. Top-P (nucleus sampling) keeps the smallest set of tokens whose cumulative probability ≥ P. When the model is confident, Top-P might keep only 2-3 tokens. When uncertain, it adapts to keep more. This dynamic adaptation is why Top-P is generally preferred for open-ended generation. When to prefer Top-K: code generation where you want consistent syntax, or when you've empirically found a K that works well for your use case. Best practice: use both together (Top-K=40, Top-P=0.95). Top-K prevents catastrophic sampling from very low probability tail tokens, Top-P provides the adaptive benefit. Temperature controls how sharp/flat the distribution is before either K or P filtering.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What is the "lost in the middle" problem and how should it affect how you structure RAG prompts?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Research (Liu et al. 2023, "Lost in the Middle") showed that LLMs systematically under-attend to information in the middle of long context windows. They perform best on information at the beginning (primacy effect) and end (recency effect) of the context, with accuracy dropping significantly for content in positions 15-60% through a long prompt. Concretely: if you retrieve 10 documents and concatenate them, the most relevant document placed in the middle will be effectively ignored, while a less relevant document at position 1 or 10 gets disproportionate weight. RAG implications: (1) Put the most important/highest-scored retrieved context at the beginning or end of your prompt, not the middle. (2) Limit context to top 3-5 chunks rather than 10-15. (3) Use a reranker to ensure the most relevant chunk is first. (4) For very long contexts, consider sending multiple shorter prompts instead of one long one. Models trained specifically for long-context understanding (Gemini 1.5 Pro, Claude 3.5 Sonnet) mitigate but do not fully eliminate this problem.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: A model generates "Eiffel Tower is in Berlin" confidently. Is this hallucination or a retrieval failure?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">This is a factual hallucination: the model generates false information with confidence. Distinguish from retrieval failure: retrieval failure means the system couldn't find the right document. Hallucination means even with the correct document retrieved, the model generates something not supported (or contradicted) by the document. How to diagnose: (1) Check if the correct fact was in the retrieved context. If yes → hallucination (the model ignored grounding evidence). If no → retrieval failure (fix chunking, reranking, or embedding model). Root cause of hallucination: the next-token prediction objective optimizes for plausibility, not accuracy. "Eiffel Tower is in P..." → "Paris" and "Berlin" both have high probability in training data because both follow "Eiffel Tower is in" in some proportion of training text. Mitigations: (1) Force the model to cite specific spans from retrieved text ("quote the relevant passage before answering"). (2) Use a validation LLM call to check if the answer is supported by the retrieved context. (3) Lower temperature for factual tasks.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S05 CHAPTER ══════════════ -->
+<div class="slide" data-session="S05 · Infrastructure" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #155e75, #0891b2);">
+    <div class="hero-icon">💻</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 05 · Infrastructure</div>
+      <h1>Local LLMs and API Providers</h1>
+      <p>Run Llama on your own laptop, free, private, offline. And use one API key to access every cloud provider through OpenRouter.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">⚖️ Local vs Cloud</div></div>
+        <div class="cs-card-body tight">
+          <table class="cs-table">
+            <thead><tr><th>Factor</th><th>☁️ Cloud API</th><th>💻 Local (Ollama)</th></tr></thead>
+            <tbody>
+              <tr><td>Cost</td><td>Per token</td><td><span class="badge green">Free</span></td></tr>
+              <tr><td>Privacy</td><td>Data leaves machine</td><td><span class="badge green">100% local</span></td></tr>
+              <tr><td>Internet</td><td>Required</td><td><span class="badge green">Works offline</span></td></tr>
+              <tr><td>Quality</td><td><span class="badge green">Best available</span></td><td>Depends on hardware</td></tr>
+              <tr><td>Latency</td><td>~1s (fast GPU)</td><td>Slower on CPU</td></tr>
+              <tr><td>Setup</td><td>API key only</td><td>Install + pull model</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🛠️ Tools You Used</div></div>
+        <div class="cs-card-body">
+          <div class="provider-card" style="margin-bottom:10px;">
+            <div class="provider-icon-box" style="background:#fef3c7;">🦙</div>
+            <div><div class="provider-name">Ollama</div><div class="provider-desc">Run Llama 3, Mistral, Gemma locally. CLI + REST API. <code>ollama run llama3.2</code></div></div>
+          </div>
+          <div class="provider-card" style="margin-bottom:10px;">
+            <div class="provider-icon-box" style="background:#e8f4fd;">🔀</div>
+            <div><div class="provider-name">OpenRouter</div><div class="provider-desc">One API key for 100+ models. OpenAI-compatible endpoint. Compare providers without multiple keys.</div></div>
+          </div>
+          <div class="provider-card">
+            <div class="provider-icon-box" style="background:#f0fdf4;">📦</div>
+            <div><div class="provider-name">LM Studio</div><div class="provider-desc">GUI for local models. Drag-and-drop GGUF loading. Built-in OpenAI-compatible server.</div></div>
+          </div>
+          <div class="cs-code" style="margin-top:14px;font-size:11px;">
+<span class="cm"># Universal chat format, same across all providers</span>
+messages = [
+  {<span class="str">"role"</span>: <span class="str">"system"</span>,    <span class="str">"content"</span>: <span class="str">"You are a helpful assistant."</span>},
+  {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"What is attention?"</span>},
+  {<span class="str">"role"</span>: <span class="str">"assistant"</span>, <span class="str">"content"</span>: <span class="str">"Attention is..."</span>},
+  {<span class="str">"role"</span>: <span class="str">"user"</span>,      <span class="str">"content"</span>: <span class="str">"Give me an example."</span>},
+]</div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🏗️ Architecture: Local Inference vs Cloud API</div><span class="badge gray">How Ollama works</span></div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:170px;font-family:Inter,sans-serif;">
+          <rect width="700" height="170" fill="#f8fafc" rx="8"/>
+          <!-- LOCAL SIDE -->
+          <rect x="20" y="20" width="290" height="135" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+          <text x="165" y="40" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">💻 LOCAL (Ollama)</text>
+          <!-- Your app box -->
+          <rect x="35" y="55" width="80" height="36" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="75" y="70" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Your</text>
+          <text x="75" y="82" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Python App</text>
+          <!-- Arrow -->
+          <path d="M115 73 L150 73" stroke="#059669" stroke-width="1.5" marker-end="url(#garr)"/>
+          <text x="132" y="68" text-anchor="middle" fill="#059669" font-size="8">prompt</text>
+          <!-- Ollama box -->
+          <rect x="150" y="55" width="80" height="36" rx="6" fill="#bbf7d0" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="190" y="70" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Ollama</text>
+          <text x="190" y="82" text-anchor="middle" fill="#15803d" font-size="10" font-weight="700">Server</text>
+          <!-- Arrow down to GGUF -->
+          <path d="M190 91 L190 115" stroke="#059669" stroke-width="1.5" marker-end="url(#garr)"/>
+          <!-- GGUF box -->
+          <rect x="150" y="115" width="80" height="30" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="190" y="130" text-anchor="middle" fill="#166534" font-size="9" font-weight="700">GGUF weights</text>
+          <text x="190" y="141" text-anchor="middle" fill="#16a34a" font-size="8">~4GB on disk</text>
+          <!-- Badge: private -->
+          <rect x="35" y="105" width="100" height="18" rx="4" fill="#dcfce7" stroke="#86efac"/>
+          <text x="85" y="118" text-anchor="middle" fill="#15803d" font-size="9" font-weight="700">✅ Free · Private · Offline</text>
+          <!-- CLOUD SIDE -->
+          <rect x="390" y="20" width="290" height="135" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+          <text x="535" y="40" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">☁️ CLOUD (OpenAI / Gemini)</text>
+          <!-- Your app box -->
+          <rect x="405" y="55" width="80" height="36" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="445" y="70" text-anchor="middle" fill="#1d4ed8" font-size="10" font-weight="700">Your</text>
+          <text x="445" y="82" text-anchor="middle" fill="#1d4ed8" font-size="10" font-weight="700">Python App</text>
+          <!-- Arrow -->
+          <path d="M485 73 L520 73" stroke="#2563eb" stroke-width="1.5" marker-end="url(#barr)"/>
+          <text x="502" y="68" text-anchor="middle" fill="#2563eb" font-size="8">HTTPS</text>
+          <!-- Cloud API box -->
+          <rect x="520" y="55" width="80" height="36" rx="6" fill="#bfdbfe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="560" y="70" text-anchor="middle" fill="#1d4ed8" font-size="10" font-weight="700">API Server</text>
+          <text x="560" y="82" text-anchor="middle" fill="#1e40af" font-size="9">(GPU cluster)</text>
+          <!-- Badge: billed -->
+          <rect x="405" y="105" width="100" height="18" rx="4" fill="#eff6ff" stroke="#93c5fd"/>
+          <text x="455" y="118" text-anchor="middle" fill="#1d4ed8" font-size="9" font-weight="700">💳 $/token · Internet required</text>
+          <!-- VS separator -->
+          <text x="350" y="100" text-anchor="middle" fill="#6b7280" font-size="16" font-weight="800">VS</text>
+          <!-- Arrow defs -->
+          <defs>
+            <marker id="garr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#059669"/></marker>
+            <marker id="barr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#2563eb"/></marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S05 Q&A ══════════════ -->
+<div class="slide" data-session="S05 · Infrastructure" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 05</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s05);">S05</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge teal">7 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is GGUF format and why does it matter for running LLMs locally?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">GGUF is a self-describing binary file format for quantized LLM weights, created by the llama.cpp project (it replaced the older GGML format; GGUF stands for GGML Universal Format). It matters because: (1) all model weights, hyperparameters, tokenizer, and metadata are packed into one portable file, no separate config files needed. (2) Supports quantization: a 7B model shrinks from ~14GB (FP16, the standard distribution format) to ~4.1GB at Q4_K_M, approximately 3% perplexity increase vs FP16. (3) Optimized for CPU/GPU inference via llama.cpp, with Apple Metal support on M-series chips. Ollama uses GGUF internally. Q4_K_M decoded: Q4 = 4-bit quantization; K = K-quant method (group-wise, more accurate than naive INT4); M = Medium quality/speed tradeoff within the K-quant family.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What are the roles in the standard LLM chat message format, and which are consistent across providers?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">The standard chat format uses messages with role/content pairs. Consistent across all providers (OpenAI, Anthropic, Gemini, Ollama): system (sets the AI's persona, constraints, and context), user (the human's message in each turn), assistant (the AI's prior response, for multi-turn history). Provider-specific: the "tool" role for function call results exists in OpenAI's format, but Anthropic uses user messages with tool_result content blocks. The three-role structure (system/user/assistant) is the universal standard. Code for any provider: messages = [{"role": "system", "content": "You are..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}].</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: What is OpenRouter and what are its limitations compared to calling a provider directly?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">OpenRouter is an API gateway providing access to 100+ models (GPT-4o, Claude Sonnet, Gemini, Llama, Mistral) through a single OpenAI-compatible endpoint with one API key. You only change the base_url and model name in your existing code. Limitations vs. direct API calls: (1) Extra latency: ~50-200ms routing overhead. (2) Outage masking: if a provider is down, errors are less diagnostic. (3) Model versioning: model names may map to different underlying versions. (4) Compound rate limits: you hit both OpenRouter's AND the provider's limits simultaneously. (5) Inconsistent tool calling: function calling standardization across providers is imperfect. Use OpenRouter for: development, model comparison experiments, prototyping. For production with SLA requirements: use direct provider API for better error handling and contractual guarantees.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is quantization in LLMs and what does Q4_K_M mean step by step?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Quantization reduces numerical precision of model weights to save memory and speed up inference. Memory per parameter: FP32 = 4 bytes, FP16 = 2 bytes, INT8 = 1 byte, INT4 = 0.5 bytes. For a 7B parameter model: FP32 = 28GB, FP16 = 14GB, INT8 = 7GB, Q4_K_M ≈ 4.1GB. Q4_K_M decoded: "Q4" = 4-bit quantization. "K" = K-quant method: weights quantized in groups (~32 weights/group), with a per-group scale factor calibrated to minimize quantization error, more accurate than naive INT4. "M" = Medium size variant (S = smaller/faster but slightly less accurate, L = larger/more accurate but slower). Q4_K_M achieves approximately 3% perplexity increase vs FP16, imperceptible in most applications. This 3.5x memory reduction is what lets you run a 7B model on a laptop with 8GB RAM.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: How much RAM do you need to run a 7B model locally, and what affects generation speed?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">A 7B model at Q4_K_M requires ~4.1GB for model weights. Add 1-2GB for KV cache and overhead. Practical minimum: 6-8GB available RAM. Hardware guide: 8GB RAM (MacBook Air M1/M2): runs 7B at Q4_K_M at ~15-25 tok/s using Apple Metal. M-series chips use unified memory, where RAM is also GPU memory. 16GB RAM: 7B comfortably or 13B at Q4_K_M. 32GB: 13B well or attempt 30B. 64GB+: 70B at Q4_K_M (~40GB). Generation speed factors: (1) CPU vs. Metal/GPU: CPU is 5-10x slower. (2) Context length: longer KV cache = more memory bandwidth. (3) Quantization level: Q2 is faster than Q8 but lower quality. Apple M-series chips with unified memory are the best consumer-grade local inference hardware. Memory bandwidth rivals discrete GPUs for inference workloads.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: Compare Ollama, LM Studio, and OpenRouter: when would you choose each?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Ollama: CLI-first tool, runs a REST server at localhost:11434 with OpenAI-compatible /api/chat. Best for developers, scripting, Jupyter notebooks, production local inference servers. Command: "ollama run llama3.2" downloads GGUF automatically. LM Studio: GUI desktop app for local models. Drag-and-drop GGUF loading, built-in chat interface, OpenAI-compatible server at localhost:1234. Best for non-developers, students exploring models visually, quick local chat without CLI. OpenRouter: cloud API gateway, no local install. Best for accessing frontier models (GPT-4o, Claude 3.5 Sonnet) through one key, model comparison studies, or teams needing one billing source. Decision framework: need privacy/offline/free → Ollama (dev) or LM Studio (GUI). Need frontier model quality → OpenRouter or direct provider. Need it in production code → Ollama (stable REST API, Docker-friendly, no GUI dependency).</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q7: How does the map-reduce pattern work for documents that exceed the context window?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">A single context window (even 128K tokens) cannot fit a full book, large codebase, or thousands of emails. Map-reduce splits the document into chunks (map step), each processed independently by the LLM, then combines results (reduce step). For summarization: map each chunk to a summary, reduce merges all chunk summaries into one final coherent output. For Q&amp;A over long documents: map extracts relevant passages from each chunk, reduce synthesizes the final answer. An alternative is the refine strategy: process chunk 1 to get an initial output, then pass that output plus chunk 2 to the LLM for refinement, repeat until done. Refine produces more coherent output because each step builds on the previous, but it is sequential and cannot be parallelized. Map-reduce is faster because all chunks are processed in parallel. Trade-off: map-reduce can lose cross-chunk context; refine maintains it but is much slower. In LangChain: load_summarize_chain(chain_type="map_reduce").</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S06 CHAPTER ══════════════ -->
+<div class="slide" data-session="S06 · Optimization" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #312e81, #4338ca);">
+    <div class="hero-icon">✍️</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 06 · Optimization</div>
+      <h1>Prompt Engineering and DSPy</h1>
+      <p>First: how to write a good prompt manually. Then: how to let code find the optimal prompt automatically using DSPy, MIPROv2, and GEPA.</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📋 Two Parts to This Session</div></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>#</th><th>Part</th><th>What You Learn</th><th>Why It Matters</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge blue">Part 1</span></td><td>Manual Prompt Engineering</td><td>Role, Task, Context, Examples, Output Format. Zero-shot, Few-shot, CoT.</td><td>Foundation skill. Every AI engineer needs this.</td></tr>
+            <tr><td><span class="badge purple">Part 2</span></td><td>Automated Optimization</td><td>DSPy Signatures, BootstrapFewShot, MIPROv2, GEPA</td><td>Removes guesswork. Finds prompts better than human-written.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S06 PROMPT ANATOMY ══════════════ -->
+<div class="slide" data-session="S06 · Optimization" data-topic="How to Write a Good Prompt">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 06</span><span class="bc-sep">›</span><span class="bc-current">How to Write a Good Prompt</span></div>
+    <div class="page-title">✍️ The anatomy of a well-written prompt</div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🧩 Five Parts of a Prompt</div><span class="badge gray">Most prompts fail because only "Task" is included</span></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>Part</th><th>What It Does</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge blue">Role</span></td><td>Who the AI should be, activates the right writing patterns from training data</td><td>"You are a senior data analyst writing for executives"</td></tr>
+            <tr><td><span class="badge orange">Task</span></td><td>What exactly you want done, be specific, not vague</td><td>"Summarize the following in exactly 3 bullet points"</td></tr>
+            <tr><td><span class="badge teal">Context</span></td><td>Background the AI needs to answer correctly</td><td>"The audience has no technical background"</td></tr>
+            <tr><td><span class="badge green">Examples</span></td><td>2-3 input/output pairs showing the format and style you want</td><td>Few-shot examples before the actual question</td></tr>
+            <tr><td><span class="badge purple">Format</span></td><td>How to structure the output, critical if your code needs to parse it</td><td>"Reply ONLY with valid JSON. No markdown. No explanation."</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-panel before">
+        <div class="compare-panel-header">❌ Bad Prompt</div>
+        <div class="compare-panel-body"><code style="font-family:'JetBrains Mono',monospace;">Summarize this.</code><br><br>The model doesn't know the length, audience, format, or what to focus on. You'll get something different every time.</div>
+      </div>
+      <div class="compare-panel after">
+        <div class="compare-panel-header">✅ Good Prompt</div>
+        <div class="compare-panel-body"><code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;">You are a business analyst writing for non-technical managers.<br>Summarize the following customer feedback in exactly 3 bullet points.<br>Each bullet: main complaint + why it matters to the business.</code><br><br>Role + Task + Format. Consistent output every single time.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S06 TECHNIQUES ══════════════ -->
+<div class="slide" data-session="S06 · Optimization" data-topic="Prompting Techniques">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 06</span><span class="bc-sep">›</span><span class="bc-current">Prompting Techniques</span></div>
+    <div class="page-title">✍️ Zero-Shot · Few-Shot · Chain-of-Thought</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-3">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title"><span class="badge blue">Zero-Shot</span></div></div>
+        <div class="cs-card-body">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">No examples. Just the instruction. Works for simple tasks.</p>
+          <div class="cs-code" style="font-size:11px;">Classify: "I love this!"<br><span class="cm">→ Positive</span></div>
+          <div class="info-panel warning" style="margin-top:10px;"><span class="panel-icon">⚠️</span><div style="font-size:11.5px;">Fails when format consistency matters, you get different label names every run.</div></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title"><span class="badge green">Few-Shot</span></div></div>
+        <div class="cs-card-body">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Show 2-3 examples. The model infers format and labels from them.</p>
+          <div class="cs-code" style="font-size:11px;">"Love it!" → <span class="str">Positive</span>
+"Awful!" → <span class="str">Negative</span>
+"It's ok" → <span class="str">Mixed</span>
+"I love this!" →</div>
+          <div class="info-panel success" style="margin-top:10px;"><span class="panel-icon">✅</span><div style="font-size:11.5px;">Model locks into your exact labels and format, no description needed.</div></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title"><span class="badge purple">Chain-of-Thought</span></div></div>
+        <div class="cs-card-body">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Add "think step by step." Forces visible reasoning before the answer.</p>
+          <div class="cs-code" style="font-size:10.5px;"><span class="cm">-- Without CoT:</span>
+Q: 9.11 &gt; 9.9 ?
+A: Yes ❌ (wrong)
+
+<span class="cm">-- With CoT:</span>
+Q: 9.11 &gt; 9.9? Think step by step.
+A: 9.11 has 0.11 after decimal.
+   9.9 has 0.90. So 9.9 &gt; 9.11.
+   <span class="str">No.</span> ✅</div>
+          <div class="info-panel info" style="margin-top:10px;"><span class="panel-icon">ℹ️</span><div style="font-size:11.5px;">Intermediate tokens give more context for each next prediction. Works especially well for reasoning and classification.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📐 Output Format: Always lock it down if your code needs to parse it</div></div>
+      <div class="cs-card-body tight">
+        <div class="compare-grid">
+          <div class="compare-panel before">
+            <div class="compare-panel-header">❌ Unstructured (cannot reliably parse)</div>
+            <div class="compare-panel-body">"The customer seems fairly happy overall, particularly mentioning delivery speed...", Your code has to parse natural language. That breaks constantly.</div>
+          </div>
+          <div class="compare-panel after">
+            <div class="compare-panel-header">✅ Structured (json.loads() just works)</div>
+            <div class="compare-panel-body"><code style="font-family:'JetBrains Mono',monospace;font-size:11px;">Reply ONLY with this JSON. No markdown.<br>{"sentiment": "positive"|"negative"|"mixed",<br>&nbsp;"would_recommend": true|false}</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🧱 Prompt Anatomy: from vague to specific</div><span class="badge gray">5-part structure</span></div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:130px;font-family:Inter,sans-serif;">
+          <rect width="700" height="130" fill="#f8fafc" rx="8"/>
+          <!-- Five blocks -->
+          <!-- Role -->
+          <rect x="10" y="30" width="118" height="60" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+          <text x="69" y="52" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="800">ROLE</text>
+          <text x="69" y="67" text-anchor="middle" fill="#7c3aed" font-size="8.5">Who should the AI be?</text>
+          <text x="69" y="80" text-anchor="middle" fill="#7c3aed" font-size="8">"Senior data analyst..."</text>
+          <!-- Arrow -->
+          <text x="138" y="65" text-anchor="middle" fill="#9ca3af" font-size="16">+</text>
+          <!-- Task -->
+          <rect x="148" y="30" width="118" height="60" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+          <text x="207" y="52" text-anchor="middle" fill="#1d4ed8" font-size="12" font-weight="800">TASK</text>
+          <text x="207" y="67" text-anchor="middle" fill="#2563eb" font-size="8.5">What exactly to do?</text>
+          <text x="207" y="80" text-anchor="middle" fill="#2563eb" font-size="8">"Write exactly 3 bullets"</text>
+          <!-- Arrow -->
+          <text x="276" y="65" text-anchor="middle" fill="#9ca3af" font-size="16">+</text>
+          <!-- Context -->
+          <rect x="286" y="30" width="118" height="60" rx="6" fill="#ccfbf1" stroke="#2dd4bf" stroke-width="1.5"/>
+          <text x="345" y="52" text-anchor="middle" fill="#0f766e" font-size="12" font-weight="800">CONTEXT</text>
+          <text x="345" y="67" text-anchor="middle" fill="#0f766e" font-size="8.5">Audience &amp; constraints?</text>
+          <text x="345" y="80" text-anchor="middle" fill="#0f766e" font-size="8">"For non-tech mgrs"</text>
+          <!-- Arrow -->
+          <text x="414" y="65" text-anchor="middle" fill="#9ca3af" font-size="16">+</text>
+          <!-- Examples -->
+          <rect x="424" y="30" width="118" height="60" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="483" y="52" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">EXAMPLES</text>
+          <text x="483" y="67" text-anchor="middle" fill="#15803d" font-size="8.5">Show the format?</text>
+          <text x="483" y="80" text-anchor="middle" fill="#15803d" font-size="8">2-3 input→output pairs</text>
+          <!-- Arrow -->
+          <text x="552" y="65" text-anchor="middle" fill="#9ca3af" font-size="16">+</text>
+          <!-- Format -->
+          <rect x="562" y="30" width="128" height="60" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+          <text x="626" y="52" text-anchor="middle" fill="#c2410c" font-size="12" font-weight="800">FORMAT</text>
+          <text x="626" y="67" text-anchor="middle" fill="#c2410c" font-size="8.5">How to structure output?</text>
+          <text x="626" y="80" text-anchor="middle" fill="#c2410c" font-size="8">"JSON only, no markdown"</text>
+          <!-- Labels row -->
+          <text x="69" y="108" text-anchor="middle" fill="#7c3aed" font-size="8">Activates patterns</text>
+          <text x="207" y="108" text-anchor="middle" fill="#1d4ed8" font-size="8">Be specific</text>
+          <text x="345" y="108" text-anchor="middle" fill="#0f766e" font-size="8">Missing = wrong tone</text>
+          <text x="483" y="108" text-anchor="middle" fill="#15803d" font-size="8">Locks format</text>
+          <text x="626" y="108" text-anchor="middle" fill="#c2410c" font-size="8">Critical if parsing</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S06 DSPY ══════════════ -->
+<div class="slide" data-session="S06 · Optimization" data-topic="DSPy and MIPROv2">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 06</span><span class="bc-sep">›</span><span class="bc-current">DSPy Prompt Optimization</span></div>
+    <div class="page-title">⚙️ DSPy: automated prompt optimization</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">📝 Signatures: Define the Task, Not the Prompt</div></div>
+        <div class="cs-card-body">
+          <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px;">DSPy treats prompts as learnable parameters. You define what you want in code. The optimizer finds the best prompt automatically.</p>
+          <div class="cs-code">
+<span class="kw">class</span> <span class="cls">Classification</span>(dspy.Signature):
+    <span class="str">"""Classify customer message intent."""</span>
+    customer_message = dspy.InputField()
+    intent_labels    = dspy.InputField()
+    answer           = dspy.OutputField()
+
+<span class="cm"># ChainOfThought adds reasoning field automatically</span>
+cot = dspy.ChainOfThought(Classification)</div>
+          <div class="info-panel info" style="margin-top:12px;"><span class="panel-icon">ℹ️</span><div>The docstring becomes the system instruction. The field names become prompt slots. You never write raw prompt strings.</div></div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🏆 The 4 Optimizers: From Simple to Powerful</div></div>
+        <div class="cs-card-body">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="optimizer-card level-1">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div class="optimizer-title">LabeledFewShot</div><span class="badge gray">Baseline</span></div>
+              <div class="optimizer-desc">Randomly picks k training examples and injects them. No actual optimization.</div>
+            </div>
+            <div class="optimizer-card level-2">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div class="optimizer-title">BootstrapFewShot</div><span class="badge blue">Better</span></div>
+              <div class="optimizer-desc">Runs the model on training data, keeps only examples where the model was <em>already correct</em>. Higher quality signal.</div>
+            </div>
+            <div class="optimizer-card level-3">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div class="optimizer-title">BootstrapFewShot + RandomSearch</div><span class="badge orange">Strong</span></div>
+              <div class="optimizer-desc">Runs Bootstrap multiple times with different random seeds. Picks the best-performing program.</div>
+            </div>
+            <div class="optimizer-card level-4">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div class="optimizer-title">MIPROv2</div><span class="badge purple">Most Powerful</span></div>
+              <div class="optimizer-desc">Searches over the <strong>instruction wording itself</strong>, not just examples. Found the instruction in MiproV2Prompt.json automatically, nobody wrote it.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S06 Q&A ══════════════ -->
+<div class="slide" data-session="S06 · Optimization" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 06</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s06);">S06</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge purple">6 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What are the five parts of a well-written prompt and why does each matter?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Role (who the AI should be): activates relevant writing patterns from training. "You are a senior data analyst writing for executives" produces very different output than the same task with no role. Task (what exactly to do): be specific: for example, "summarize in 3 bullet points" not "summarize." Context (background it needs): "the audience has no technical background" changes every word choice. Examples (2-3 input/output pairs): the most powerful tool for locking in format and label names: the model copies your exact output structure. Output format (how to structure the response): critical if code must parse the output: "Reply ONLY with valid JSON, no markdown, no explanation." Most bad prompts fail because only the Task is included, and the model guesses at tone, length, format, and labels differently every run. Including all 5 produces consistent, parseable output you can deploy to production.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What is Chain-of-Thought prompting and why does forcing reasoning help?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">CoT prompting adds "think step by step" or explicitly asks the model to reason before answering. Classic example: "Is 9.11 > 9.9?" → without CoT: "Yes" (wrong). With CoT: "9.11 means 0.11 after decimal. 9.9 means 0.90. 0.11 < 0.90, so 9.11 < 9.9. No." (correct). Why it works mechanically: intermediate reasoning tokens provide additional context for each subsequent token prediction. The model is effectively doing more computation by generating the reasoning chain. Works in two modes: zero-shot ("think step by step" added to any prompt) and few-shot (show 2-3 examples with explicit reasoning → answer chains). CoT dramatically improves accuracy on multi-step reasoning, math word problems, complex classification, and code generation. DSPy's ChainOfThought module automates this by adding a "reasoning" field before the answer field in the signature.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: What is DSPy and how does it differ from writing prompts manually?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">DSPy (Stanford NLP, 2023) treats prompts as learnable parameters rather than hand-written strings. Manual workflow: write a prompt → test → tweak wording → repeat. This is slow, doesn't scale, and the optimal prompt is highly model-specific. DSPy workflow: (1) Define a Signature: a Python class specifying input/output fields and a docstring describing the task. (2) Choose a Module (Predict, ChainOfThought, ReAct). (3) Provide training examples + a scoring metric. (4) Run an Optimizer (LabeledFewShot, BootstrapFewShot, MIPROv2). The optimizer automatically searches over example selection and instruction wording to maximize your metric. The model never sees your raw prompt. DSPy assembles the optimal prompt from signature + examples + instructions at runtime. This enables prompt optimization across model versions: re-run the optimizer when you upgrade from GPT-4 to GPT-4o and the prompt adapts automatically.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is the difference between LabeledFewShot and BootstrapFewShot in DSPy?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">LabeledFewShot: the simplest optimizer. Randomly picks k examples from your training set (which must have ground-truth labels) and injects them as few-shot demonstrations. No actual optimization: you're just doing in-context learning with randomly selected examples. Quality depends on which k examples happen to be picked. BootstrapFewShot: runs the current program on every training example, evaluates each prediction against your metric, and keeps only examples where the model was already correct. The demonstrations injected into the prompt are guaranteed to pass your validation criterion. They're not random, they're validated examples of the model succeeding. This produces significantly higher quality signal than random selection. The "bootstrap" name: you're using the model's own correct predictions to create high-quality training data for itself. BootstrapFewShot requires no human-labeled outputs, only human-labeled inputs with a metric to evaluate outputs.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: What can MIPROv2 optimize that BootstrapFewShot cannot?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">BootstrapFewShot selects which demonstrations to include, but it cannot modify the instruction text of the prompt itself. MIPROv2 (Multi-prompt Instruction PRoposal Optimizer v2) searches over both the instruction wording AND the few-shot examples simultaneously. MIPROv2 uses Bayesian optimization (TPE-style) to explore the instruction space: it generates candidate instruction variants, evaluates each on validation data, and focuses the search on promising phrasings. Example: MIPROv2 might find "Let's work through this step by step to ensure accuracy" outperforms your hand-written "Answer the following question" by 8% F1, something no human thought to write. MIPROv2 is most valuable when: (1) you have labeled validation data, (2) your metric is well-defined and computationally cheap, (3) manual prompting has already been tried and isn't sufficient. Downside: MIPROv2 requires many LLM calls for the optimization sweep (can be expensive). Use BootstrapFewShot first; upgrade to MIPROv2 when you need further gains.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: Give a concrete example where few-shot prompting is strictly necessary over zero-shot.</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Format consistency for downstream code parsing. Zero-shot "Classify the sentiment as positive, negative, or mixed" produces: "Positive", "positive", "POSITIVE", "The sentiment is positive", "positive sentiment", "I believe this is positive", all different strings, none reliably parseable by code. Few-shot with 3 examples ("Love it!" → "positive", "Awful!" → "negative", "It's ok" → "mixed") forces the model to lock into exactly one of three strings you control. Your json.loads() or if answer == "positive" code works 100% of the time. A second example: extracting a date from a document. Zero-shot produces: "2024-01-15", "January 15, 2024", "15/01/2024", "the 15th of January." One few-shot example showing input → "2024-01-15" forces ISO format consistently. Rule: whenever your downstream code must parse the output, or you need consistent label strings for a classifier, few-shot is not optional, it is the only reliable approach.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S07 CHAPTER ══════════════ -->
+<div class="slide" data-session="S07 · Unification" data-topic="Introduction">
+  <div class="chapter-hero" style="background:linear-gradient(135deg, #881337, #be185d);">
+    <div class="hero-icon">🔗</div>
+    <div class="hero-text">
+      <div class="session-tag">Session 07 · Unification</div>
+      <h1>LangChain: One Interface, Every Provider</h1>
+      <p>You've called OpenAI. You've called Gemini. You've called Ollama. Why are you maintaining three different codebases for the same thing?</p>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📋 What LangChain Unifies</div></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>Component</th><th>Before LangChain</th><th>After LangChain</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Provider calls</strong></td><td>3 different SDKs, 3 different response parsers</td><td>Same <code>.invoke()</code> for all providers</td></tr>
+            <tr><td><strong>Prompt management</strong></td><td>f-strings and manual string building</td><td><code>ChatPromptTemplate</code> with typed variables</td></tr>
+            <tr><td><strong>Conversation history</strong></td><td>Manually pass message list each turn</td><td><code>MessagesPlaceholder</code> + <code>InMemoryChatMessageHistory</code></td></tr>
+            <tr><td><strong>Streaming</strong></td><td>Different streaming API per provider</td><td><code>chain.stream()</code> works identically everywhere</td></tr>
+            <tr><td><strong>Output parsing</strong></td><td>Access different fields per provider</td><td><code>StrOutputParser()</code> extracts content universally</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S07 LCEL ══════════════ -->
+<div class="slide" data-session="S07 · Unification" data-topic="LCEL and Streaming">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 07</span><span class="bc-sep">›</span><span class="bc-current">LCEL Chains and Streaming</span></div>
+    <div class="page-title">🔗 Building chains with the pipe operator</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">⚙️ LCEL Pipeline</div></div>
+        <div class="cs-card-body">
+          <div class="info-panel info" style="margin-bottom:12px;"><span class="panel-icon">ℹ️</span><div>The <strong>|</strong> operator chains Runnable components. Output of left becomes input of right. Same interface for every component.</div></div>
+          <div class="cs-code">
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+<span class="kw">from</span> langchain_anthropic <span class="kw">import</span> ChatAnthropic
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> ChatOllama
+
+<span class="cm"># Build the chain, provider-agnostic</span>
+chain = prompt_template | llm | StrOutputParser()
+
+<span class="cm"># Invoke, same for ALL providers</span>
+answer = chain.invoke({<span class="str">"question"</span>: <span class="str">"Explain RAG"</span>})
+
+<span class="cm"># Streaming, tokens appear as generated</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> chain.stream({<span class="str">"question"</span>: <span class="str">"Explain RAG"</span>}):
+    print(chunk, end=<span class="str">""</span>, flush=<span class="kw">True</span>)</div>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">💬 Conversation Memory</div></div>
+        <div class="cs-card-body">
+          <div class="cs-code">
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> (
+    ChatPromptTemplate, MessagesPlaceholder
+)
+<span class="kw">from</span> langchain_core.chat_history <span class="kw">import</span> (
+    InMemoryChatMessageHistory
+)
+
+<span class="cm"># Template with a slot for conversation history</span>
+prompt = ChatPromptTemplate.from_messages([
+    (<span class="str">"system"</span>, <span class="str">"You are a helpful assistant."</span>),
+    MessagesPlaceholder(<span class="str">"history"</span>),  <span class="cm"># ← history slot</span>
+    (<span class="str">"human"</span>, <span class="str">"{question}"</span>),
+])
+
+history = InMemoryChatMessageHistory()
+history.add_user_message(<span class="str">"What is RAG?"</span>)
+history.add_ai_message(<span class="str">"RAG stands for..."</span>)</div>
+          <div class="info-panel success" style="margin-top:12px;"><span class="panel-icon">✅</span><div><strong>MessagesPlaceholder</strong> automatically injects the full history list into the template. You define the structure once, the history is passed at runtime.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">⛓️ LCEL Pipe Chain: how components connect</div><span class="badge gray">Visual diagram</span></div>
+      <div class="cs-card-body" style="padding:16px;">
+        <svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:140px;font-family:Inter,sans-serif;">
+          <rect width="700" height="140" fill="#f8fafc" rx="8"/>
+          <!-- Step labels at top -->
+          <text x="350" y="18" text-anchor="middle" fill="#6b7280" font-size="10">chain = prompt_template  |  llm  |  StrOutputParser()</text>
+          <!-- Component 1: Prompt Template -->
+          <rect x="20" y="35" width="150" height="65" rx="8" fill="#f5f3ff" stroke="#c084fc" stroke-width="2"/>
+          <text x="95" y="60" text-anchor="middle" fill="#5b21b6" font-size="11" font-weight="700">ChatPromptTemplate</text>
+          <text x="95" y="75" text-anchor="middle" fill="#7c3aed" font-size="9">Input: {"question": "..."}</text>
+          <text x="95" y="88" text-anchor="middle" fill="#7c3aed" font-size="9">Output: messages list</text>
+          <text x="95" y="115" text-anchor="middle" fill="#9ca3af" font-size="8">Formats the prompt</text>
+          <!-- Pipe operator -->
+          <rect x="178" y="58" width="30" height="22" rx="4" fill="#be185d" stroke="none"/>
+          <text x="193" y="74" text-anchor="middle" fill="#fff" font-size="16" font-weight="900">|</text>
+          <!-- Component 2: LLM -->
+          <rect x="215" y="35" width="150" height="65" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
+          <text x="290" y="60" text-anchor="middle" fill="#1d4ed8" font-size="11" font-weight="700">LLM (any provider)</text>
+          <text x="290" y="75" text-anchor="middle" fill="#2563eb" font-size="9">ChatOpenAI / ChatOllama</text>
+          <text x="290" y="88" text-anchor="middle" fill="#2563eb" font-size="9">ChatAnthropic / ChatGoogleGenerativeAI</text>
+          <text x="290" y="115" text-anchor="middle" fill="#9ca3af" font-size="8">Swap provider in 1 line</text>
+          <!-- Pipe operator -->
+          <rect x="373" y="58" width="30" height="22" rx="4" fill="#be185d" stroke="none"/>
+          <text x="388" y="74" text-anchor="middle" fill="#fff" font-size="16" font-weight="900">|</text>
+          <!-- Component 3: Output Parser -->
+          <rect x="410" y="35" width="150" height="65" rx="8" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+          <text x="485" y="60" text-anchor="middle" fill="#15803d" font-size="11" font-weight="700">StrOutputParser()</text>
+          <text x="485" y="75" text-anchor="middle" fill="#16a34a" font-size="9">Input: AIMessage</text>
+          <text x="485" y="88" text-anchor="middle" fill="#16a34a" font-size="9">Output: plain string</text>
+          <text x="485" y="115" text-anchor="middle" fill="#9ca3af" font-size="8">Extracts .content</text>
+          <!-- Arrow to result -->
+          <path d="M562 68 L596 68" stroke="#be185d" stroke-width="2" marker-end="url(#parr)"/>
+          <!-- Result -->
+          <rect x="596" y="42" width="94" height="52" rx="8" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+          <text x="643" y="62" text-anchor="middle" fill="#c2410c" font-size="10" font-weight="700">Result</text>
+          <text x="643" y="76" text-anchor="middle" fill="#c2410c" font-size="9">"Attention is..."</text>
+          <text x="643" y="89" text-anchor="middle" fill="#c2410c" font-size="8">plain string ✓</text>
+          <!-- Defs -->
+          <defs><marker id="parr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#be185d"/></marker></defs>
+          <!-- Bottom note -->
+          <text x="350" y="132" text-anchor="middle" fill="#6b7280" font-size="9">chain.invoke({...}) · chain.stream({...}) · chain.batch([...]), same call for ALL providers</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ S07 Q&A ══════════════ -->
+<div class="slide" data-session="S07 · Unification" data-topic="Interview Questions">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Session 07</span><span class="bc-sep">›</span><span class="bc-current">Interview Practice</span></div>
+    <div class="page-title">🎯 Interview Questions <span class="session-pill" style="background:var(--s07);">S07</span></div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">💬 Expand each to reveal the answer</div><span class="badge pink">6 questions</span></div>
+      <div class="cs-card-body">
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q1: What is LCEL and what does the pipe operator (|) do technically?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">LCEL (LangChain Expression Language) is a declarative way to compose LangChain components into pipelines using the | operator. Every component implements the Runnable interface. The | operator overloads Python's bitwise OR to chain Runnables: output of left becomes input of right. So chain = prompt | llm | StrOutputParser() means: (1) prompt formats the input dict into a messages list, (2) llm sends the messages list to the provider and returns an AIMessage, (3) StrOutputParser extracts the .content string from the AIMessage. The chain object itself is also a Runnable: you can pipe it into another component. You can swap any component without touching the others: change the provider by replacing llm, change output format by replacing the parser. The same chain.invoke({"question": "..."}) call works for OpenAI, Anthropic, Google, or Ollama.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q2: What is ChatPromptTemplate and what is MessagesPlaceholder used for?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">ChatPromptTemplate defines the message structure sent to the LLM as a template with typed variable slots ({variable_name}). It takes a list of message tuples: [("system", "You are a {persona}"), ("human", "{question}")]. At runtime, .format_messages(persona="analyst", question="What is RAG?") produces the final messages list. MessagesPlaceholder is a special slot for injecting a dynamic list of messages, specifically used for conversation history. Instead of manually building {"role": "user", "content": "..."} dicts for every prior turn, you define MessagesPlaceholder("history") once in the template and pass the history object at runtime. The placeholder expands into the full list of all prior messages automatically. This cleanly separates template definition from runtime data, and works with any history store (in-memory, Redis, database).</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q3: How does streaming work in LangChain and why is it critical for production?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">chain.stream(input) returns a Python generator that yields text chunks as the LLM produces them, typically word-by-word or a few tokens at a time. chain.invoke(input) waits for the complete response (5-20 seconds for long outputs). Why streaming matters: (1) Perceived latency: users see the first word in under 1 second instead of a blank screen for 10 seconds, and perceived speed is 5-10× better even if total time is the same. (2) User trust: a streaming response feels like conversation; a 10-second wait followed by sudden output feels broken. (3) Early termination: users can stop generation if the response is going in the wrong direction. You save tokens. LangChain streaming API: for chunk in chain.stream({"question": "..."}): print(chunk, end="", flush=True). In Streamlit: st.write_stream(chain.stream({"question": "..."})) handles the UI update automatically. The same .stream() call works across all providers. LangChain normalizes provider-specific streaming APIs.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q4: What is the Runnable interface in LangChain and what are its 5 core methods?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">The Runnable interface is the standard protocol every LangChain component implements, making them composable with |. Five core methods: (1) .invoke(input): synchronous single call, returns one output. Use for simple scripts. (2) .stream(input): synchronous streaming, yields output chunks. Use for real-time UIs. (3) .batch(inputs): synchronous, processes a list of inputs efficiently, often in parallel. Use for bulk processing. (4) .ainvoke(input): async version of invoke, returns awaitable. Use in async web frameworks (FastAPI). (5) .astream(input): async streaming generator. Use in async web servers with streaming responses. Every component that implements these 5 methods works with |: ChatPromptTemplate, any LLM wrapper, StrOutputParser, RunnableLambda (wraps any Python function), RunnablePassthrough (passes input unchanged). You can create custom Runnables: class MyTransformer(Runnable): def invoke(self, input, config=None): ...</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q5: How would you switch a production LangChain chain from GPT-4 to Claude Sonnet with minimal changes?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Because all LLM wrappers implement the same Runnable interface, you change exactly one line: from langchain_openai import ChatOpenAI → from langchain_anthropic import ChatAnthropic; llm = ChatOpenAI(model="gpt-4") → llm = ChatAnthropic(model="claude-sonnet-4-5"). The chain prompt | llm | parser is unchanged. For production-grade switchability: define a factory function def get_llm(provider=None): provider = provider or os.getenv("LLM_PROVIDER", "openai"). if provider == "openai": return ChatOpenAI(model=os.getenv("OPENAI_MODEL", "gpt-4o")). if provider == "anthropic": return ChatAnthropic(model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")). if provider == "google": return ChatGoogleGenerativeAI(model=os.getenv("GOOGLE_MODEL", "gemini-1.5-pro")). Then: llm = get_llm(). Switching in production = change one environment variable, no code deployment. Caveat: models differ in context length, function calling format, and system message handling. Always test your specific use case after switching.</div></div></div>
+        <div class="qa-item"><button class="qa-trigger"><span class="q-text">Q6: What is RunnableWithMessageHistory and how does it differ from manually managing a message list?</span><span class="q-icon">›</span></button><div class="qa-answer"><div class="qa-answer-inner">Manual approach: maintain a list, append each user message and AI response, pass the full list to the chain on every turn. Works, but: (1) you write boilerplate for every app, (2) persistence across restarts needs separate code, (3) multi-user isolation needs manual session keying. RunnableWithMessageHistory wraps any LCEL chain to automate all of this: chain_with_history = RunnableWithMessageHistory(chain, get_session_history_fn, input_messages_key="question", history_messages_key="history"). get_session_history_fn maps session_id → a history store object (InMemoryChatMessageHistory, RedisChatMessageHistory, or custom). On each call, it: (1) retrieves history for the session_id, (2) injects it into the MessagesPlaceholder, (3) runs the chain, (4) appends the new turn to the store automatically. Multi-user isolation: chain_with_history.invoke({"question": "..."}, config={"configurable": {"session_id": user_id}}). Each user_id gets completely isolated history. Session persistence survives restarts with Redis backend. This eliminates all the boilerplate of building multi-user stateful chat.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ INTERVIEW CHEAT SHEET ══════════════ -->
+<div class="slide" data-session="Overview" data-topic="Interview Cheat Sheet">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-current">Interview Cheat Sheet</span></div>
+    <div class="page-title">⚡ 22 concepts. 10 seconds each. No notes.</div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">🎯 What to say in your next GenAI interview</div><span class="badge pink">22 concepts</span></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>Concept</th><th>What to say in 10 seconds</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">TF-IDF</td><td>Rare words that appear often in one doc are important. Formula: TF x log(N / df).</td></tr>
+            <tr><td class="mono">BM25</td><td>TF-IDF with saturation (k1) and document length normalization (b). Default in Elasticsearch.</td></tr>
+            <tr><td class="mono">Inverted Index</td><td>Word-to-document lookup for sub-millisecond search. O(1) retrieval instead of full scan.</td></tr>
+            <tr><td class="mono">Word Embedding</td><td>Dense vector where similar words cluster together. Geometry encodes meaning.</td></tr>
+            <tr><td class="mono">Cosine Similarity</td><td>Measures angle between vectors, ignores magnitude. Range: -1 to 1.</td></tr>
+            <tr><td class="mono">Skip-gram</td><td>Word2Vec mode: predict context words from a center word. Better for rare words.</td></tr>
+            <tr><td class="mono">CBOW</td><td>Word2Vec mode: predict center word from context words. Faster to train.</td></tr>
+            <tr><td class="mono">Negative Sampling</td><td>Replaces full softmax with binary classifier on noise words. 5000x faster training.</td></tr>
+            <tr><td class="mono">GloVe</td><td>Embeddings from global co-occurrence statistics instead of local context windows.</td></tr>
+            <tr><td class="mono">Self-Attention</td><td>Each token weighs every other token for relevance using Q, K, V projections.</td></tr>
+            <tr><td class="mono">Multi-Head Attention</td><td>Run attention in parallel with different learned projections for different relationship types.</td></tr>
+            <tr><td class="mono">Positional Encoding</td><td>Adds order information. Transformers process in parallel so position must be injected.</td></tr>
+            <tr><td class="mono">BERT vs GPT</td><td>BERT: encoder-only, bidirectional, understands context. GPT: decoder-only, generates left-to-right.</td></tr>
+            <tr><td class="mono">RLHF</td><td>Three stages: SFT, reward model from human rankings, PPO with KL penalty to align LLM.</td></tr>
+            <tr><td class="mono">Hallucination</td><td>Model predicts plausible text, not verified facts. No built-in "I don't know" signal.</td></tr>
+            <tr><td class="mono">BPE</td><td>Iteratively merge frequent character pairs until target vocabulary size is reached.</td></tr>
+            <tr><td class="mono">Temperature</td><td>Divide logits by T before softmax. Low = deterministic. High = creative.</td></tr>
+            <tr><td class="mono">Top-K / Top-P</td><td>Top-K: keep K most probable. Top-P: keep smallest set summing to P. Use both together.</td></tr>
+            <tr><td class="mono">GGUF / Q4_K_M</td><td>Quantized model file. Q4 = 4-bit weights, K = group-wise scaling, M = medium accuracy.</td></tr>
+            <tr><td class="mono">Prompt Engineering</td><td>Role + Task + Context + Examples + Output format. All 5 parts for consistent output.</td></tr>
+            <tr><td class="mono">DSPy / MIPROv2</td><td>Prompts as learnable parameters. Optimizer finds best instruction text automatically.</td></tr>
+            <tr><td class="mono">LCEL / Runnable</td><td>LangChain pipe operator. Every component implements .invoke, .stream, .batch, .ainvoke, .astream.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ YOU ARE NOT BEGINNERS ══════════════ -->
+<div class="slide" data-session="Overview" data-topic="You Are Not Beginners Anymore">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-current">You Are Not Beginners Anymore</span></div>
+    <div class="page-title">🔥 Eight sessions ago you asked: "How does Google find a result?"</div>
+  </div>
+  <div class="page-body">
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">Now you can explain all of this</div></div>
+      <div class="cs-card-body tight">
+        <div class="cols-2">
+          <ul class="cs-list">
+            <li>How a search engine scores and ranks documents (TF-IDF, BM25, inverted index)</li>
+            <li>How a neural network learns that "car" and "automobile" mean the same thing (Word2Vec)</li>
+            <li>How Transformers read context that RNNs could not (self-attention, Q/K/V)</li>
+            <li>How GPT went from predicting text to passing the bar exam (scale, emergence, RLHF)</li>
+          </ul>
+          <ul class="cs-list">
+            <li>How tokens are built and how sampling controls generation (BPE, temperature, Top-P)</li>
+            <li>How to run GPT-quality AI on your own laptop for free (Ollama, GGUF, quantization)</li>
+            <li>How to let code write and optimise prompts (DSPy, BootstrapFewShot, MIPROv2)</li>
+            <li>How to call any LLM with the same code (LangChain, LCEL, Runnable interface)</li>
+          </ul>
+        </div>
+        <div class="info-panel success" style="margin-top:16px;"><span class="panel-icon">💪</span><div><strong>This foundation is permanent.</strong> Every LLM system in the world, no matter how advanced, sits on exactly these concepts. You understand the ground floor. Next session, we build higher.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ CLOSING ══════════════ -->
+<div class="slide" data-session="Overview" data-topic="What's Next">
+  <div class="page-header">
+    <div class="breadcrumb-row"><span class="bc-link">Recap</span><span class="bc-sep">›</span><span class="bc-current">What's Coming Next</span></div>
+    <div class="page-title">🎯 You've built the foundation. Now we build on top of it.</div>
+  </div>
+  <div class="page-body">
+    <div class="cols-2">
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🗃️ Upcoming: RAG</div><span class="badge blue">Next module</span></div>
+        <div class="cs-card-body tight">
+          <ul class="cs-list">
+            <li>Connect LLMs to your own data, documents, databases, APIs</li>
+            <li>Stop hallucinations on your private knowledge base</li>
+            <li>Chunk → Embed → Store → Retrieve → Generate with citations</li>
+            <li>ChromaDB, sentence-transformers, production patterns</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-header"><div class="cs-card-title">🤖 Upcoming: Agents</div><span class="badge purple">Coming soon</span></div>
+        <div class="cs-card-body tight">
+          <ul class="cs-list">
+            <li>LLMs that can use tools, search the web, write and run code</li>
+            <li>ReAct pattern, Thought, Action, Observation loop</li>
+            <li>LangGraph for stateful multi-step workflows</li>
+            <li>CrewAI for multi-agent teams with specialist roles</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <div class="cs-card-header"><div class="cs-card-title">📊 Your Progress</div></div>
+      <div class="cs-card-body tight">
+        <table class="cs-table">
+          <thead><tr><th>Session</th><th>Topic</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge gray">S00</span></td><td>Keyword Search, TF-IDF</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge blue">S01</span></td><td>Word Embeddings, Word2Vec</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge purple">S02</span></td><td>Transformer Architecture</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge green">S03</span></td><td>GPT Evolution, RLHF, Alignment</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge red">S04</span></td><td>BPE, Temperature, Sampling</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge teal">S05</span></td><td>Local LLMs, OpenRouter</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge blue">S06</span></td><td>Prompt Engineering, DSPy, MIPROv2</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+            <tr><td><span class="badge orange">S07</span></td><td>LangChain, LCEL, Streaming</td><td><span class="status"><span class="status-dot" style="background:var(--green);"></span> Complete</span></td></tr>
+          </tbody>
+        </table>
+        <div class="info-panel success" style="margin-top:12px;"><span class="panel-icon">🎯</span><div><strong>The gap between you and a GenAI engineer role is the next few modules.</strong> Every session you've completed has closed a real gap. Keep going.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</div><!-- /deck -->
+
+<script>
+/* ─── SCROLL-SNAP PRESENTATION ENGINE ─── */
+const slides  = Array.from(document.querySelectorAll('.slide'));
+const total   = slides.length;
+const deck    = document.getElementById('deck');
+const body    = document.body;
+const counter = document.getElementById('counter');
+const pfill   = document.getElementById('progress-fill');
+const dotsBox = document.getElementById('slide-dots');
+
+/* ─── BUILD DOTS ─── */
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'slide-dot';
+  d.title = slides[i].dataset.topic || '';
+  d.addEventListener('click', () => scrollToSlide(i));
+  dotsBox.appendChild(d);
+});
+const dots = Array.from(dotsBox.children);
+
+/* ─── SCROLL TO SLIDE ─── */
+function scrollToSlide(n) {
+  slides[n].scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ─── UPDATE CHROME ─── */
+function updateChrome(idx) {
+  const n   = String(idx + 1).padStart(2, '0');
+  const tot = String(total).padStart(2, '0');
+  counter.textContent = n + ' / ' + tot;
+  pfill.style.width   = ((idx + 1) / total * 100) + '%';
+  document.getElementById('nav-session').textContent = slides[idx].dataset.session || '';
+  document.getElementById('nav-topic').textContent   = slides[idx].dataset.topic   || '';
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+/* ─── INTERSECTION OBSERVER: track active slide + fade-in ─── */
+let activeSeen = new Set();
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in-view');
+      const idx = slides.indexOf(entry.target);
+      if (entry.intersectionRatio > 0.4) updateChrome(idx);
+    }
+  });
+}, {
+  root: body,
+  threshold: [0.1, 0.4, 0.8]
+});
+slides.forEach(s => obs.observe(s));
+
+/* ─── KEYBOARD ─── */
+document.addEventListener('keydown', e => {
+  const cur = slides.findIndex(s => s.getBoundingClientRect().top >= -10 && s.getBoundingClientRect().top < window.innerHeight / 2);
+  if (e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); scrollToSlide(Math.min(cur + 1, total - 1)); }
+  if (e.key === 'ArrowUp')                     { e.preventDefault(); scrollToSlide(Math.max(cur - 1, 0)); }
+  if (e.key === 'ArrowRight')                  { e.preventDefault(); scrollToSlide(Math.min(cur + 1, total - 1)); }
+  if (e.key === 'ArrowLeft')                   { e.preventDefault(); scrollToSlide(Math.max(cur - 1, 0)); }
+});
+
+/* ─── TOUCH SWIPE ─── */
+let ty = 0;
+document.addEventListener('touchstart', e => { ty = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchend',   e => {
+  const dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dy) > 50) {
+    const cur = slides.findIndex(s => s.getBoundingClientRect().top >= -10 && s.getBoundingClientRect().top < window.innerHeight / 2);
+    scrollToSlide(dy < 0 ? Math.min(cur + 1, total - 1) : Math.max(cur - 1, 0));
+  }
+});
+
+/* ─── FULLSCREEN ─── */
+document.getElementById('fs-btn').onclick = () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+  else document.exitFullscreen();
+};
+
+/* ─── Q&A ACCORDIONS ─── */
+document.querySelectorAll('.qa-trigger').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const ans = this.nextElementSibling;
+    const open = !ans.classList.contains('open');
+    ans.classList.toggle('open', open);
+    this.classList.toggle('open', open);
+  });
+});
+
+/* ─── INIT: show first slide ─── */
+slides[0].classList.add('in-view');
+updateChrome(0);
+</script>
+</body>
+</html>

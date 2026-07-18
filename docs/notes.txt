@@ -1,0 +1,22 @@
+Python Programming Language
+
+Python was created by Guido van Rossum and was first released in 1991.
+Python is a high-level, interpreted programming language known for its clean and readable syntax.
+It emphasizes code readability and allows programmers to express concepts in fewer lines of code.
+Python supports multiple programming paradigms including procedural, object-oriented, and functional programming.
+
+Machine Learning and Artificial Intelligence
+
+Machine learning is a subset of artificial intelligence that enables systems to learn from data.
+Instead of being explicitly programmed, machine learning models identify patterns and improve over time.
+Common machine learning techniques include supervised learning, unsupervised learning, and reinforcement learning.
+Neural networks are a class of machine learning models inspired by the structure of the human brain.
+Deep learning is a subfield of machine learning that uses multi-layered neural networks.
+
+Vector Databases and ChromaDB
+
+ChromaDB is an open-source vector database designed for AI applications.
+ChromaDB stores embeddings, which are numerical vector representations of text, images, or other data.
+It allows developers to perform fast semantic search by comparing embedding similarity.
+ChromaDB is commonly used in Retrieval-Augmented Generation (RAG) pipelines.
+Unlike traditional databases that store raw text, ChromaDB indexes high-dimensional embedding vectors.

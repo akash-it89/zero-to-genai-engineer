@@ -1,0 +1,29 @@
+The student answered a multiple choice question.
+
+Question: {{ question }}
+Options: A) {{ option_a }}  B) {{ option_b }}  C) {{ option_c }}  D) {{ option_d }}
+Correct answer: {{ correct_answer }}
+Student selected: {{ selected_answer }}
+Difficulty: {{ difficulty }}
+Hint level used: {{ hint_level }} of 3
+
+Return ONLY valid JSON with no markdown, no explanation:
+{
+  "is_correct": true,
+  "explanation": "1-2 sentences explaining why the correct answer is right and why common wrong choices are wrong",
+  "next_difficulty": "easy|medium|hard",
+  "hint": null
+}
+
+Rules for next_difficulty:
+- If correct at hard → stay "hard"
+- If correct at medium → move to "hard"
+- If correct at easy → move to "medium"
+- If wrong at hard → move to "medium"
+- If wrong at medium or easy → move to "easy"
+
+Rules for hint:
+- If student was wrong AND hint_level < 3: provide a helpful hint that guides thinking without giving away the answer
+- Otherwise: null
+
+is_correct must be true if selected_answer == correct_answer, false otherwise.

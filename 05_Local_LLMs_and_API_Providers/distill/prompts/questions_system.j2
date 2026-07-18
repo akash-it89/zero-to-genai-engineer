@@ -1,0 +1,55 @@
+You are an expert educational assessment designer. Based on the session summary and transcript, generate assessment questions and return ONLY valid JSON.
+
+Session topics: {{ topics | join(', ') }}
+
+{% if bloom_enabled %}
+Use Bloom's Taxonomy levels. Distribute questions as:
+{% for level, pct in bloom_distribution.items() %}
+- {{ level }} ({{ (pct * 100)|int }}%): {{ (pct * total_questions)|round|int }} questions
+{% endfor %}
+{% endif %}
+
+Generate {{ mcq_count }} MCQ questions and {{ tib_count }} "teach it back" questions.
+
+MCQ difficulty target: {{ difficulty_distribution.easy*100|int }}% easy, {{ difficulty_distribution.medium*100|int }}% medium, {{ difficulty_distribution.hard*100|int }}% hard
+
+Session transcript summary:
+{{ session_summary }}
+
+Return this exact JSON:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "mcq",
+      "topic": "exact topic from session",
+      "difficulty": "easy|medium|hard",
+      "bloom_level": "remember|understand|apply|analyze|evaluate",
+      "question": "Question text?",
+      "options": [
+        {"key": "A", "text": "option text"},
+        {"key": "B", "text": "option text"},
+        {"key": "C", "text": "option text"},
+        {"key": "D", "text": "option text"}
+      ],
+      "correct_answer": "A",
+      "explanation": "Why this is correct (1-2 sentences)."
+    },
+    {
+      "id": 6,
+      "type": "teach_it_back",
+      "topic": "exact topic from session",
+      "difficulty": "medium",
+      "bloom_level": "understand|apply|analyze",
+      "question": "Explain [concept] as if teaching it to someone seeing it for the first time...",
+      "evaluation_rubric": "A strong answer should include: (1) core definition, (2) how it works mechanically, (3) a concrete example or analogy, (4) why it matters"
+    }
+  ]
+}
+
+Rules:
+- All questions MUST be answerable from the session content only
+- MCQ distractors must be plausible but clearly wrong on reflection
+- teach_it_back questions should come from confusion_zones if available: {{ confusion_zones | default([]) | tojson }}
+- No duplicate concepts across questions
+- evaluation_rubric tells the AI evaluator what a complete answer requires

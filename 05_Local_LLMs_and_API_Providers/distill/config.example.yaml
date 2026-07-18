@@ -1,0 +1,441 @@
+# config.example.yaml — Distill Configuration Reference
+# -------------------------------------------------------
+# This file documents every available configuration option.
+# Copy to config.yaml and edit for your environment.
+#
+# Environment variable override pattern:
+#   DISTILL_<SECTION>_<KEY>=value
+#   Example: DISTILL_LLM_PROVIDER=openai
+#   Nested keys use double underscore: DISTILL_LLM_OLLAMA__BASE_URL=http://...
+
+# ─── App ────────────────────────────────────────────────────────────────────
+app:
+  # Internal application name (used in logs)
+  name: "Distill"
+
+  # Semantic version — increment on releases
+  version: "0.1.0"
+
+  # Brand name displayed in the UI header
+  brand_name: "Distill"
+
+  # Tagline shown in the UI subtitle and export footers
+  brand_tagline: "Pure knowledge, every class"
+
+  # Enable debug mode: verbose logging, stack traces in API errors
+  # NEVER set true in production
+  debug: false
+
+  # Python logging level: DEBUG | INFO | WARNING | ERROR | CRITICAL
+  log_level: "INFO"
+
+# ─── Server ─────────────────────────────────────────────────────────────────
+server:
+  # Host to bind the FastAPI/uvicorn server
+  # "0.0.0.0" = all interfaces; use "127.0.0.1" for local-only
+  host: "0.0.0.0"
+
+  # Port for the API server
+  port: 8000
+
+  # Allowed CORS origins for browser clients
+  # Add your production domain here when deploying
+  cors_origins:
+    - "http://localhost:5173"   # Vite dev server
+    - "http://localhost:3000"   # Alternative React dev port
+
+  # Maximum file upload size in megabytes (audio, PDFs, transcripts)
+  max_upload_size_mb: 50
+
+# ─── LLM ────────────────────────────────────────────────────────────────────
+llm:
+  # Active provider: ollama | lmstudio | openai | anthropic | gemini
+  # All provider-specific keys below are optional — only configure the active one
+  provider: "ollama"
+
+  # Model identifier (must match the provider's model naming)
+  # Ollama examples:    gemma3:9b, llama3.2:3b, mistral:7b, phi4:14b
+  # OpenAI examples:    gpt-4o-mini, gpt-4o
+  # Anthropic examples: claude-3-5-haiku-latest, claude-3-5-sonnet-latest
+  # Gemini examples:    gemini-2.0-flash, gemini-1.5-pro
+  model: "gemma3:9b"
+
+  # Sampling temperature — lower = more deterministic, higher = more creative
+  # 0.3 is good for structured output (MCQs, JSON); 0.7+ for creative tasks
+  temperature: 0.3
+
+  # Maximum tokens to generate in LLM responses
+  # Increase for longer debrief paragraphs; decrease to save cost on cloud providers
+  max_tokens: 4000
+
+  # Seconds before an LLM call times out (important for large local models)
+  timeout_seconds: 120
+
+  # Number of times to retry a failed LLM call before raising an error
+  retry_attempts: 3
+
+  # Seconds to wait between retry attempts (exponential backoff applied internally)
+  retry_delay_seconds: 2
+
+  # ── Ollama (local, free) ──────────────────────────────────────────────────
+  ollama:
+    # URL of your running Ollama server
+    base_url: "http://localhost:11434"
+
+    # How long Ollama keeps the model loaded in VRAM after the last request
+    # "5m" = 5 minutes; "0" = unload immediately; "-1" = keep forever
+    keep_alive: "5m"
+
+  # ── LM Studio (local, free) ───────────────────────────────────────────────
+  lmstudio:
+    # LM Studio exposes an OpenAI-compatible API on this URL
+    base_url: "http://localhost:1234/v1"
+
+    # LM Studio accepts any non-empty string as the API key
+    api_key: "lm-studio"
+
+  # ── OpenAI ────────────────────────────────────────────────────────────────
+  openai:
+    # OpenAI API base URL — change for Azure OpenAI deployments
+    base_url: "https://api.openai.com/v1"
+
+    # OpenAI organization ID (optional, for multi-org accounts)
+    organization: null
+
+  # ── Anthropic ─────────────────────────────────────────────────────────────
+  anthropic:
+    # Anthropic API base URL
+    base_url: "https://api.anthropic.com"
+
+    # Anthropic API version header
+    api_version: "2023-06-01"
+
+  # ── Google Gemini ─────────────────────────────────────────────────────────
+  gemini:
+    # Gemini API base URL
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+
+  # ── LangChain integration ─────────────────────────────────────────────────
+  langchain:
+    # Which provider LangChain uses internally (mirrors llm.provider above)
+    backend: "ollama"
+
+    # Enable LangSmith tracing (requires LANGCHAIN_API_KEY in .env)
+    tracing_enabled: false
+
+    # LangSmith project name for this app's traces
+    tracing_project: "distill"
+
+# ─── Speech-to-Text ──────────────────────────────────────────────────────────
+speech_to_text:
+  # Active STT provider: whisper_local | openai_whisper | aws_transcribe | google_stt
+  provider: "whisper_local"
+
+  # BCP-47 language code for transcription
+  # "en" = English; "ta" = Tamil; "hi" = Hindi; null = auto-detect
+  language: "en"
+
+  # ── Local Whisper (free, runs on CPU/GPU) ────────────────────────────────
+  whisper_local:
+    # Model size: tiny | base | small | medium | large-v3
+    # Tradeoffs: tiny=fastest/least accurate, large-v3=slowest/most accurate
+    # "medium" is the recommended default for classroom use
+    model_size: "medium"
+
+    # Compute device: "cpu" | "cuda" | "mps" (Apple Silicon)
+    device: "cpu"
+
+    # Numeric precision type (affects speed/accuracy on CPU)
+    # "float32" = best compatibility; "int8" = faster on CPU
+    compute_type: "float32"
+
+    # Download the Whisper model on server startup if not cached
+    # Set false to skip download check (useful if model already on disk)
+    download_on_startup: true
+
+  # ── OpenAI Whisper API (paid, cloud) ────────────────────────────────────
+  openai_whisper:
+    # OpenAI Whisper model name
+    model: "whisper-1"
+
+  # ── AWS Transcribe (paid, cloud) ─────────────────────────────────────────
+  aws_transcribe:
+    # AWS region where Transcribe is available
+    region: "us-east-1"
+
+    # S3 bucket for audio staging (required for large files via AWS Transcribe)
+    # null = use in-memory streaming (supported for shorter clips)
+    s3_bucket: null
+
+  # ── Google Cloud STT ─────────────────────────────────────────────────────
+  google_stt:
+    # Path to Google service account credentials JSON file
+    # null = use Application Default Credentials (ADC)
+    credentials_path: null
+
+# ─── Assessment ──────────────────────────────────────────────────────────────
+assessment:
+  # ── Multiple Choice Questions ────────────────────────────────────────────
+  mcq:
+    # Number of MCQs to generate per session
+    count: 5
+
+    # Proportion of questions at each difficulty level (must sum to 1.0)
+    difficulty_distribution:
+      easy: 0.30
+      medium: 0.50
+      hard: 0.20
+
+    # Show hints when a student requests them
+    show_hints: true
+
+    # Number of progressively revealing hint levels (1 = one hint only)
+    hint_levels: 3
+
+    # Reveal the explanation immediately after the student answers
+    show_explanation_after_answer: true
+
+    # Per-question time limit in seconds; null = no limit
+    time_limit_seconds: null
+
+  # ── Teach It Back (voice/text explanation questions) ─────────────────────
+  teach_it_back:
+    # Number of "teach it back" questions per session
+    count: 3
+
+    # Minimum word count for a text answer to be evaluated (below = too short)
+    min_answer_words: 20
+
+    # Maximum seconds for a voice recording before auto-stop
+    max_recording_seconds: 120
+
+    # Allow the student to re-record or re-type their answer once
+    allow_retake: true
+
+    # Enable voice recording as the primary answer mode
+    voice_enabled: true
+
+    # Show a text input as a fallback if voice is unavailable
+    text_fallback: true
+
+  # ── Bloom's Taxonomy question tagging ───────────────────────────────────
+  bloom_taxonomy:
+    # Tag every question with its Bloom's level and show it in the UI
+    enabled: true
+
+    # Target distribution across Bloom's levels (must sum to 1.0)
+    distribution:
+      remember: 0.20
+      understand: 0.30
+      apply: 0.30
+      analyze: 0.10
+      evaluate: 0.10
+
+  # ── Adaptive Difficulty Engine ───────────────────────────────────────────
+  adaptive_engine:
+    # Enable adaptive difficulty adjustments during a session
+    enabled: true
+
+    # Starting difficulty level for a new student: easy | medium | hard
+    initial_difficulty: "medium"
+
+    # Raise difficulty after this many consecutive correct answers
+    increase_after_consecutive_correct: 2
+
+    # Lower difficulty after this many consecutive wrong answers
+    decrease_after_consecutive_wrong: 1
+
+    # Track difficulty per topic independently (vs. globally for the session)
+    per_topic_tracking: true
+
+# ─── Evaluation ──────────────────────────────────────────────────────────────
+evaluation:
+  # ── AI Interviewer Persona ───────────────────────────────────────────────
+  interviewer:
+    # Display name shown to students in the feedback UI
+    name: "Dr. Priya"
+
+    # Full persona instruction injected into the evaluation system prompt
+    # Must describe the interviewer's background, standards, and communication style
+    persona: >
+      You are a Senior Applied Scientist who has conducted 400+ technical interviews
+      over 12 years at top AI companies. You are known for being precise, fair, and
+      deeply honest. You never give empty praise. When you say 'strong answer,' it
+      means something. When you identify a gap, you name it exactly — not vague
+      advice, but the specific concept, term, or mechanism they missed.
+
+    # Short style descriptor used in debrief tone instructions
+    style: "Structured, warm but honest, always constructive, never generic"
+
+    # Domain description for the persona (informs what topics they evaluate)
+    domain: "Artificial Intelligence, Machine Learning, and Generative AI"
+
+  # ── Scoring Dimensions ───────────────────────────────────────────────────
+  # Each dimension is scored 1–5 independently.
+  # Final weighted score = sum(score_i * weight_i); weights must sum to 1.0.
+  score_dimensions:
+    - key: "accuracy"
+      label: "Technical Accuracy"
+      weight: 0.30
+      description: "Are the core facts and concepts correct?"
+    - key: "depth"
+      label: "Conceptual Depth"
+      weight: 0.25
+      description: "Does the answer go beyond surface-level understanding?"
+    - key: "clarity"
+      label: "Clarity of Explanation"
+      weight: 0.20
+      description: "Could a peer understand this explanation?"
+    - key: "examples"
+      label: "Use of Examples"
+      weight: 0.15
+      description: "Are concrete examples used to support the answer?"
+    - key: "connections"
+      label: "Concept Connections"
+      weight: 0.10
+      description: "Does the answer connect to other topics from the session?"
+
+  # ── Verdict Labels ───────────────────────────────────────────────────────
+  # Evaluated top-to-bottom; first matching min_weighted_score wins.
+  # cloudscape_type controls the alert badge color in the UI.
+  verdicts:
+    - label: "Strong — interview ready"
+      min_weighted_score: 4.2
+      cloudscape_type: "success"     # green
+    - label: "Good — minor gaps to address"
+      min_weighted_score: 3.0
+      cloudscape_type: "info"        # blue
+    - label: "Developing — needs more practice"
+      min_weighted_score: 2.0
+      cloudscape_type: "warning"     # orange
+    - label: "Foundational — revisit core concepts"
+      min_weighted_score: 0.0
+      cloudscape_type: "error"       # red
+
+  # ── Debrief Output Format ────────────────────────────────────────────────
+  output:
+    # How many paragraphs the LLM should write in the debrief
+    debrief_paragraph_count: 3
+
+    # Include a direct quote from the student's answer in the debrief
+    quote_student_answer: true
+
+    # Append a follow-up question the student should be able to answer next
+    include_follow_up_question: true
+
+    # Include a ranked list of study recommendations
+    include_study_recommendations: true
+
+    # Maximum number of study recommendations to include
+    max_recommendations: 3
+
+# ─── Concept Map ─────────────────────────────────────────────────────────────
+concept_map:
+  # Diagram renderer: "mermaid" (browser-side, no server needed)
+  renderer: "mermaid"
+
+  # Mermaid graph direction: TD (top-down) | LR (left-right) | BT | RL
+  direction: "TD"
+
+  # Color nodes by student performance (green=strong, red=weak, grey=untested)
+  color_by_performance: true
+
+  # Draw dependency arrows between related concepts
+  show_dependencies: true
+
+  # Maximum concept nodes to render (prevents overly complex diagrams)
+  max_nodes: 20
+
+# ─── Session Storage ─────────────────────────────────────────────────────────
+session:
+  # Storage backend: "memory" | "sqlite" | "postgres"
+  # "memory" = in-process dict, data lost on restart (good for dev/demo)
+  # "sqlite"  = persistent local file at sqlite_path
+  # "postgres"= production database, set database_url
+  storage: "memory"
+
+  # Path to SQLite database file (used when storage = "sqlite")
+  sqlite_path: "./data/sessions.db"
+
+  # Full database URL (used when storage = "postgres")
+  # Example: "postgresql+asyncpg://user:pass@host:5432/distill"
+  database_url: null
+
+  # Maximum number of sessions held in the in-memory store before eviction
+  max_sessions_in_memory: 100
+
+# ─── Prompt Templates ────────────────────────────────────────────────────────
+prompts:
+  # Directory containing Jinja2 prompt template files (relative to backend/)
+  directory: "./prompts"
+
+  # Mapping of prompt names to template file names
+  # Each template is a Jinja2 .j2 file rendered with session context variables
+  templates:
+    summary: "summary_system.j2"           # Summarise a lecture transcript
+    questions: "questions_system.j2"       # Generate MCQ + teach-it-back questions
+    concept_map: "concept_map_system.j2"   # Extract concepts and their relationships
+    evaluate_mcq: "evaluate_mcq_system.j2" # Score a student's MCQ answer
+    evaluate_voice: "evaluate_voice_system.j2"  # Score a teach-it-back answer
+    confusion_map: "confusion_map_system.j2"    # Identify confused/weak concepts
+
+# ─── Export ──────────────────────────────────────────────────────────────────
+export:
+  # ── WhatsApp Summary ─────────────────────────────────────────────────────
+  whatsapp:
+    # Enable the "Share to WhatsApp" button on the results page
+    enabled: true
+
+    # Include the overall score in the WhatsApp message
+    include_score: true
+
+    # Include the verdict label (e.g. "Good — minor gaps to address")
+    include_verdict: true
+
+    # Include the 2–3 weak topic areas identified during assessment
+    include_weak_areas: true
+
+    # Include one personalized study tip
+    include_study_tip: true
+
+    # Footer appended to every exported message
+    footer_text: "Generated by Distill · Inceptez"
+
+  # ── Anki Flashcard Export ────────────────────────────────────────────────
+  anki:
+    # Enable export of session concepts as Anki-compatible .apkg or CSV
+    enabled: true
+
+  # ── PDF Report ───────────────────────────────────────────────────────────
+  pdf:
+    # Enable PDF report generation (requires reportlab or weasyprint)
+    enabled: false
+
+# ─── UI ──────────────────────────────────────────────────────────────────────
+ui:
+  # AWS Cloudscape Design System theme: "default" | "dark" (future)
+  cloudscape_theme: "default"
+
+  sidebar:
+    # Show the list of previous sessions in the left sidebar
+    show_session_history: true
+
+    # Maximum number of past sessions to list
+    max_history_items: 20
+
+  wizard:
+    # Allow students to navigate back to previous wizard steps
+    allow_back_navigation: true
+
+  features:
+    # Show the confusion map tab on the results page
+    confusion_map_enabled: true
+
+    # Display Bloom's taxonomy level badges on each question
+    bloom_labels_visible: true
+
+    # Show a countdown timer on MCQ questions (requires time_limit_seconds set)
+    timer_visible: false
+
+    # Animate a live audio waveform during voice recording
+    voice_waveform_enabled: true
