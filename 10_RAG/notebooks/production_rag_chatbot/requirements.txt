@@ -1,0 +1,17 @@
+# Requirements for the Production RAG Chatbot Streamlit app (app.py + rag_pipeline.py)
+#   pip install -r requirements.txt
+#
+# Same stack as ../13_capstone_production_rag_chatbot.ipynb, plus streamlit for the UI.
+
+streamlit
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+pypdf
+docx2txt
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+langchain-openai
+python-dotenv

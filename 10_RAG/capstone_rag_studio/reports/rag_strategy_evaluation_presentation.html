@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Strategy Matrix — Evaluation Presentation</title>
+<style>
+  :root {
+    --awsui-blue: #0972d3;
+    --awsui-blue-dark: #033160;
+    --awsui-blue-soft: #f0f8ff;
+    --bg: #f2f3f3;
+    --surface: #ffffff;
+    --border: #e9ebed;
+    --text: #16191f;
+    --text-secondary: #5f6b7a;
+    --good: #037f0c;
+    --good-soft: #e9f6ea;
+    --warn: #8d6605;
+    --warn-soft: #fef7e0;
+    --bad: #d91515;
+    --bad-soft: #fdf3f1;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --radius: 8px;
+    --rail-color: rgba(9, 114, 211, 0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --awsui-blue: #539fe5;
+      --awsui-blue-dark: #d1e7fc;
+      --awsui-blue-soft: #0c2135;
+      --bg: #0f1b2a;
+      --surface: #17293d;
+      --border: #2a3f57;
+      --text: #e9ebed;
+      --text-secondary: #9aa9bd;
+      --good: #59d16e;
+      --good-soft: #0e2617;
+      --warn: #e0a911;
+      --warn-soft: #2c2408;
+      --bad: #ff8d7e;
+      --bad-soft: #2c1512;
+      --rail-color: rgba(83, 159, 229, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --awsui-blue: #539fe5; --awsui-blue-dark: #d1e7fc; --awsui-blue-soft: #0c2135;
+    --bg: #0f1b2a; --surface: #17293d; --border: #2a3f57; --text: #e9ebed;
+    --text-secondary: #9aa9bd; --good: #59d16e; --good-soft: #0e2617;
+    --warn: #e0a911; --warn-soft: #2c2408; --bad: #ff8d7e; --bad-soft: #2c1512;
+    --rail-color: rgba(83, 159, 229, 0.4);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: var(--sans); font-weight: 700; margin: 0; }
+  section.slide {
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px 108px 64px 72px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .slide-inner { max-width: 1080px; margin: 0 auto; width: 100%; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--awsui-blue); margin-bottom: 14px;
+  }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: var(--awsui-blue); display: inline-block; }
+  h2.slide-title { font-size: 30px; margin-bottom: 8px; text-wrap: balance; letter-spacing: -0.01em; }
+  .slide-lede { color: var(--text-secondary); font-size: 16px; max-width: 74ch; margin-bottom: 28px; }
+
+  /* ---- Cloudscape-ish panel ---- */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .panel + .panel { margin-top: 14px; }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .panel-header h3 { font-size: 15px; }
+
+  /* status indicator, badge — cloudscape style */
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+  .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+  .status.good { color: var(--good); } .status.good::before { background: var(--good); }
+  .status.warn { color: var(--warn); } .status.warn::before { background: var(--warn); }
+  .status.bad { color: var(--bad); } .status.bad::before { background: var(--bad); }
+  .status.info { color: var(--awsui-blue); } .status.info::before { background: var(--awsui-blue); }
+
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+    background: var(--awsui-blue-soft); color: var(--awsui-blue); margin-right: 6px;
+  }
+  .badge.mono { font-family: var(--mono); }
+
+  /* cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; border-top: 3px solid var(--awsui-blue); }
+  .card .stat { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 700; color: var(--text); }
+  .card .label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .card .sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
+
+  /* table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 9px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); position: sticky; top: 0; }
+  td.num, th.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  tr.best td:first-child { border-left: 3px solid var(--good); }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .bar-track { width: 60px; height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+  .bar-fill { height: 100%; background: var(--awsui-blue); }
+
+  /* bar chart */
+  .chart-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+  .chart-row .name { width: 250px; flex-shrink: 0; font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chart-row .track { flex: 1; height: 15px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .chart-row .fill { height: 100%; background: linear-gradient(90deg, var(--awsui-blue), var(--awsui-blue-dark)); border-radius: 3px 0 0 3px; }
+  .chart-row .val { width: 50px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+
+  .two-col { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .kv-list { display: flex; flex-direction: column; gap: 10px; }
+  .kv-row { display: flex; justify-content: space-between; gap: 16px; font-size: 13.5px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
+  .kv-row .k { color: var(--text-secondary); }
+  .kv-row .v { font-family: var(--mono); font-weight: 600; }
+
+  .example {
+    font-family: var(--mono); font-size: 12.5px; background: var(--bg); border-radius: 6px;
+    padding: 10px 12px; margin-top: 10px; white-space: pre-wrap; border-left: 3px solid var(--border);
+  }
+  .example.bad-ex { border-left-color: var(--bad); }
+  .example.good-ex { border-left-color: var(--good); }
+
+  .metric-def { display: grid; grid-template-columns: 200px 1fr; gap: 4px 20px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .metric-def:last-child { border-bottom: none; }
+  .metric-def .name { font-weight: 700; font-size: 14px; }
+  .metric-def .fw { color: var(--text-secondary); font-size: 13.5px; }
+
+  .qa-grid { display: flex; flex-direction: column; gap: 10px; }
+  .qa-item { padding: 10px 0; border-bottom: 1px dashed var(--border); }
+  .qa-item:last-child { border-bottom: none; }
+  .qa-q { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
+  .qa-ref { color: var(--text-secondary); font-size: 12.5px; margin-bottom: 4px; }
+
+  ol.numbered, ul.plain { margin: 0; padding-left: 20px; }
+  ol.numbered li, ul.plain li { margin-bottom: 8px; font-size: 14.5px; }
+
+  code { font-family: var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+
+  /* ---- right-side dotted progress rail ---- */
+  .rail {
+    position: fixed; top: 0; right: 34px; height: 100vh;
+    display: flex; align-items: center; z-index: 50;
+  }
+  .rail-line {
+    position: relative; height: 76%; border-right: 2px dotted var(--rail-color);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .rail-dot {
+    width: 11px; height: 11px; border-radius: 50%; background: var(--surface);
+    border: 2px solid var(--border); transform: translateX(6px); cursor: pointer;
+    transition: all 0.25s ease; position: relative;
+  }
+  .rail-dot:hover { border-color: var(--awsui-blue); }
+  .rail-dot.active { background: var(--awsui-blue); border-color: var(--awsui-blue); transform: translateX(6px) scale(1.25); }
+  .rail-dot .tip {
+    position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
+    background: var(--text); color: var(--surface); font-size: 11.5px; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+  .rail-dot:hover .tip { opacity: 1; }
+  @media (max-width: 760px) {
+    .rail { display: none; }
+    section.slide { padding: 48px 24px; }
+  }
+
+  /* section-number watermark */
+  .slide-num {
+    position: absolute; top: 40px; right: 108px; font-family: var(--mono); font-size: 12px;
+    color: var(--text-secondary); letter-spacing: 0.05em;
+  }
+  @media (max-width: 760px) { .slide-num { display: none; } }
+
+  /* cover slide */
+  #s-cover { background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%); }
+  .cover-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0; }
+  .cover-meta { display: flex; gap: 28px; margin-top: 36px; flex-wrap: wrap; }
+  .cover-meta .item .num { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--awsui-blue); }
+  .cover-meta .item .lbl { font-size: 12.5px; color: var(--text-secondary); }
+  .doc-scroll { max-height: 46vh; overflow-y: auto; font-size: 13px; white-space: pre-wrap; font-family: var(--mono); background: var(--bg); border-radius: 6px; padding: 16px; }
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-hidden="false">
+  <div class="rail-line" id="rail-line"></div>
+</nav>
+
+<section class="slide" id="s-cover">
+  <div class="slide-inner">
+    <div class="eyebrow">RAG Studio — Evaluation Presentation</div>
+    <h2 class="slide-title" style="font-size:42px;">RAG Strategy Matrix<br>Evaluation Report</h2>
+    <div class="slide-lede">
+      A live, end-to-end comparison of 14 retrieval-augmented-generation pipeline configurations,
+      scored by both RAGAS and DeepEval against a 7-question golden set over a purpose-written
+      policy handbook. Every score on every slide came from a real model call — nothing here is
+      simulated.
+    </div>
+    <div class="cover-badges">
+      <span class="badge mono">14 variants</span>
+      <span class="badge mono">7 golden questions</span>
+      <span class="badge mono">6 RAGAS + DeepEval metrics</span>
+      <span class="badge mono">gpt-4o-mini generation</span>
+      <span class="badge mono">gpt-4o judge (DeepEval)</span>
+    </div>
+    <div class="cover-meta">
+      <div class="item"><div class="num">0.881</div><div class="lbl">best composite score</div></div>
+      <div class="item"><div class="num">14/14</div><div class="lbl">variants completed</div></div>
+      <div class="item"><div class="num">23</div><div class="lbl">indexed chunks</div></div>
+      <div class="item"><div class="num">2</div><div class="lbl">systemic bugs found</div></div>
+    </div>
+  </div>
+  <div class="slide-num">01 / 14</div>
+</section>
+
+<section class="slide" id="s-context">
+  <div class="slide-inner">
+    <div class="eyebrow">Context</div>
+    <h2 class="slide-title">What was tested, and against what document</h2>
+    <div class="slide-lede">
+      The evaluation needed a document where the correct answer to every question is knowable in
+      advance — so reference-dependent metrics like RAGAS context recall are meaningful. A
+      purpose-written policy handbook made that possible.
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><h3>Nimbus Cloud Storage — Customer Handbook</h3><span class="status info">~2,000 words · 8 sections</span></div>
+        <ul class="plain">
+          <li>Company overview &amp; product tiers (Free / Pro / Business $99/mo with SSO / Enterprise)</li>
+          <li>Security &amp; encryption — AES-256 at rest, HSM-managed keys, Private Vault</li>
+          <li>API rate limits — per-tier request ceilings, 429 behavior</li>
+          <li>Data retention &amp; deletion timelines — trash window, cancellation grace period</li>
+          <li>Refund policy — 14-day guarantee, first-payment-only exclusion</li>
+          <li>Support SLAs — response times and uptime service credits by tier</li>
+          <li>Compliance certifications — SOC 2, ISO 27001, HIPAA status</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Fixed across every variant</h3></div>
+        <div class="kv-list">
+          <div class="kv-row"><span class="k">Embeddings</span><span class="v">minilm (local)</span></div>
+          <div class="kv-row"><span class="k">Vector store</span><span class="v">in-memory</span></div>
+          <div class="kv-row"><span class="k">Generation model</span><span class="v">gpt-4o-mini @ T=0.0</span></div>
+          <div class="kv-row"><span class="k">Chunking</span><span class="v">recursive, 500 / 60</span></div>
+          <div class="kv-row"><span class="k">Retrieved / reranked to</span><span class="v">top_k 20 → 5</span></div>
+          <div class="kv-row"><span class="k">Caching / guardrails</span><span class="v">off</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">02 / 14</div>
+</section>
+
+<section class="slide" id="s-axes">
+  <div class="slide-inner">
+    <div class="eyebrow">Design of the matrix</div>
+    <h2 class="slide-title">4 axes, 14 configurations</h2>
+    <div class="slide-lede">
+      Rather than a full combinatorial sweep of every field (which would run into the thousands of
+      configurations), the matrix targeted the axes known to actually move answer quality: how
+      candidates are retrieved, whether they're reranked, and whether the query or the retrieved
+      context is transformed before generation.
+    </div>
+    <div class="cards">
+      <div class="card">
+        <div class="label" style="margin-bottom:6px;">Retrieval mode</div>
+        <div style="font-size:14px;">dense · bm25 · hybrid_rrf · hybrid_weighted</div>
+      </div>
+      <div class="card">
+        <div class="label" style="margin-bottom:6px;">Reranker</div>
+        <div style="font-size:14px;">none · local cross-encoder</div>
+      </div>
+      <div class="card">
+        <div class="label" style="margin-bottom:6px;">Query transform</div>
+        <div style="font-size:14px;">none · HyDE · multi-query</div>
+      </div>
+      <div class="card">
+        <div class="label" style="margin-bottom:6px;">Post-retrieval</div>
+        <div style="font-size:14px;">none · contextual compression</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header"><h3>Coverage</h3></div>
+      <p style="margin:0; font-size:14px; color:var(--text-secondary);">
+        8 variants cover every retrieval × reranker pair. 6 more variants layer HyDE, multi-query,
+        or contextual compression onto the strongest baseline (<code>hybrid_rrf</code>), each with
+        and without the reranker — isolating each transform's individual effect.
+      </p>
+    </div>
+  </div>
+  <div class="slide-num">03 / 14</div>
+</section>
+
+<section class="slide" id="s-metrics">
+  <div class="slide-inner">
+    <div class="eyebrow">How quality was measured</div>
+    <h2 class="slide-title">Metric definitions</h2>
+    <div class="slide-lede">Two independent judge frameworks were used so no single scoring methodology's blind spots go unchecked.</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><h3>RAGAS</h3><span class="badge">reference-dependent</span></div>
+        <div class="metric-def"><div class="name">Faithfulness</div><div class="fw">Does every claim in the answer trace back to the retrieved context? Penalizes fabrication.</div></div>
+        <div class="metric-def"><div class="name">Answer relevancy</div><div class="fw">Does the answer actually address the question asked, without padding or drift?</div></div>
+        <div class="metric-def"><div class="name">Context precision</div><div class="fw">Of the chunks retrieved, how many were actually relevant / ranked highly?</div></div>
+        <div class="metric-def"><div class="name">Context recall</div><div class="fw">Did retrieval surface everything needed to construct the reference answer?</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>DeepEval</h3><span class="badge">gpt-4o judge</span></div>
+        <div class="metric-def"><div class="name">Faithfulness</div><div class="fw">Same intent as RAGAS's version, scored independently by a different judge model.</div></div>
+        <div class="metric-def"><div class="name">Answer relevancy</div><div class="fw">Same intent, independent judge — used as a cross-check against RAGAS's score.</div></div>
+        <div class="metric-def"><div class="name">Pass rate</div><div class="fw">Fraction of the 7 golden questions where <em>every</em> DeepEval metric individually cleared its threshold.</div></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px; border-left:3px solid var(--awsui-blue);">
+      <strong>Composite score</strong> (used to rank variants throughout this presentation) is simply
+      <code>(RAGAS metric average + DeepEval metric average) / 2</code> — a single number for
+      at-a-glance comparison, with the full metric breakdown always available in the table.
+    </div>
+  </div>
+  <div class="slide-num">04 / 14</div>
+</section>
+
+<section class="slide" id="s-summary">
+  <div class="slide-inner">
+    <div class="eyebrow">Executive summary</div>
+    <h2 class="slide-title">Four things worth knowing before the details</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="stat">0.881</div>
+        <div class="label">Best composite — <code>hybrid_rrf</code> + HyDE or multi-query</div>
+        <div class="sub">Tied for first, reranker made no measurable difference here</div>
+      </div>
+      <div class="card">
+        <div class="stat">0.837–0.881</div>
+        <div class="label">Composite range across all 14 variants</div>
+        <div class="sub">A real but modest 4.4-point spread</div>
+      </div>
+      <div class="card">
+        <div class="stat">14 / 14</div>
+        <div class="label">Variants failed the same golden question</div>
+        <div class="sub">A chunking blind spot, not a strategy problem</div>
+      </div>
+      <div class="card">
+        <div class="stat">~30%</div>
+        <div class="label">Of grounded answers show zero citations</div>
+        <div class="sub">A citation-format parsing bug, present in every variant</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">05 / 14</div>
+</section>
+
+<section class="slide" id="s-table">
+  <div class="slide-inner" style="max-width:1200px;">
+    <div class="eyebrow">Full results</div>
+    <h2 class="slide-title">All 14 variants, every metric</h2>
+    <div class="slide-lede">Sorted by composite score, descending. Scroll horizontally on smaller screens.</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Variant</th><th>Config</th>
+            <th class="num">RAGAS faith.</th><th class="num">RAGAS relev.</th>
+            <th class="num">RAGAS ctx-prec.</th><th class="num">RAGAS ctx-recall</th>
+            <th class="num">DeepEval faith.</th><th class="num">DeepEval relev.</th>
+            <th class="num">DE pass%</th><th class="num">Retrieval ms</th>
+            <th class="num">Generate ms</th><th>Composite</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="slide-num">06 / 14</div>
+</section>
+
+<section class="slide" id="s-chart">
+  <div class="slide-inner">
+    <div class="eyebrow">Ranking</div>
+    <h2 class="slide-title">Composite score, ranked</h2>
+    <div class="panel" id="composite-chart"></div>
+  </div>
+  <div class="slide-num">07 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-transform">
+  <div class="slide-inner">
+    <div class="eyebrow">Finding 01 · Biggest lever</div>
+    <h2 class="slide-title">Query transforms beat every other lever tested</h2>
+    <div class="slide-lede">
+      HyDE and multi-query each added <strong>+0.018 composite</strong> over the plain
+      <code>hybrid_rrf</code> baseline — identically whether or not a reranker was also enabled.
+      That's a bigger single effect than switching retrieval mode or adding a reranker at all.
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h3>The cost side of the ledger</h3><span class="status warn">real latency &amp; token cost</span></div>
+      <div class="kv-list">
+        <div class="kv-row"><span class="k">Multi-query retrieval time</span><span class="v">54ms → 125ms (~2.3×)</span></div>
+        <div class="kv-row"><span class="k">Extra LLM call per question</span><span class="v">HyDE: ~1,000ms · multi-query: ~1,650ms</span></div>
+        <div class="kv-row"><span class="k">Why</span><span class="v">multi-query retrieves once per paraphrase, then fuses</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">08 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-rerank">
+  <div class="slide-inner">
+    <div class="eyebrow">Finding 02 · Inconsistent effect</div>
+    <h2 class="slide-title">Reranking helped some modes, hurt one</h2>
+    <div class="slide-lede">Paired composite-score deltas, reranker off → on, for each retrieval mode:</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Retrieval mode</th><th class="num">No reranker</th><th class="num">Cross-encoder</th><th class="num">Δ</th></tr></thead>
+        <tbody>
+          <tr><td>bm25</td><td class="num">0.855</td><td class="num">0.864</td><td class="num" style="color:var(--good);">+0.009</td></tr>
+          <tr><td>dense</td><td class="num">0.853</td><td class="num">0.856</td><td class="num" style="color:var(--good);">+0.004</td></tr>
+          <tr><td>hybrid_rrf</td><td class="num">0.864</td><td class="num">0.864</td><td class="num" style="color:var(--text-secondary);">+0.000</td></tr>
+          <tr><td>hybrid_weighted</td><td class="num">0.850</td><td class="num">0.837</td><td class="num" style="color:var(--bad);">−0.013</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel" style="margin-top:14px;">
+      For a 23-chunk corpus this small, first-stage retrieval is already strong enough that
+      reranking has little room to improve on it. For <code>hybrid_weighted</code> specifically it
+      actively hurt — most likely by reordering a couple of fusion-scored candidates in a way that
+      didn't match reference expectations.
+    </div>
+  </div>
+  <div class="slide-num">09 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-compress-speed">
+  <div class="slide-inner">
+    <div class="eyebrow">Findings 03 &amp; 04</div>
+    <h2 class="slide-title">Compression didn't earn its keep; BM25 was the speed champion</h2>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><h3>Contextual compression</h3><span class="status warn">wash to slightly negative</span></div>
+        <p style="font-size:14px; color:var(--text-secondary); margin:0;">
+          −0.013 composite with no reranker, +0.002 with the cross-encoder. At this corpus size the
+          reranker already narrows to 5 chunks — there's little left to trim, so compression mostly
+          adds an extra embedding-similarity pass for no benefit. It would likely earn its keep on a
+          much larger, noisier corpus.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>BM25 retrieval speed</h3><span class="status good">25–30× faster</span></div>
+        <p style="font-size:14px; color:var(--text-secondary); margin:0;">
+          Avg 2.2ms vs. 53–125ms for embedding-based modes, since it's pure local lexical scoring
+          with no embedding call in the loop — yet it scored within 0.01 composite of the best
+          embedding-based baseline. On a keyword-rich corpus, BM25 is a legitimately strong default
+          for latency-sensitive deployments, not just a fallback.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">10 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-refund">
+  <div class="slide-inner">
+    <div class="eyebrow">Finding 05 · Universal failure</div>
+    <h2 class="slide-title">One question broke every single variant</h2>
+    <div class="slide-lede">
+      "Am I eligible for a refund if I've been on the Growth plan for six months and just got
+      charged for a renewal?" — every one of the 14 variants, including both HyDE and multi-query
+      (designed to help with exactly this kind of paraphrased question), answered
+      <em>"answer not found in provided context."</em>
+    </div>
+    <div class="example bad-ex">Reference: "No. The 14-day money-back guarantee only applies to a customer's
+first payment on a tier, not to renewal charges."
+
+All 14 variants: "answer not found in provided context"</div>
+    <div class="panel" style="margin-top:14px; border-left:3px solid var(--bad);">
+      This is a <strong>chunking</strong> problem, not a retrieval-strategy problem: the 500-character
+      recursive splitter most likely separated the sentence naming the 14-day window from the sentence
+      excluding renewal charges into two different chunks — so no single retrieved chunk contained
+      the complete, qualifying policy fact. No amount of reranking or query rewriting fixes a fact
+      that's been chunked apart from its own qualifier. The fix is chunking strategy (larger chunk
+      size, or clause-aware splitting for policy documents), not retrieval strategy.
+    </div>
+  </div>
+  <div class="slide-num">11 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-citation">
+  <div class="slide-inner">
+    <div class="eyebrow">Finding 06 · Present in every variant</div>
+    <h2 class="slide-title">A citation-format bug hides good answers</h2>
+    <div class="slide-lede">
+      ~30% of answers show zero extracted citations despite being fully grounded — because the
+      model sometimes cites like a footnote (<code>[19]</code>) instead of the instructed
+      <code>[chunk_id]</code> format, and the extractor only recognizes exact chunk ids.
+    </div>
+    <div class="example bad-ex">Q: "What is the guaranteed support response time for a critical ticket on
+the Enterprise tier...?"
+A: "...is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the..."
+    citations extracted: 0   (the answer is correct and grounded — the tag just doesn't parse)</div>
+    <div class="panel" style="margin-top:14px;">
+      This is a prompt/parsing gap in the generation stage, independent of retrieval strategy — it
+      shows up identically regardless of which of the 14 configs is used, so no amount of strategy
+      tuning fixes it. The fix belongs in the citation prompt or the extraction regex.
+    </div>
+  </div>
+  <div class="slide-num">12 / 14</div>
+</section>
+
+<section class="slide" id="s-finding-deepeval">
+  <div class="slide-inner">
+    <div class="eyebrow">Reading the numbers correctly</div>
+    <h2 class="slide-title">Why DeepEval's pass rate sits at 50% almost everywhere</h2>
+    <div class="slide-lede">
+      13 of 14 variants show exactly a 50% DeepEval pass rate — not because half of every variant's
+      answers are bad, but because pass/fail requires <em>every</em> one of the 7 golden questions
+      to individually clear the relevancy threshold, and the refund-renewal failure scores 0.00 on
+      relevancy in every variant.
+    </div>
+    <div class="example bad-ex">DeepEval's own reason string:
+"The score is 0.00 because the response failed to address the question
+about refund eligibility for the Growth plan, instead providing
+unrelated information."</div>
+    <div class="panel" style="margin-top:14px;">
+      The underlying <strong>average</strong> relevancy score is still 0.79–0.93 across
+      variants — healthy — but one universally-failing question caps every variant's binary
+      pass/fail at 50%. Worth loosening to a majority- or threshold-based pass rule if this is meant
+      to be a go/no-go production gate.
+    </div>
+  </div>
+  <div class="slide-num">13 / 14</div>
+</section>
+
+<section class="slide" id="s-recommendation">
+  <div class="slide-inner">
+    <div class="eyebrow">Recommendation</div>
+    <h2 class="slide-title">What to actually ship</h2>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><h3>Configuration</h3><span class="status good">recommended</span></div>
+        <p style="font-size:14.5px;">
+          <strong>hybrid_rrf</strong> retrieval + <strong>HyDE</strong> query transform, reranker
+          optional. Tied for best composite (0.881) with and without the reranker — meaning the
+          reranker adds no measurable value once HyDE is in place, so skip it and save the latency.
+        </p>
+        <p style="font-size:14.5px; margin-bottom:0;">
+          If retrieval latency matters more than the last ~2% of quality: <strong>bm25</strong>,
+          no reranker, no query transform is a strong lower-cost fallback (0.855 composite, a
+          fraction of the latency, zero extra LLM calls).
+        </p>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Fix before shipping either config</h3><span class="status bad">blocking</span></div>
+        <ol class="numbered" style="font-size:14px;">
+          <li>Loosen the citation regex/prompt so numeric footnote-style citations still resolve to
+          a real chunk id, or re-emphasize the exact <code>[chunk_id]</code> format more forcefully.</li>
+          <li>Re-chunk clause-heavy policy sections (refunds, SLAs, deletion timelines) with a
+          larger chunk size or a semantic/clause-aware splitter.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">14 / 14</div>
+</section>
+
+<section class="slide" id="s-appendix">
+  <div class="slide-inner" style="max-width:1200px;">
+    <div class="eyebrow">Appendix</div>
+    <h2 class="slide-title">Golden question set &amp; per-variant answers</h2>
+    <div class="slide-lede">The 7 reference questions used to score every variant, plus an expandable answer log per variant.</div>
+    <div class="panel">
+      <div class="panel-header"><h3>Golden set</h3></div>
+      <div class="qa-grid" id="golden-set"></div>
+    </div>
+    <div id="qa-container" style="margin-top:14px;"></div>
+  </div>
+</section>
+
+<section class="slide" id="s-colophon" style="min-height:60vh;">
+  <div class="slide-inner">
+    <div class="eyebrow">Colophon</div>
+    <h2 class="slide-title">Generated from a live run of RAG Studio</h2>
+    <p class="slide-lede">
+      Every score in this presentation came from a real <code>rag</code> package execution — real
+      RAGAS calls, real DeepEval calls, real <code>gpt-4o-mini</code> generations. No fixture data,
+      no mocked judges.
+    </p>
+  </div>
+</section>
+
+<script>
+const DATA = [{"name": "hybrid_rrf__cross_encoder__hyde", "retrieval": "hybrid_rrf", "reranker": "cross_encoder", "query_transform": "hyde", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.741919871017255, "context_precision": 0.9999999999309523, "context_recall": 0.9285714285714286}, "ragas_avg": 0.8521466344037185, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.8814304600590022, "avg_retrieval_ms": 118.81050585985317, "avg_rerank_ms": 66.91154771085296, "avg_generate_ms": 1655.7895595656842, "avg_query_transform_ms": 969.4305715675, "avg_post_retrieval_ms": 0.0012912870650844915, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 236.14285714285714, "no_context_count": 0, "elapsed_seconds": 245.69211411476135, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__none__multiquery", "retrieval": "hybrid_rrf", "reranker": "none", "query_transform": "multi_query", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7419095789634804, "context_precision": 0.9999999999309523, "context_recall": 0.8571428571428571}, "ragas_avg": 0.834286918533132, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8571428571428571}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9285714285714286, "deepeval_pass_rate": 0.5, "composite": 0.8814291735522803, "avg_retrieval_ms": 124.82328571578753, "avg_rerank_ms": 0.00309528799594513, "avg_generate_ms": 1985.2225179950308, "avg_query_transform_ms": 1649.0719764218998, "avg_post_retrieval_ms": 0.0017618627420493535, "avg_citations_per_answer": 0.8571428571428571, "zero_citation_answers": 3, "avg_answer_length": 228.0, "no_context_count": 0, "elapsed_seconds": 287.43936419487, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [21].", "citations": []}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__none__hyde", "retrieval": "hybrid_rrf", "reranker": "none", "query_transform": "hyde", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418910833611213, "context_precision": 0.9999999999309523, "context_recall": 0.8571428571428571}, "ragas_avg": 0.8342822946325422, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8571428571428571}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9285714285714286, "deepeval_pass_rate": 0.5, "composite": 0.8814268616019854, "avg_retrieval_ms": 85.8590477270939, "avg_rerank_ms": 0.004809570132887789, "avg_generate_ms": 1637.8101370064542, "avg_query_transform_ms": 1059.0742262886904, "avg_post_retrieval_ms": 0.0012797245290130377, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 242.0, "no_context_count": 0, "elapsed_seconds": 300.5766909122467, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [nimbus_handbook.txt::5]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [nimbus_handbook.txt::20].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::20", "source": "nimbus_handbook.txt"}]}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__cross_encoder__multiquery", "retrieval": "hybrid_rrf", "reranker": "cross_encoder", "query_transform": "multi_query", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418908292331953, "context_precision": 0.9999999999309523, "context_recall": 0.9285714285714286}, "ragas_avg": 0.8521393739577037, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.8814268298359946, "avg_retrieval_ms": 104.66821999788019, "avg_rerank_ms": 59.18339871485451, "avg_generate_ms": 1694.6530834289401, "avg_query_transform_ms": 1091.2474821379874, "avg_post_retrieval_ms": 0.0009525725285389594, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 235.28571428571428, "no_context_count": 0, "elapsed_seconds": 256.77860927581787, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, the requests receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying, and the API rejects the excess requests immediately [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__cross_encoder__compression", "retrieval": "hybrid_rrf", "reranker": "cross_encoder", "query_transform": "none", "post_retrieval": "contextual_compression", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418976270520629, "context_precision": 0.9999999999309523, "context_recall": 0.7857142857142857}, "ragas_avg": 0.8164267876981348, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8285714285714285}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9142857142857143, "deepeval_pass_rate": 0.5, "composite": 0.8653562509919246, "avg_retrieval_ms": 53.21941657790116, "avg_rerank_ms": 96.13489872260418, "avg_generate_ms": 1991.5571427139055, "avg_query_transform_ms": 0.00474385784140655, "avg_post_retrieval_ms": 56.21627385595015, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 236.14285714285714, "no_context_count": 0, "elapsed_seconds": 254.27898287773132, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__cross_encoder", "retrieval": "hybrid_rrf", "reranker": "cross_encoder", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7419080519933311, "context_precision": 0.9999999999309523, "context_recall": 0.7857142857142857}, "ragas_avg": 0.8164293939334517, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.8635718398238688, "avg_retrieval_ms": 56.93514857141833, "avg_rerank_ms": 54.88451199822261, "avg_generate_ms": 1969.2556429986976, "avg_query_transform_ms": 0.00629742446887706, "avg_post_retrieval_ms": 0.0014402945193329028, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 236.14285714285714, "no_context_count": 0, "elapsed_seconds": 307.6815719604492, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__none", "retrieval": "hybrid_rrf", "reranker": "none", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418981759027506, "context_precision": 0.9999999999309523, "context_recall": 0.8571428571428571}, "ragas_avg": 0.8342840677679496, "deepeval": {"faithfulness": 0.9642857142857143, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.8928571428571428, "deepeval_pass_rate": 0.5, "composite": 0.8635706053125463, "avg_retrieval_ms": 53.63183343018006, "avg_rerank_ms": 0.0030357124550001962, "avg_generate_ms": 1670.4039404201988, "avg_query_transform_ms": 0.007387001200446061, "avg_post_retrieval_ms": 0.0008928597838218723, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 238.28571428571428, "no_context_count": 0, "elapsed_seconds": 362.8603892326355, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying, and excess requests are rejected immediately without being queued or delayed [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "bm25__cross_encoder", "retrieval": "bm25", "reranker": "cross_encoder", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418942427836581, "context_precision": 0.9999999999309523, "context_recall": 0.7857142857142857}, "ragas_avg": 0.8164259416310335, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.8635701136726597, "avg_retrieval_ms": 2.225464288910319, "avg_rerank_ms": 102.32942856133117, "avg_generate_ms": 1514.7558092846468, "avg_query_transform_ms": 0.007279994731236782, "avg_post_retrieval_ms": 0.0030834219484989133, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 232.28571428571428, "no_context_count": 0, "elapsed_seconds": 299.1553432941437, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying, and excess requests are rejected immediately without being queued or delayed [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "dense__cross_encoder", "retrieval": "dense", "reranker": "cross_encoder", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7418989615719542, "context_precision": 0.9999999999309523, "context_recall": 0.7857142857142857}, "ragas_avg": 0.8164271213281076, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.7928571428571428}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.8964285714285714, "deepeval_pass_rate": 0.5, "composite": 0.8564278463783395, "avg_retrieval_ms": 53.123160714416635, "avg_rerank_ms": 1049.3865475707155, "avg_generate_ms": 1814.60898813592, "avg_query_transform_ms": 0.0047384278981813365, "avg_post_retrieval_ms": 0.0015297181172562496, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 238.28571428571428, "no_context_count": 0, "elapsed_seconds": 9291.21408200264, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying, and excess requests are rejected immediately without being queued or delayed [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}, {"name": "bm25__none", "retrieval": "bm25", "reranker": "none", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7419089948552064, "context_precision": 0.9999999999309523, "context_recall": 0.7142857142857143}, "ragas_avg": 0.7985724867917778, "deepeval": {"faithfulness": 1.0, "answer_relevancy": 0.8214285714285714}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.8546433862530318, "avg_retrieval_ms": 20.49733342885572, "avg_rerank_ms": 0.006470143229567579, "avg_generate_ms": 3319.4699048596835, "avg_query_transform_ms": 0.007630858038152967, "avg_post_retrieval_ms": 0.002243996797395604, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 238.28571428571428, "no_context_count": 0, "elapsed_seconds": 3687.7569649219513, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying, and excess requests are rejected immediately without being queued or delayed [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "dense__none", "retrieval": "dense", "reranker": "none", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7095238095238096, "answer_relevancy": 0.7438806686827523, "context_precision": 0.9404761904077381, "context_recall": 0.7857142857142857}, "ragas_avg": 0.7948987385821464, "deepeval": {"faithfulness": 0.9642857142857143, "answer_relevancy": 0.8571428571428571}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.9107142857142857, "deepeval_pass_rate": 0.5, "composite": 0.852806512148216, "avg_retrieval_ms": 73.48861314156758, "avg_rerank_ms": 0.003708143984632833, "avg_generate_ms": 1867.7833748557273, "avg_query_transform_ms": 0.006202421250886151, "avg_post_retrieval_ms": 0.0020002813211509158, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 236.14285714285714, "no_context_count": 0, "elapsed_seconds": 289.7848551273346, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [13][15].", "citations": []}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_rrf__none__compression", "retrieval": "hybrid_rrf", "reranker": "none", "query_transform": "none", "post_retrieval": "contextual_compression", "chunk_count": 23, "ragas": {"faithfulness": 0.7142857142857143, "answer_relevancy": 0.7419021752367109, "context_precision": 0.9404761904077381, "context_recall": 0.8571428571428571}, "ragas_avg": 0.8134517342682551, "deepeval": {"faithfulness": 0.9166666666666666, "answer_relevancy": 0.8571428571428571}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.8869047619047619, "deepeval_pass_rate": 0.5, "composite": 0.8501782480865085, "avg_retrieval_ms": 52.66830970815915, "avg_rerank_ms": 0.0038808585876332863, "avg_generate_ms": 1415.889333422196, "avg_query_transform_ms": 0.005881148224164333, "avg_post_retrieval_ms": 55.940029714422835, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 237.14285714285714, "no_context_count": 0, "elapsed_seconds": 242.3573408126831, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The Nimbus API does not queue or delay excess requests; it rejects them immediately [nimbus_handbook.txt::10][nimbus_handbook.txt::12].", "citations": [{"chunk_id": "nimbus_handbook.txt::10", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::12", "source": "nimbus_handbook.txt"}]}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [13][15].", "citations": []}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_weighted__none", "retrieval": "hybrid_weighted", "reranker": "none", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7095238095238096, "answer_relevancy": 0.7418906966641595, "context_precision": 0.9999999999309523, "context_recall": 0.8571428571428571}, "ragas_avg": 0.8271393408154447, "deepeval": {"faithfulness": 0.9523809523809523, "answer_relevancy": 0.7928571428571428}, "deepeval_passed": {"faithfulness": true, "answer_relevancy": false}, "deepeval_avg": 0.8726190476190476, "deepeval_pass_rate": 0.5, "composite": 0.8498791942172461, "avg_retrieval_ms": 57.88916057956937, "avg_rerank_ms": 0.0037797227767961366, "avg_generate_ms": 1614.17360114865, "avg_query_transform_ms": 0.005077720353645938, "avg_post_retrieval_ms": 0.0011308542785367795, "avg_citations_per_answer": 1.0, "zero_citation_answers": 2, "avg_answer_length": 242.14285714285714, "no_context_count": 0, "elapsed_seconds": 281.2570700645447, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [nimbus_handbook.txt::19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [nimbus_handbook.txt::20].", "citations": [{"chunk_id": "nimbus_handbook.txt::19", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::20", "source": "nimbus_handbook.txt"}]}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::4].", "citations": [{"chunk_id": "nimbus_handbook.txt::4", "source": "nimbus_handbook.txt"}]}]}, {"name": "hybrid_weighted__cross_encoder", "retrieval": "hybrid_weighted", "reranker": "cross_encoder", "query_transform": "none", "post_retrieval": "none", "chunk_count": 23, "ragas": {"faithfulness": 0.7380952380952381, "answer_relevancy": 0.7419177586287136, "context_precision": 0.9999999999309523, "context_recall": 0.7857142857142857}, "ragas_avg": 0.8164318205922974, "deepeval": {"faithfulness": 0.8571428571428571, "answer_relevancy": 0.8571428571428571}, "deepeval_passed": {"faithfulness": false, "answer_relevancy": false}, "deepeval_avg": 0.8571428571428571, "deepeval_pass_rate": 0.0, "composite": 0.8367873388675773, "avg_retrieval_ms": 50.93385114534093, "avg_rerank_ms": 59.23517857445404, "avg_generate_ms": 1596.894184863361, "avg_query_transform_ms": 0.005017712412934218, "avg_post_retrieval_ms": 0.0018095680778580053, "avg_citations_per_answer": 0.7142857142857143, "zero_citation_answers": 3, "avg_answer_length": 236.14285714285714, "no_context_count": 0, "elapsed_seconds": 274.3783640861511, "qa_records": [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys.", "answer": "Nimbus uses AES-256 encryption for data at rest, and the encryption keys are managed through a hardware security module (HSM) cluster that is independently audited twice per year [nimbus_handbook.txt::7].", "citations": [{"chunk_id": "nimbus_handbook.txt::7", "source": "nimbus_handbook.txt"}]}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued.", "answer": "A Business tier account can make 1,200 requests per minute to the API. If that limit is exceeded, requests that exceed the rate limit receive an HTTP 429 response with a Retry-After header indicating how many seconds to wait before retrying. The API does not queue or delay excess requests; it rejects them immediately [10][12].", "citations": []}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion.", "answer": "The maximum total time before your data is permanently and irreversibly gone is 90 days. This includes 30 days for the deleted file to be in the recoverable trash folder and an additional 60 days for the account data to be retained in a read-only state after subscription cancellation, before it is permanently deleted [nimbus_handbook.txt::13][nimbus_handbook.txt::15].", "citations": [{"chunk_id": "nimbus_handbook.txt::13", "source": "nimbus_handbook.txt"}, {"chunk_id": "nimbus_handbook.txt::15", "source": "nimbus_handbook.txt"}]}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges.", "answer": "answer not found in provided context", "citations": []}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees.", "answer": "The guaranteed support response time for a critical ticket on the Enterprise tier is 1 hour [19]. If Nimbus misses its Enterprise uptime SLA, the affected customer is entitled to a service credit equal to 5% of that month's fees for each full percentage point of downtime below the guaranteed threshold, up to a maximum credit of 50% of that month's fees [20].", "citations": []}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on.", "answer": "Nimbus is not currently HIPAA-certified and does not recommend storing protected health information (PHI) on the platform unless the customer has signed a Business Associate Agreement (BAA) [nimbus_handbook.txt::21].", "citations": [{"chunk_id": "nimbus_handbook.txt::21", "source": "nimbus_handbook.txt"}]}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration.", "answer": "The cheapest subscription tier that includes single sign-on (SSO) is the Business tier, which costs $99 per month [nimbus_handbook.txt::5].", "citations": [{"chunk_id": "nimbus_handbook.txt::5", "source": "nimbus_handbook.txt"}]}]}];
+const GOLDEN = [{"id": "encryption", "question": "What encryption standard does Nimbus use for data at rest, and who manages the encryption keys?", "reference": "Data at rest is encrypted using AES-256. Encryption keys are managed through a hardware security module (HSM) cluster audited twice a year. For files in a Private Vault, Nimbus itself cannot access the encryption keys."}, {"id": "rate_limits", "question": "How many requests per minute can a Business tier account make to the API, and what happens if that limit is exceeded?", "reference": "Business tier accounts are limited to 1,200 requests per minute. Requests beyond that receive an HTTP 429 response with a Retry-After header; excess requests are rejected immediately, not queued."}, {"id": "deletion_timeline", "question": "If I delete a file and then cancel my subscription right away, what is the maximum total time before my data is permanently and irreversibly gone?", "reference": "Up to 90 days total: up to 60 days of read-only account retention after cancellation, followed by the standard 30-day trash recovery window before permanent deletion."}, {"id": "refund_renewal", "question": "Am I eligible for a refund if I've been on the Growth plan for six months and just got charged for a renewal?", "reference": "No. The 14-day money-back guarantee only applies to a customer's first payment on a tier, not to renewal charges."}, {"id": "enterprise_sla", "question": "What is the guaranteed support response time for a critical ticket on the Enterprise tier, and what service credit applies if Nimbus misses its Enterprise uptime SLA?", "reference": "Enterprise critical tickets have a guaranteed 1-hour response time. If uptime falls below the 99.95% Enterprise SLA, the customer receives a 5% service credit per full percentage point of downtime shortfall, capped at 50% of that month's fees."}, {"id": "hipaa", "question": "Is Nimbus HIPAA certified, and can I store health records on it?", "reference": "Nimbus is not HIPAA-certified. Storing protected health information is not recommended unless the customer has a signed Business Associate Agreement (BAA), which is only available as a custom Enterprise add-on."}, {"id": "cheapest_sso_tier", "question": "Which subscription tier is the cheapest one that includes single sign-on (SSO)?", "reference": "The Business tier, at $99 per month, is the cheapest tier that includes SSO integration."}];
+
+// ---- table ----
+const tbody = document.getElementById('table-body');
+DATA.forEach((v, i) => {
+  const tr = document.createElement('tr');
+  if (Math.abs(v.composite - DATA[0].composite) < 0.0005) tr.className = 'best';
+  const pills = [v.retrieval, v.reranker,
+                 v.query_transform !== 'none' ? v.query_transform : null,
+                 v.post_retrieval !== 'none' ? v.post_retrieval : null]
+    .filter(Boolean).map(c => `<span class="badge mono" style="margin-right:3px;">${c}</span>`).join('');
+  tr.innerHTML = `
+    <td><strong>${v.name}</strong></td>
+    <td>${pills}</td>
+    <td class="num">${v.ragas.faithfulness.toFixed(2)}</td>
+    <td class="num">${v.ragas.answer_relevancy.toFixed(2)}</td>
+    <td class="num">${v.ragas.context_precision.toFixed(2)}</td>
+    <td class="num">${v.ragas.context_recall.toFixed(2)}</td>
+    <td class="num">${v.deepeval.faithfulness.toFixed(2)}</td>
+    <td class="num">${v.deepeval.answer_relevancy.toFixed(2)}</td>
+    <td class="num">${(v.deepeval_pass_rate*100).toFixed(0)}%</td>
+    <td class="num">${v.avg_retrieval_ms.toFixed(0)}</td>
+    <td class="num">${v.avg_generate_ms.toFixed(0)}</td>
+    <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${(v.composite*100).toFixed(0)}%"></div></div><span style="font-family:var(--mono);">${v.composite.toFixed(3)}</span></div></td>`;
+  tbody.appendChild(tr);
+});
+
+// ---- chart ----
+const chart = document.getElementById('composite-chart');
+const maxC = Math.max(...DATA.map(v => v.composite));
+DATA.forEach(v => {
+  const row = document.createElement('div');
+  row.className = 'chart-row';
+  row.innerHTML = `<div class="name">${v.name}</div>
+    <div class="track"><div class="fill" style="width:${(v.composite/maxC*100).toFixed(1)}%"></div></div>
+    <div class="val">${v.composite.toFixed(3)}</div>`;
+  chart.appendChild(row);
+});
+
+// ---- golden set ----
+const goldenEl = document.getElementById('golden-set');
+GOLDEN.forEach(g => {
+  const div = document.createElement('div');
+  div.className = 'qa-item';
+  div.innerHTML = `<div class="qa-q">${g.question}</div><div class="qa-ref">Reference: ${g.reference}</div>`;
+  goldenEl.appendChild(div);
+});
+
+// ---- per-variant answer log ----
+const qaContainer = document.getElementById('qa-container');
+DATA.forEach(v => {
+  const details = document.createElement('details');
+  details.className = 'panel';
+  details.style.cursor = 'pointer';
+  const summary = document.createElement('summary');
+  summary.style.cssText = 'cursor:pointer;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;';
+  summary.innerHTML = `<span>${v.name}</span><span style="font-family:var(--mono);font-weight:400;color:var(--text-secondary);">composite ${v.composite.toFixed(3)}</span>`;
+  details.appendChild(summary);
+  const body = document.createElement('div');
+  body.style.marginTop = '10px';
+  (v.qa_records || []).forEach(qa => {
+    const item = document.createElement('div');
+    item.className = 'qa-item';
+    const n = (qa.citations || []).length;
+    item.innerHTML = `<div class="qa-q">${qa.question}</div>
+      <div class="qa-ref">Reference: ${qa.reference}</div>
+      <div style="font-size:13.5px;">${qa.answer ?? '<em>(error)</em>'}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-secondary);margin-top:4px;">${n} citation${n===1?'':'s'}</div>`;
+    body.appendChild(item);
+  });
+  details.appendChild(body);
+  qaContainer.appendChild(details);
+});
+
+// ---- scroll rail ----
+const slides = Array.from(document.querySelectorAll('section.slide'));
+const railLine = document.getElementById('rail-line');
+slides.forEach((s, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'rail-dot';
+  dot.dataset.target = s.id;
+  const title = s.querySelector('.slide-title') ? s.querySelector('.slide-title').textContent : s.id;
+  dot.innerHTML = `<span class="tip">${title}</span>`;
+  dot.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
+  railLine.appendChild(dot);
+});
+const dots = Array.from(railLine.querySelectorAll('.rail-dot'));
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      dots.forEach(d => d.classList.remove('active'));
+      if (dots[idx]) dots[idx].classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

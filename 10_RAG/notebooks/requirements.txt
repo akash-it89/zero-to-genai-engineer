@@ -1,0 +1,83 @@
+# Requirements for the 10_RAG notebooks (01–11)
+#   pip install -r requirements.txt
+#
+# Each notebook also self-installs its own subset via a "%pip install" cell at the top,
+# so you can either use this file up front or just run the notebooks standalone.
+#
+# Every package below is verified against every notebook's actual `%pip install` cell —
+# nothing here is unused, and nothing a notebook imports is missing. Packages are listed
+# once, under the notebook that first introduces them; later notebooks that reuse a
+# package are noted in a comment rather than re-listing it.
+#
+# numpy is pinned <2 for opencv / rapidocr (OCR) compatibility.
+numpy<2
+
+# ── Notebook 01 — Why RAG (LangChain + OpenAI) ──
+langchain
+langchain-core
+langchain-openai
+python-dotenv
+
+# ── Notebook 02 — Ingestion & Chunking (LangChain) ──
+# (reuses langchain-openai, python-dotenv from Notebook 01)
+langchain-community
+langchain-text-splitters
+langchain-experimental
+langchain-classic
+langchain-pymupdf4llm
+pypdf
+docx2txt
+beautifulsoup4
+lxml
+tiktoken
+rapidocr-onnxruntime
+
+# ── Notebook 03 — Ingestion & Chunking (LlamaIndex) ──
+# (reuses rapidocr-onnxruntime, docx2txt, beautifulsoup4, lxml, tiktoken, python-dotenv)
+llama-index
+llama-index-readers-file
+llama-index-embeddings-openai
+llama-index-llms-openai
+pymupdf4llm
+
+# ── Notebook 04 — Embeddings (OpenAI + local models) ──
+# (reuses langchain-openai, tiktoken, python-dotenv)
+sentence-transformers
+scikit-learn
+matplotlib
+
+# ── Notebook 05 — Vector Databases (FAISS → Chroma → Pinecone) ──
+# (reuses langchain-openai, matplotlib, tiktoken, python-dotenv — no new deps beyond these three)
+faiss-cpu
+chromadb
+pinecone
+
+# ── Notebook 06 — Sparse Retrieval ──
+# (reuses scikit-learn, sentence-transformers, langchain-openai, python-dotenv)
+bm25s
+PyStemmer
+
+# ── Notebook 07 — Hybrid Search ──
+# (reuses bm25s, PyStemmer, sentence-transformers, scikit-learn, langchain-openai,
+#  matplotlib, python-dotenv — no new deps)
+
+# ── Notebook 08 — Reranking ──
+# (reuses bm25s, PyStemmer, sentence-transformers, langchain-openai, matplotlib, python-dotenv)
+flashrank
+cohere
+
+# ── Notebook 09 — RAGAS Evaluation ──
+# (reuses langchain-openai, python-dotenv; the notebook self-shims a Vertex AI import
+#  some ragas releases pull in unconditionally even though this project never uses Vertex AI)
+ragas
+pandas
+
+# ── Notebook 10 — DeepEval Evaluation ──
+# (reuses langchain-openai, python-dotenv — only one new dep)
+deepeval
+
+# ── Notebook 11 — Production-Ready Conversational Chatbots ──
+# (reuses langchain, langchain-openai, python-dotenv)
+langchain-anthropic
+langgraph
+langgraph-checkpoint-sqlite

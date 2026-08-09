@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching Deck: Notebook 04, Embeddings</title>
+<style>
+  :root {
+    --bg: #fafbfb; --surface: #ffffff; --surface-alt: #f2f3f3; --border: #e4e7ea;
+    --text: #16191f; --text-secondary: #5f6b7a;
+    --accent: #0b8f6b; --accent-dark: #075c46; --accent-soft: #e6f6f1;
+    --teach: #8a6d00; --teach-soft: #fdf6e0;
+    --good: #037f0c; --good-soft: #e9f6ea; --bad: #cc1f1f; --bad-soft: #fdeeee;
+    --code-bg: #10231c; --code-text: #dff2ea;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --radius: 10px; --rail-color: rgba(11, 143, 107, 0.32);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15.5px; line-height: 1.6; }
+  h1, h2, h3 { font-family: var(--sans); margin: 0; }
+  section.slide { min-height: 100vh; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center; padding: 68px 116px 68px 76px; border-bottom: 1px solid var(--border); position: relative; }
+  .slide-inner { max-width: 1040px; margin: 0 auto; width: 100%; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 14px; }
+  .eyebrow::before { content: ""; width: 20px; height: 2px; background: var(--accent); display: inline-block; }
+  h2.slide-title { font-size: 32px; font-weight: 700; margin-bottom: 10px; text-wrap: balance; letter-spacing: -0.01em; color: var(--text); }
+  .slide-lede { color: var(--text-secondary); font-size: 16.5px; max-width: 76ch; margin-bottom: 26px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; box-shadow: 0 1px 2px rgba(16,24,32,0.04); }
+  .panel + .panel { margin-top: 14px; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .panel-header h3 { font-size: 15px; font-weight: 700; }
+  .teach { background: var(--teach-soft); border: 1px solid #f0e0a6; border-left: 4px solid var(--teach); border-radius: 8px; padding: 16px 20px; margin-top: 16px; }
+  .teach .eyebrow { color: var(--teach); margin-bottom: 8px; } .teach .eyebrow::before { background: var(--teach); }
+  .teach p { margin: 0 0 6px; font-size: 14.5px; } .teach p:last-child { margin-bottom: 0; }
+  .teach ul { margin: 6px 0 0; padding-left: 20px; } .teach li { font-size: 14.5px; margin-bottom: 4px; }
+  .grid { display: grid; gap: 16px; } .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 900px) { .compare { grid-template-columns: 1fr; } }
+  .compare-card { border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); }
+  .compare-card.bad { background: var(--bad-soft); border-color: #f3caca; } .compare-card.good { background: var(--good-soft); border-color: #c6e6c9; }
+  .compare-card .tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; margin-bottom: 10px; }
+  .compare-card.bad .tag { background: var(--bad); color: white; } .compare-card.good .tag { background: var(--good); color: white; }
+  code.inline { font-family: var(--mono); background: var(--surface-alt); padding: 1px 6px; border-radius: 4px; font-size: 0.88em; }
+  pre.code { background: var(--code-bg); color: var(--code-text); border-radius: 8px; padding: 16px 18px; font-family: var(--mono); font-size: 12.8px; overflow-x: auto; line-height: 1.55; margin: 0; }
+  .code-label { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .stat-badge { background: var(--accent-soft); color: var(--accent-dark); border-radius: 8px; padding: 9px 15px; font-family: var(--mono); font-size: 13.5px; font-weight: 700; }
+  .stat-badge.bad { background: var(--bad-soft); color: var(--bad); }
+  .stat-badge.good { background: var(--good-soft); color: var(--good); }
+
+  /* similarity heatmap mock */
+  .heatmap { display: inline-grid; grid-template-columns: repeat(3, 76px); gap: 4px; margin: 8px 0; }
+  .hcell { height: 60px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 13px; border-radius: 6px; color: white; }
+  .hlabel { font-size: 10.5px; color: var(--text-secondary); text-align: center; font-weight: 600; }
+
+  /* bar comparison */
+  .bar-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+  .bar-row .lbl { width: 190px; font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+  .bar-row .track { flex: 1; height: 20px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; }
+  .bar-row .fill { height: 100%; border-radius: 4px 0 0 4px; }
+  .bar-row .val { width: 60px; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 700; flex-shrink: 0; }
+
+  table.agenda { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  table.agenda th, table.agenda td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+  table.agenda th { background: var(--surface-alt); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  table.agenda td.time { font-family: var(--mono); color: var(--accent-dark); font-weight: 700; white-space: nowrap; }
+  table.agenda tr:last-child td { border-bottom: none; }
+  table.rule { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); font-size: 13.5px; }
+  table.rule th, table.rule td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.rule th { background: var(--surface-alt); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  table.rule tr:last-child td { border-bottom: none; }
+  .faq-item { padding: 14px 0; border-bottom: 1px solid var(--border); } .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-weight: 700; font-size: 14.5px; margin-bottom: 5px; color: var(--accent-dark); }
+  .faq-a { font-size: 14px; color: var(--text-secondary); }
+  /* scatter mock */
+  .scatter { position: relative; width: 100%; max-width: 560px; height: 220px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin: 10px 0; }
+  .scatter .dot { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .scatter .dot.far { background: var(--bad); box-shadow: 0 0 0 4px var(--bad-soft); }
+  .scatter .ring { position: absolute; width: 92px; height: 68px; border: 2px dashed var(--accent); border-radius: 50%; opacity: 0.55; }
+  .scatter .cap { position: absolute; font-size: 11px; font-weight: 700; color: var(--text-secondary); font-family: var(--mono); }
+
+  /* puzzle fit mock */
+  .puzzle-visual { display: flex; gap: 60px; margin: 14px 0; flex-wrap: wrap; }
+  .puzzle-pair { display: flex; align-items: center; }
+  .puzzle-piece { width: 88px; height: 64px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 700; font-size: 11px; color: #fff; border-radius: 5px; position: relative; }
+  .puzzle-pair.fit .puzzle-piece:first-child { background: var(--accent); margin-right: -14px; }
+  .puzzle-pair.fit .puzzle-piece:last-child { background: var(--accent); }
+  .puzzle-pair.fit .puzzle-piece:first-child::after { content: ""; position: absolute; right: -13px; top: 20px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); }
+  .puzzle-pair.mismatch { gap: 22px; align-items: flex-start; }
+  .puzzle-pair.mismatch .puzzle-piece:first-child { background: var(--accent); }
+  .puzzle-pair.mismatch .puzzle-piece:last-child { background: var(--bad); margin-top: 22px; }
+  .puzzle-x { align-self: center; color: var(--bad); font-weight: 700; font-size: 20px; margin: 0 -4px; }
+
+  /* matryoshka rings */
+  .matryoshka { position: relative; width: 200px; height: 200px; margin: 10px auto; }
+  .matryoshka .ring-outer { position: absolute; inset: 0; border: 3px solid var(--accent); border-radius: 50%; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; font-family: var(--mono); font-size: 11px; color: var(--accent-dark); font-weight: 700; }
+  .matryoshka .ring-inner { position: absolute; top: 46px; left: 46px; right: 46px; bottom: 46px; border: 3px solid var(--teach); border-radius: 50%; display: flex; align-items: flex-start; justify-content: center; padding-top: 6px; font-family: var(--mono); font-size: 10.5px; color: var(--teach); font-weight: 700; }
+
+  .rail { position: fixed; top: 0; right: 36px; height: 100vh; display: flex; align-items: center; z-index: 50; }
+  .rail-line { position: relative; height: 78%; border-right: 2px dotted var(--rail-color); display: flex; flex-direction: column; justify-content: space-between; }
+  .rail-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); transform: translateX(6px); cursor: pointer; transition: all 0.25s ease; position: relative; }
+  .rail-dot:hover { border-color: var(--accent); }
+  .rail-dot.active { background: var(--accent); border-color: var(--accent); transform: translateX(6px) scale(1.25); }
+  .rail-dot .tip { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); background: var(--text); color: white; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+  .rail-dot:hover .tip { opacity: 1; }
+  @media (max-width: 780px) { .rail { display: none; } section.slide { padding: 48px 24px; } }
+  .slide-num { position: absolute; top: 42px; right: 116px; font-family: var(--mono); font-size: 12px; color: var(--text-secondary); }
+  @media (max-width: 780px) { .slide-num { display: none; } }
+  #s-cover { background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); }
+  .cover-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); }
+
+  /* student/trainer mode toggle */
+  .teach { display: none; }
+  body.trainer-mode .teach { display: block; }
+  .mode-toggle {
+    position: fixed; bottom: 22px; left: 22px; z-index: 200;
+    display: flex; align-items: center; gap: 9px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 14px 8px 12px; box-shadow: 0 4px 14px rgba(16,24,32,0.10);
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    opacity: 0.55; transition: opacity 0.2s ease;
+  }
+  .mode-toggle:hover { opacity: 1; }
+  .mode-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex-shrink: 0; }
+  .mode-toggle.trainer-on .dot { background: var(--teach); }
+  .mode-toggle button {
+    border: none; background: var(--surface-alt); border-radius: 999px; padding: 5px 11px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--text); font-family: var(--sans);
+  }
+  .mode-toggle button:hover { background: var(--border); }
+  @media print { .mode-toggle { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="mode-toggle" id="mode-toggle">
+  <span class="dot"></span>
+  <span id="mode-label">Student view &mdash; safe to present</span>
+  <button id="mode-btn" type="button">Show trainer notes</button>
+</div>
+
+
+<nav class="rail"><div class="rail-line" id="rail-line"></div></nav>
+
+<section class="slide" id="s-cover">
+  <div class="slide-inner">
+    <div class="eyebrow">Teaching Deck · Notebook 04</div>
+    <h2 class="slide-title" style="font-size:44px;">Embeddings: turning meaning into points on a map</h2>
+    <div class="slide-lede">
+      Notebooks 02 and 03 got us chunks. This one turns those chunks into vectors so "close in meaning"
+      becomes a number you can actually compute. Every stat on these slides came out of a real run last night, nothing here is made up.
+    </div>
+    <div class="cover-badges">
+      <span class="badge">~40–45 min session</span>
+      <span class="badge">OpenAI + local models</span>
+      <span class="badge">4 model-choice axes</span>
+      <span class="badge">2026 production update included</span>
+    </div>
+  </div>
+  <div class="slide-num">01 / 12</div>
+</section>
+
+<section class="slide" id="s-fit">
+  <div class="slide-inner">
+    <div class="eyebrow">Where this fits</div>
+    <h2 class="slide-title">We've got chunks. They still can't be searched.</h2>
+    <div class="slide-lede">You can't compare two strings for "closeness," there's no math operation for that. So we turn each chunk into a vector, a list of numbers, and closeness turns into something we can compute: cosine similarity.</div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Open with this line, it always lands: "yesterday we decided WHAT to feed the model, today we decide HOW it gets turned into numbers." Keep it short, move on fast, the good stuff is next slide.</p>
+    </div>
+  </div>
+  <div class="slide-num">02 / 12</div>
+</section>
+
+<section class="slide" id="s-geometry">
+  <div class="slide-inner">
+    <div class="eyebrow">Core concept</div>
+    <h2 class="slide-title">Paraphrases sit close together. Random text doesn't.</h2>
+    <div class="slide-lede">Two sentences, zero words in common, run through cosine similarity:</div>
+    <div class="heatmap">
+      <div class="hcell" style="background:#0b8f6b;">1.00</div><div class="hcell" style="background:#3ba888;">0.60</div><div class="hcell" style="background:#e3e8e6; color:#5f6b7a;">0.09</div>
+      <div class="hcell" style="background:#3ba888;">0.60</div><div class="hcell" style="background:#0b8f6b;">1.00</div><div class="hcell" style="background:#e3e8e6; color:#5f6b7a;">0.09</div>
+      <div class="hcell" style="background:#e3e8e6; color:#5f6b7a;">0.09</div><div class="hcell" style="background:#e3e8e6; color:#5f6b7a;">0.09</div><div class="hcell" style="background:#0b8f6b;">1.00</div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:6px;">
+      <div class="hlabel" style="width:76px;">"cancel<br>subscription"</div><div class="hlabel" style="width:76px;">"terminate<br>plan"</div><div class="hlabel" style="width:76px;">"warehouse<br>migration"</div>
+    </div>
+    <div class="stats">
+      <span class="stat-badge good">cos(paraphrases) = 0.598, high</span>
+      <span class="stat-badge bad">cos(unrelated) = 0.088, basically nothing</span>
+    </div>
+    <div class="scatter">
+      <div class="ring" style="left:70px; top:64px;"></div>
+      <div class="dot" style="left:88px; top:88px;"></div>
+      <div class="dot" style="left:118px; top:78px;"></div>
+      <div class="cap" style="left:52px; top:130px;">paraphrase pair, sit right on top of each other</div>
+      <div class="dot far" style="left:430px; top:38px;"></div>
+      <div class="cap" style="left:400px; top:12px;">"warehouse migration", off on its own</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Say the keyword count out loud before you show the number: zero shared words. That's the whole pitch for semantic search over keyword search, right there, don't over-explain it after.</p>
+    </div>
+  </div>
+  <div class="slide-num">03 / 12</div>
+</section>
+
+<section class="slide" id="s-ironrule">
+  <div class="slide-inner">
+    <div class="eyebrow">The one non-negotiable rule</div>
+    <h2 class="slide-title">Index and query have to use the same model. Full stop.</h2>
+    <div class="puzzle-visual">
+      <div class="puzzle-pair fit">
+        <div class="puzzle-piece">index<br>model A</div>
+        <div class="puzzle-piece">query<br>model A</div>
+      </div>
+      <div class="puzzle-pair mismatch">
+        <div class="puzzle-piece">index<br>model A</div>
+        <div class="puzzle-x">✕</div>
+        <div class="puzzle-piece">query<br>model B</div>
+      </div>
+    </div>
+    <div class="compare">
+      <div class="compare-card bad">
+        <span class="tag">Broken #1: different dims</span>
+        <p style="font-size:13.5px; margin:0;">3-large query (3072d) vs 3-small index (1536d)</p>
+        <p style="font-size:13px; margin-top:8px; font-family:var(--mono);">→ ValueError, the vectors aren't even the same length</p>
+      </div>
+      <div class="compare-card bad">
+        <span class="tag">Broken #2: same dims, wrong model</span>
+        <p style="font-size:13.5px; margin:0;">Same 384-dim, the exact same sentence, two different models</p>
+        <p style="font-size:13px; margin-top:8px; font-family:var(--mono);">→ cos = 0.230, reads as "barely related" and it's identical text</p>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Broken #1 is the boring one, it crashes and you fix it in five minutes. Broken #2 is the one that's bitten actual teams in prod: no error, no stack trace, retrieval just quietly returns garbage. Say it plainly: same dimensions doesn't mean same space. Only the same model gives you that. Tell them to version-lock the embedding model the same way they'd lock a database schema, and don't let anyone swap it "real quick" without re-embedding everything.</p>
+    </div>
+  </div>
+  <div class="slide-num">04 / 12</div>
+</section>
+
+<section class="slide" id="s-axes">
+  <div class="slide-inner">
+    <div class="eyebrow">Choosing a model</div>
+    <h2 class="slide-title">There's no "best" embedding model. Four things to weigh.</h2>
+    <div class="grid grid-4">
+      <div class="panel"><div class="panel-header"><h3>Language</h3></div><p style="font-size:13px; margin:0;">Got non-English text in the corpus? Multilingual model, no debate.</p></div>
+      <div class="panel"><div class="panel-header"><h3>Context window</h3></div><p style="font-size:13px; margin:0;">Its max tokens has to beat your chunk size or it just truncates.</p></div>
+      <div class="panel"><div class="panel-header"><h3>Dimensionality</h3></div><p style="font-size:13px; margin:0;">More dims, more nuance. Also more storage and slower search.</p></div>
+      <div class="panel"><div class="panel-header"><h3>Domain fit</h3></div><p style="font-size:13px; margin:0;">Heavy jargon? A general model will blur terms together. Fine-tune.</p></div>
+    </div>
+  </div>
+  <div class="slide-num">05 / 12</div>
+</section>
+
+<section class="slide" id="s-lang">
+  <div class="slide-inner">
+    <div class="eyebrow">Axis 1 · Language</div>
+    <h2 class="slide-title">Same sentence, three languages, wildly different scores</h2>
+    <div class="slide-lede">One legal clause about a 60-day notice period. Embedded in English, French, and Hindi.</div>
+    <div class="bar-row"><div class="lbl">English-only: EN↔FR</div><div class="track"><div class="fill" style="width:2%; background:#cc1f1f;"></div></div><div class="val">−0.028</div></div>
+    <div class="bar-row"><div class="lbl">English-only: EN↔HI</div><div class="track"><div class="fill" style="width:5%; background:#cc1f1f;"></div></div><div class="val">−0.052</div></div>
+    <div class="bar-row"><div class="lbl">Multilingual: EN↔FR</div><div class="track"><div class="fill" style="width:86%; background:#0b8f6b;"></div></div><div class="val">+0.859</div></div>
+    <div class="bar-row"><div class="lbl">Multilingual: EN↔HI</div><div class="track"><div class="fill" style="width:94%; background:#0b8f6b;"></div></div><div class="val">+0.945</div></div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Point at the negative numbers and just let that sit for a second. The English-only model doesn't merely miss the connection between EN and FR, it scores them as if they're pointing the opposite direction. Then flip to the multilingual row and watch the same pair jump to 0.86-0.94. Same sentence both times.</p>
+    </div>
+  </div>
+  <div class="slide-num">06 / 12</div>
+</section>
+
+<section class="slide" id="s-context">
+  <div class="slide-inner">
+    <div class="eyebrow">Axis 2 · Context window</div>
+    <h2 class="slide-title">We buried a passphrase at the end of a long document</h2>
+    <div class="slide-lede">974 tokens of filler, then "ZEBRA-42" tucked in right at the end. Query: "what is the secret passphrase?"</div>
+    <div class="bar-row"><div class="lbl">all-MiniLM (256 tok max)</div><div class="track"><div class="fill" style="width:0%; background:#cc1f1f;"></div></div><div class="val">−0.131</div></div>
+    <div class="bar-row"><div class="lbl">OpenAI 3-small (8191 tok)</div><div class="track"><div class="fill" style="width:33%; background:#0b8f6b;"></div></div><div class="val">+0.333</div></div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>MiniLM caps out at 256 tokens so it truncated the doc way before it ever reached "ZEBRA-42." It never saw it, so of course the score is negative. And nothing tells you this happened, no error, no warning, the call just returns and looks fine. Loop back to notebook 02 here: chunk size has to respect the embedding model's max tokens or you get exactly this, quietly.</p>
+    </div>
+  </div>
+  <div class="slide-num">07 / 12</div>
+</section>
+
+<section class="slide" id="s-dims">
+  <div class="slide-inner">
+    <div class="eyebrow">Axis 3 · Dimensionality</div>
+    <h2 class="slide-title">Matryoshka truncation: cut it to 256d, keep almost all the signal</h2>
+    <div class="grid grid-2" style="align-items:center;">
+      <div>
+        <div class="bar-row"><div class="lbl">3-large, full (3072d)</div><div class="track"><div class="fill" style="width:56%; background:#0b8f6b;"></div></div><div class="val">0.560</div></div>
+        <div class="bar-row"><div class="lbl">3-large, truncated (256d)</div><div class="track"><div class="fill" style="width:59%; background:#0b8f6b;"></div></div><div class="val">0.591</div></div>
+      </div>
+      <div class="matryoshka">
+        <div class="ring-outer">3072d</div>
+        <div class="ring-inner">256d</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px; border-left: 3px solid var(--accent);">
+      <strong>Production pattern:</strong> retrieve a wide candidate set with the cheap truncated
+      vectors, then re-score just the top-K with the full-dimension ones. You keep most of the
+      storage and speed win and give up almost nothing on quality.
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Funny thing, truncated actually scored a hair higher here, 0.591 vs 0.560. Don't oversell that, it's not "truncated is better," it's noise on one pair. The real point: at 12x smaller you're still carrying almost all of the useful signal, that's the headline, not this one coin flip.</p>
+    </div>
+  </div>
+  <div class="slide-num">08 / 12</div>
+</section>
+
+<section class="slide" id="s-domain">
+  <div class="slide-inner">
+    <div class="eyebrow">Axis 4 · Domain fit</div>
+    <h2 class="slide-title">A general model doesn't know your jargon</h2>
+    <div class="slide-lede">Two logistics KPIs that mean different things to anyone who works in supply chain:</div>
+    <div class="stats">
+      <span class="stat-badge">"on-time delivery rate" ↔ "perfect order rate"</span>
+      <span class="stat-badge bad">similarity = 0.545</span>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Ask the room: "to a supply-chain analyst, are these the same metric?" They'll say no pretty fast once you push. On-time delivery is just timing. Perfect order rate also folds in accuracy and completeness, it's a stricter, broader metric. The general model can't tell, it just sees two similar-sounding phrases about deliveries and scores them mid-high. If your domain is full of terms like this, that's your cue to fine-tune on labeled query-passage pairs, or lean on metadata filters instead of trusting the embedding alone.</p>
+    </div>
+  </div>
+  <div class="slide-num">09 / 12</div>
+</section>
+
+<section class="slide" id="s-2026">
+  <div class="slide-inner">
+    <div class="eyebrow">2026 update, say this part out loud</div>
+    <h2 class="slide-title">Don't ship the model we just used in class</h2>
+    <table class="rule">
+      <tr><th>What's in this notebook</th><th>What you'd actually deploy</th></tr>
+      <tr><td>all-MiniLM-L6-v2 (2021, 22M params), fast and tiny, good for a live demo</td><td><strong>BGE-M3</strong> (multilingual, hybrid retrieval by default) or <strong>Qwen3-Embedding</strong> (currently on top of the open-weight leaderboard)</td></tr>
+      <tr><td>text-embedding-3-small/large</td><td>Still the current OpenAI option, nothing's replaced it as of this session</td></tr>
+    </table>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Say it plainly so it sticks: the iron rule and the four axes don't care which model name you plug in, they hold either way. We picked MiniLM because it downloads in ten seconds mid-class, not because it's what belongs in production. Don't let anyone walk out thinking MiniLM is the answer.</p>
+    </div>
+  </div>
+  <div class="slide-num">10 / 12</div>
+</section>
+
+<section class="slide" id="s-agenda">
+  <div class="slide-inner">
+    <div class="eyebrow">Suggested session flow</div>
+    <h2 class="slide-title">Roughly 40 minutes, here's how I'd run it</h2>
+    <table class="agenda">
+      <tr><th>Time</th><th>Segment</th></tr>
+      <tr><td class="time">0-5 min</td><td>Quick recap: we have chunks, now they need to become vectors we can compare</td></tr>
+      <tr><td class="time">5-12 min</td><td>Paraphrase vs. unrelated demo, heatmap and scatter, let it sink in</td></tr>
+      <tr><td class="time">12-20 min</td><td>The iron rule, run both broken scenarios live, don't skip the crash</td></tr>
+      <tr><td class="time">20-34 min</td><td>Four axes back to back: language, context window, dimensions, domain fit</td></tr>
+      <tr><td class="time">34-40 min</td><td>2026 model note, then straight into Notebook 05, vector databases</td></tr>
+    </table>
+  </div>
+  <div class="slide-num">11 / 12</div>
+</section>
+
+<section class="slide" id="s-faq">
+  <div class="slide-inner">
+    <div class="eyebrow">Anticipate these questions</div>
+    <h2 class="slide-title">Questions I get every time I teach this</h2>
+    <div class="panel">
+      <div class="faq-item"><div class="faq-q">"Can I mix embedding providers to save money?"</div><div class="faq-a">No. Back to the iron rule, pick one model per index and stick with it. Switch and you're re-embedding everything, there's no shortcut.</div></div>
+      <div class="faq-item"><div class="faq-q">"So more dimensions is always better?"</div><div class="faq-a">More nuance, sure, but also more storage and slower search. Matryoshka truncation is the compromise most teams actually use, retrieve wide and cheap, then rerank narrow with the full vectors.</div></div>
+      <div class="faq-item"><div class="faq-q">"How do I know if I actually need to fine-tune?"</div><div class="faq-a">When two concepts that mean clearly different things to your users still score suspiciously similar, like the KPI pair. That's a real signal, not a hunch.</div></div>
+    </div>
+  </div>
+  <div class="slide-num">12 / 12</div>
+</section>
+
+<script>
+const slides = Array.from(document.querySelectorAll('section.slide'));
+const railLine = document.getElementById('rail-line');
+slides.forEach((s) => {
+  const dot = document.createElement('div');
+  dot.className = 'rail-dot';
+  const title = s.querySelector('.slide-title') ? s.querySelector('.slide-title').textContent : s.id;
+  dot.innerHTML = `<span class="tip">${title}</span>`;
+  dot.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
+  railLine.appendChild(dot);
+});
+const dots = Array.from(railLine.querySelectorAll('.rail-dot'));
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      dots.forEach(d => d.classList.remove('active'));
+      if (dots[idx]) dots[idx].classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => observer.observe(s));
+
+const modeToggle = document.getElementById('mode-toggle');
+const modeLabel = document.getElementById('mode-label');
+const modeBtn = document.getElementById('mode-btn');
+modeBtn.addEventListener('click', () => {
+  const isTrainer = document.body.classList.toggle('trainer-mode');
+  modeToggle.classList.toggle('trainer-on', isTrainer);
+  modeLabel.textContent = isTrainer ? 'Trainer view \u2014 notes visible, do not project like this' : 'Student view \u2014 safe to present';
+  modeBtn.textContent = isTrainer ? 'Hide trainer notes' : 'Show trainer notes';
+});
+</script>
+</body>
+</html>

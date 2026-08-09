@@ -1,0 +1,8 @@
+API Rate Limits Explained
+
+API rate limits scale with your plan: Free tier allows 100 requests per minute, Pro tier
+allows 1,000 requests per minute, and Enterprise allows 10,000 requests per minute (higher
+limits are negotiable for Enterprise customers with sustained high-volume needs). Exceeding
+your limit returns an HTTP 429 status code. When you receive a 429, your client should back
+off and wait at least 60 seconds before retrying — repeated immediate retries can extend
+your rate-limit window.

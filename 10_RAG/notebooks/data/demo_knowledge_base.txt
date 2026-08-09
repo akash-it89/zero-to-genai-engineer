@@ -1,0 +1,193 @@
+# Engineering & Ops Knowledge Base (Demo Corpus)
+
+Run 'git reset --soft HEAD~1' to undo the last commit while keeping all its changes staged in the index.
+
+Raise the log level of the HTTP client library (for example set the 'httpx' or 'urllib3' logger to WARNING) so individual request/response lines are suppressed while real warnings still surface.
+
+Amazon EFS is a managed elastic file system for POSIX file sharing across many instances.
+
+Run 'git reset --hard HEAD~1' to undo the last commit and discard all its changes permanently.
+
+Enforce multi-factor authentication to reduce the impact of stolen credentials.
+
+Angina is chest pain from reduced blood flow to the heart that does not cause permanent muscle damage.
+
+Product SKU9921XL is the extra-large red jacket priced at 89 dollars.
+
+A 504 Gateway Timeout means the upstream service took too long to respond; increase the gateway's read timeout.
+
+A 502 Bad Gateway from the API gateway means the upstream service returned an invalid response or is down. Restart the upstream service and verify its health checks are passing.
+
+Amazon RDS is a managed relational database service, not general file storage.
+
+Cosine similarity measures the angle between vectors and is the standard metric for comparing embeddings.
+
+A traditional IRA may offer a tax deduction on contributions depending on income and workplace coverage.
+
+This agreement renews automatically for successive one-year terms unless cancelled before the renewal date.
+
+Product SKU7788XL is the extra-large blue hoodie and is priced at 49 dollars.
+
+Amazon S3 is object storage designed for cheaply storing and retrieving large files (objects) at scale, with tiers like S3 Standard and lower-cost S3 Glacier for archives.
+
+Product SKU7788LG is the large blue hoodie and is priced at 45 dollars.
+
+A myocardial infarction, or heart attack, is caused by occlusion of a coronary artery — usually a ruptured atherosclerotic plaque — that cuts off blood flow and causes ischemic damage to cardiac muscle.
+
+Quantize a self-hosted model to reduce GPU memory and increase throughput.
+
+A Roth IRA has income eligibility limits and, unlike a 401k, no employer match.
+
+A sequential scan is chosen by the planner when a table is small or when most rows match the filter.
+
+Python 3.8 introduced the walrus operator := for assignment expressions.
+
+Enable gzip compression to reduce response payload sizes.
+
+Connection pooling with PgBouncer reduces the overhead of establishing new database connections.
+
+Larger embedding dimensions capture more nuance but increase vector-database memory and storage cost.
+
+Store passwords as salted hashes using a slow, memory-hard algorithm such as bcrypt, scrypt, or Argon2 — never plaintext or fast hashes like MD5 or SHA-256.
+
+A 503 Service Unavailable indicates the server is overloaded or in maintenance mode; enable autoscaling or a maintenance page.
+
+PostgreSQL listens on TCP port 5432 by default.
+
+CrashLoopBackOff means the container starts, exits with an error, and Kubernetes keeps restarting it with increasing back-off delays; inspect 'kubectl logs' and the exit code to find why it exits.
+
+Store session tokens in httpOnly, Secure cookies to mitigate XSS token theft.
+
+Reranking with a cross-encoder rescoring the top-k results improves precision at the top.
+
+ImagePullBackOff means Kubernetes cannot pull the container image; check the image name, tag, and registry credentials.
+
+Rotate log files daily and compress old ones to save disk space.
+
+DNS uses port 53, over UDP for most queries and TCP for zone transfers.
+
+Hypertension is chronically elevated blood pressure that raises the risk of many cardiac events.
+
+Heart failure is the heart's inability to pump enough blood to meet the body's needs.
+
+A readiness probe failure keeps a pod out of the Service endpoints until it reports healthy.
+
+Rotate API keys regularly and scope them to the minimum permissions required.
+
+Horizontally scale the service behind a load balancer to add more capacity.
+
+Embeddings from different models live in different vector spaces, so a query embedded with one model is not comparable to a corpus embedded with another; you must use the identical model for both index and query.
+
+A traditional 401k is funded with pre-tax dollars, lowering taxable income now, but withdrawals in retirement are taxed as ordinary income.
+
+Adding an index speeds up reads but slows down writes because every INSERT must update the index structure.
+
+The confidentiality obligations survive for three years following termination of this agreement.
+
+A 500 Internal Server Error is an unhandled exception in application code; check the stack trace in your logs.
+
+Amazon CloudFront is a CDN that caches content at edge locations closer to users.
+
+Run 'git restore --staged <file>' to unstage a file while keeping its working-tree changes.
+
+SSH uses TCP port 22 by default for encrypted remote shell access.
+
+Run 'git revert HEAD' to create a new commit that undoes the previous commit without rewriting history.
+
+Use a secrets manager like Vault to keep database credentials out of source code.
+
+Amazon DynamoDB is a managed key-value and document NoSQL database.
+
+Late payments accrue interest at 1.5 percent per month until the outstanding balance is settled.
+
+SMTP uses port 25 for mail relay, with 587 for authenticated submission.
+
+Fine-tuning an embedding model on in-domain pairs improves retrieval over generic off-the-shelf models.
+
+Increase the application's overall log level to ERROR to hide informational messages everywhere.
+
+Shorten retrieved context by reranking and keeping only the top few chunks.
+
+A stroke occurs when blood supply to part of the brain is interrupted, either by a clot or a bleed.
+
+The extra-large hoodie is available in blue, black, and grey while stocks last.
+
+A 529 plan provides tax-free growth when funds are used for qualified education expenses.
+
+Validate and sanitize all input to prevent injection attacks.
+
+Either party may terminate this agreement for convenience by providing sixty days prior written notice to the other party.
+
+Add structured JSON logging so downstream tools can parse fields reliably.
+
+A health savings account offers triple tax advantages for qualified medical expenses.
+
+Apply per-user rate limiting (for example a token-bucket limit of N requests per minute keyed by user or API key) so one client cannot exhaust capacity for others.
+
+Pending means the pod cannot be scheduled, often due to insufficient CPU or memory on any node.
+
+Either party may terminate for material breach if the breach remains uncured thirty days after written notice.
+
+Postgres replication lag can make read replicas return slightly stale data under heavy load.
+
+Browser 'Bad Gateway' pages can sometimes be cleared by flushing local DNS and refreshing the cache.
+
+Batch multiple requests together to amortize fixed per-call overhead.
+
+Add a caching layer so repeated identical requests are served without hitting the backend.
+
+Use a circuit breaker to stop calling a downstream dependency that is failing.
+
+Use a semantic cache that returns a stored answer when a new query is similar to a previous one.
+
+Evicted pods were removed because the node ran out of disk or memory resources.
+
+VACUUM reclaims storage from dead tuples and updates the visibility map for index-only scans.
+
+Enable provider prompt-prefix caching (Anthropic or OpenAI) so the shared system-prompt/context prefix is cached and billed at a large discount on cache hits, with no code changes beyond marking the prefix.
+
+Amazon EBS provides block storage volumes attached to a single EC2 instance, not shared object storage.
+
+HTTPS uses TCP port 443 by default for encrypted web traffic.
+
+Sample high-volume traces at 10 percent to control observability costs.
+
+Run 'git commit --amend' to modify the most recent commit's message or contents.
+
+A Roth 401k is funded with after-tax dollars, so qualified withdrawals in retirement — including investment gains — are completely tax-free.
+
+Python 3.12 improved f-strings, added a per-interpreter GIL, and refined type-parameter syntax.
+
+Free shipping applies to all hoodie orders over 75 dollars within the domestic region.
+
+HTTP uses TCP port 80 by default for unencrypted web traffic.
+
+Python 2.7 reached end of life in 2020 and no longer receives security updates.
+
+A 400 Bad Request means the client sent malformed input; validate the request body against the schema.
+
+OOMKilled indicates the container exceeded its memory limit and was terminated by the kernel.
+
+Approximate nearest neighbor search trades a little recall for large speed gains over brute force.
+
+Python 3.10 introduced structural pattern matching with the match statement and better error messages for syntax errors.
+
+Route simple queries to a smaller, cheaper model and reserve the frontier model for hard ones.
+
+An arrhythmia is an abnormal heart rhythm that can be too fast, too slow, or irregular.
+
+Postgres may ignore an index when a query's WHERE clause wraps the column in a function or casts its type, making the index non-sargable; rewrite the predicate or add a matching expression index.
+
+Ship logs to a centralized aggregator like Loki or Elasticsearch for searching and retention.
+
+Python 3.9 added dictionary merge operators and relaxed decorator grammar.
+
+Python 3.11 introduced fine-grained error locations in tracebacks, pointing to the exact expression that caused an error, plus significantly faster startup.
+
+Run 'git stash' to shelve uncommitted changes and return to a clean working tree.
+
+Product SKU7788XL2 is the double-extra-large blue hoodie priced at 52 dollars.
+
+Encrypt data in transit with TLS 1.3 so credentials are never sent in cleartext over the network.
+
+Neither party's liability shall exceed the total fees paid in the preceding twelve months.

@@ -1,0 +1,25 @@
+# Requirements for the MCP + Agents + RAG Helpdesk Capstone
+#   pip install -r requirements.txt
+#
+# Reuses production_rag_chatbot/'s dependencies for the RAG half (see that
+# folder's own requirements.txt) plus the MCP + modern LangChain agent stack.
+
+mcp>=1.0.0
+langchain-mcp-adapters
+langchain>=1.0.0
+langgraph
+python-dotenv
+
+# Reused from production_rag_chatbot/rag_pipeline.py (already installed if you've
+# run Notebook 13, listed here so this folder is runnable standalone too):
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+pypdf
+docx2txt
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+openai
+langchain-openai

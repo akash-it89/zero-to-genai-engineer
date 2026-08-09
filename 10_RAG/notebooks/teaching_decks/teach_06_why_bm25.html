@@ -1,0 +1,549 @@
+<title>Notebook 06: Why BM25</title>
+<style>
+  :root{
+    color-scheme: light;
+    --paper:#FAF9F5;
+    --paper-deep:#F1EFE8;
+    --card:#FFFFFF;
+    --ink:#181A1B;
+    --ink-soft:#5B5F63;
+    --ink-faint:#8A8D90;
+    --navy:#131921;
+    --navy-soft:#232F3E;
+    --orange:#FF9900;
+    --orange-deep:#CC7A00;
+    --blue:#4285F4;
+    --red:#D93A2B;
+    --yellow:#F2A900;
+    --green:#1E8E3E;
+    --line:#E4E1D6;
+    --line-soft:#EDEBE1;
+    --font-display: "Google Sans", "Segoe UI Semibold", "Segoe UI", Roboto, Arial, sans-serif;
+    --font-body: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html{ scroll-snap-type: y mandatory; scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-body); -webkit-font-smoothing:antialiased; }
+
+  .dot-rail{
+    position:fixed; top:0; right:0; bottom:0; width:46px;
+    background-image: radial-gradient(var(--navy-soft) 1.4px, transparent 1.6px);
+    background-size: 16px 16px; background-position: 8px 8px;
+    opacity:0.10; pointer-events:none; z-index:1;
+  }
+  .progress-nav{
+    position:fixed; right:16px; top:50%; transform:translateY(-50%); z-index:10;
+    display:flex; flex-direction:column; gap:11px; align-items:center;
+  }
+  .progress-nav button{
+    width:9px; height:9px; border-radius:50%; border:1.5px solid var(--navy-soft);
+    background:transparent; opacity:0.35; padding:0; cursor:pointer; transition:all .25s ease;
+  }
+  .progress-nav button:hover{ opacity:0.7; }
+  .progress-nav button.active{ background:var(--orange); border-color:var(--orange); opacity:1; transform:scale(1.25); }
+  .progress-nav button:focus-visible{ outline:2px solid var(--blue); outline-offset:3px; }
+
+  section{
+    scroll-snap-align:start; scroll-snap-stop:always;
+    min-height:100vh; min-height:100svh;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: 6vh 90px 6vh 8vw; position:relative;
+  }
+  @media (max-width: 760px){
+    section{ padding: 6vh 60px 6vh 24px; }
+    .dot-rail{ width:26px; }
+    .progress-nav{ right:8px; gap:8px; }
+  }
+  .wrap{ max-width:940px; width:100%; }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--orange-deep); font-weight:600; margin:0 0 14px 0; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{ content:""; width:22px; height:2px; background:var(--orange); display:inline-block; }
+
+  h1,h2{ font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--navy); letter-spacing:-0.01em; }
+  h1{ font-size:clamp(32px, 4.2vw, 54px); font-weight:700; line-height:1.1; }
+  h2{ font-size:clamp(26px, 3.4vw, 40px); font-weight:700; line-height:1.14; }
+  .sub{ font-size:18px; color:var(--ink-soft); margin:16px 0 0 0; max-width:660px; line-height:1.55; }
+  .body-copy{ font-size:16.5px; color:var(--ink-soft); line-height:1.6; max-width:640px; }
+  .body-copy + .body-copy{ margin-top:10px; }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:6px; }
+
+  /* ---- title ---- */
+  #s1{ background: var(--navy); }
+  #s1 .eyebrow{ color:var(--orange); } #s1 .eyebrow::before{ background:var(--orange); }
+  #s1 h1{ color:#fff; } #s1 .sub{ color:#B7BEC7; }
+  .versus-row{ display:flex; align-items:center; gap:18px; margin-top:40px; flex-wrap:wrap; }
+  .versus-card{
+    padding:16px 22px; border-radius:6px; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.14); min-width:150px;
+  }
+  .versus-card .name{ font-weight:700; color:#EDEFF1; font-size:17px; }
+  .versus-card .tag{ font-family:var(--font-mono); font-size:12px; color:#9AA3AC; margin-top:4px; }
+  .versus-vs{ font-family:var(--font-mono); color:var(--orange); font-weight:700; font-size:15px; }
+
+  /* ---- the hook: dense already does semantic search, so why bm25 ---- */
+  .recall-strip{
+    margin-top:22px; padding:14px 20px; border-radius:6px; background:#EAF6EC; border-left:3px solid var(--green);
+    font-size:14.5px; color:var(--ink); max-width:660px; line-height:1.55;
+  }
+  .gap-row{ display:flex; flex-direction:column; gap:12px; margin-top:22px; max-width:700px; }
+  .gap-item{ display:flex; gap:16px; padding:15px 18px; align-items:flex-start; }
+  .gap-item .mark{
+    font-family:var(--font-mono); font-weight:700; color:var(--red); font-size:15px;
+    flex-shrink:0; width:22px; height:22px; border-radius:50%; border:1.5px solid var(--red);
+    display:flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .gap-item .t{ font-weight:700; color:var(--navy); font-size:15px; }
+  .gap-item .d{ font-size:13.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
+  .gap-item .d b{ color:var(--ink); }
+  .hook-verdict{
+    margin-top:24px; padding:16px 20px; border-radius:6px; background:var(--navy); color:#fff;
+    border-left:4px solid var(--orange); max-width:700px; font-size:15px; line-height:1.55;
+  }
+
+  /* ---- recap ---- */
+  .formula-row{ display:flex; align-items:center; gap:14px; margin-top:26px; flex-wrap:wrap; }
+  .formula-piece{
+    padding:14px 20px; border-radius:6px; background:var(--paper-deep); border:1px solid var(--line);
+    font-family:var(--font-mono); font-size:15px; color:var(--navy); font-weight:600; text-align:center;
+  }
+  .formula-piece .cap{ display:block; font-family:var(--font-body); font-size:11.5px; font-weight:600;
+    color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; margin-top:6px; }
+  .formula-op{ font-size:20px; color:var(--ink-faint); }
+  .recap-note{
+    margin-top:24px; padding:16px 20px; border-radius:6px; background:#EEF3FE; border-left:3px solid var(--blue);
+    font-size:14.5px; color:var(--ink); max-width:640px; line-height:1.55;
+  }
+
+  /* ---- the problem, dog example ---- */
+  .dog-row{ display:flex; gap:20px; margin-top:28px; flex-wrap:wrap; }
+  .dog-card{ flex:1; min-width:220px; padding:20px 22px; text-align:center; }
+  .dog-card .count{ font-family:var(--font-mono); font-size:34px; font-weight:700; color:var(--navy); }
+  .dog-card .label{ font-size:13.5px; color:var(--ink-faint); margin-top:4px; }
+  .dog-card .verdict{ margin-top:14px; font-size:14px; color:var(--ink-soft); }
+  .question-box{
+    margin-top:26px; padding:18px 22px; border-radius:6px; background:var(--navy); color:#fff;
+    border-left:4px solid var(--orange); max-width:660px; font-size:16.5px; line-height:1.5;
+  }
+
+  /* ---- the two curves ---- */
+  .chart-row{ display:flex; gap:36px; margin-top:26px; flex-wrap:wrap; align-items:flex-start; }
+  .chart-box{ flex-shrink:0; }
+  .chart-title{ font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); text-transform:uppercase;
+    letter-spacing:.06em; margin-bottom:8px; font-weight:700; }
+  .chart-caption{ font-size:13.5px; color:var(--ink-soft); max-width:230px; line-height:1.55; margin-top:8px; }
+  .headline-sentence{
+    margin-top:26px; padding:18px 22px; border-radius:6px; background:#FFF4E0; border-left:3px solid var(--orange);
+    font-size:15.5px; color:var(--ink); max-width:700px; line-height:1.6;
+  }
+  .headline-sentence b{ color:var(--navy); }
+
+  /* ---- the numbers table ---- */
+  table.multiples{ width:100%; max-width:640px; border-collapse:collapse; margin-top:26px; font-size:15px; }
+  table.multiples th, table.multiples td{ padding:10px 16px; text-align:center; border-bottom:1px solid var(--line-soft); font-family:var(--font-mono); }
+  table.multiples th{ color:var(--ink-faint); font-size:12px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; text-align:center; }
+  table.multiples td:first-child, table.multiples th:first-child{ text-align:left; font-family:var(--font-body); font-weight:600; color:var(--navy); }
+  table.multiples tr.tfidf td{ color:var(--red); font-weight:700; }
+  table.multiples tr.bm25 td{ color:var(--green); font-weight:700; }
+
+  /* ---- formula anatomy ---- */
+  .anatomy-row{ display:flex; gap:16px; margin-top:28px; flex-wrap:wrap; }
+  .anatomy-card{ flex:1; min-width:180px; padding:18px 20px; }
+  .anatomy-card .badge{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px; font-weight:700; letter-spacing:.06em;
+    text-transform:uppercase; padding:3px 8px; border-radius:4px; margin-bottom:10px;
+  }
+  .anatomy-card.shared .badge{ background:#EEF3FE; color:var(--blue); }
+  .anatomy-card.new1 .badge{ background:#EAF6EC; color:var(--green); }
+  .anatomy-card.new2 .badge{ background:#FFF4E0; color:var(--orange-deep); }
+  .anatomy-card .t{ font-weight:700; color:var(--navy); font-size:16px; }
+  .anatomy-card .d{ font-size:13.5px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .ceiling-box{
+    margin-top:22px; padding:14px 20px; border-radius:6px; background:var(--paper-deep);
+    font-family:var(--font-mono); font-size:14px; color:var(--navy); max-width:500px;
+  }
+
+  /* ---- real corpus win / blind spot cards ---- */
+  .win-card{ padding:20px 24px; max-width:680px; }
+  .win-card .doc-line{ font-family:var(--font-mono); font-size:14px; color:var(--ink-soft); line-height:1.6; }
+  .win-card .query-line{ font-family:var(--font-mono); font-size:15px; color:var(--navy); font-weight:700; margin-top:12px; }
+  .score-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .score-badge{ font-family:var(--font-mono); font-size:13px; font-weight:700; padding:7px 13px; border-radius:5px; }
+  .score-badge.hit{ background:#EAF6EC; color:var(--green); border:1px solid var(--green); }
+  .score-badge.miss{ background:#FBEAE8; color:var(--red); border:1px solid var(--red); }
+  .score-badge.thin{ background:#FFF4E0; color:var(--orange-deep); border:1px solid var(--orange); }
+  #s9-card{ padding:20px 24px; max-width:680px; border-left:4px solid var(--red); }
+
+  /* ---- industry fact ---- */
+  .timeline{ display:flex; align-items:center; gap:0; margin-top:30px; flex-wrap:wrap; }
+  .tl-step{ flex:1; min-width:150px; text-align:center; padding:18px 10px; border-top:3px solid var(--line); }
+  .tl-step .yr{ font-family:var(--font-mono); font-size:12px; color:var(--orange-deep); font-weight:700; }
+  .tl-step .t{ font-size:14.5px; font-weight:700; color:var(--navy); margin-top:6px; }
+  .tl-step:nth-child(1){ border-top-color:var(--ink-faint); }
+  .tl-step:nth-child(2){ border-top-color:var(--red); }
+  .tl-step:nth-child(3){ border-top-color:var(--orange); }
+
+  /* ---- splade concept ---- */
+  .splade-flow{ display:flex; align-items:center; gap:14px; margin-top:26px; flex-wrap:wrap; }
+  .splade-box{ padding:16px 20px; border-radius:6px; text-align:center; }
+  .splade-box .k{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; }
+  .splade-box .v{ font-size:15px; font-weight:700; color:var(--navy); margin-top:4px; }
+  .splade-arrow{ font-size:20px; color:var(--orange); }
+  .token-cloud{ display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; max-width:700px; }
+  .token{
+    font-family:var(--font-mono); font-size:13.5px; padding:6px 12px; border-radius:5px;
+    background:var(--paper-deep); border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .token.expansion{ background:#EAF6EC; border-color:var(--green); color:var(--green); font-weight:700; }
+  .token-legend{ display:flex; gap:18px; margin-top:14px; font-size:12.5px; color:var(--ink-faint); flex-wrap:wrap; }
+  .token-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend-dot{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+  .legend-dot.plain{ background:var(--paper-deep); border:1px solid var(--line); }
+  .legend-dot.exp{ background:#EAF6EC; border:1px solid var(--green); }
+
+  /* ---- splade matrix ---- */
+  table.matrix3{ width:100%; max-width:640px; border-collapse:collapse; margin-top:26px; font-size:14.5px; }
+  table.matrix3 th, table.matrix3 td{ padding:10px 14px; text-align:center; border-bottom:1px solid var(--line-soft); }
+  table.matrix3 th{ color:var(--ink-faint); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+  table.matrix3 td:first-child, table.matrix3 th:first-child{ text-align:left; font-weight:600; color:var(--navy); }
+  table.matrix3 td.hit{ color:var(--green); font-weight:700; font-family:var(--font-mono); }
+  table.matrix3 td.miss{ color:var(--red); font-weight:700; font-family:var(--font-mono); }
+  .cost-note{
+    margin-top:22px; padding:14px 20px; border-radius:6px; background:#FFF4E0; border-left:3px solid var(--orange);
+    font-size:14px; color:var(--ink); max-width:640px; line-height:1.55;
+  }
+
+  /* ---- today plan ---- */
+  #s13{ background:var(--navy); }
+  #s13 h2{ color:#fff; } #s13 .sub{ color:#B7BEC7; }
+  .plan-list{ margin-top:28px; display:flex; flex-direction:column; gap:10px; max-width:620px; }
+  .plan-item{
+    display:flex; align-items:center; gap:14px; padding:12px 18px; border-radius:6px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);
+  }
+  .plan-item .n{
+    font-family:var(--font-mono); font-weight:700; color:var(--navy); background:var(--orange);
+    width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12px; flex-shrink:0;
+  }
+  .plan-item .t{ color:#EDEFF1; font-size:14.5px; }
+  .today-cta{ margin-top:32px; display:inline-flex; align-items:center; gap:10px; font-family:var(--font-mono);
+    font-size:15px; font-weight:700; color:var(--orange); }
+  .today-cta .arrow{ font-size:20px; }
+</style>
+
+<div class="dot-rail" aria-hidden="true"></div>
+<nav class="progress-nav" aria-label="Slide navigation">
+  <button data-target="s1" aria-label="Slide 1: Title" class="active"></button>
+  <button data-target="s2" aria-label="Slide 2: Why not just dense embeddings"></button>
+  <button data-target="s3" aria-label="Slide 3: TF-IDF recap"></button>
+  <button data-target="s4" aria-label="Slide 4: The problem"></button>
+  <button data-target="s5" aria-label="Slide 5: The two curves"></button>
+  <button data-target="s6" aria-label="Slide 6: The numbers"></button>
+  <button data-target="s7" aria-label="Slide 7: Formula anatomy"></button>
+  <button data-target="s8" aria-label="Slide 8: Real corpus win"></button>
+  <button data-target="s9" aria-label="Slide 9: Blind spot"></button>
+  <button data-target="s10" aria-label="Slide 10: Meet SPLADE"></button>
+  <button data-target="s11" aria-label="Slide 11: SPLADE results"></button>
+  <button data-target="s12" aria-label="Slide 12: Industry fact"></button>
+  <button data-target="s13" aria-label="Slide 13: Today's plan"></button>
+</nav>
+
+<section id="s1">
+  <div class="wrap">
+    <p class="eyebrow">Notebook 06 &middot; Sparse Retrieval</p>
+    <h1>Why BM25, and not just TF-IDF?</h1>
+    <p class="sub">We already know TF-IDF. Today we find the one thing wrong with it, and the one idea that fixes it. That idea is BM25.</p>
+    <div class="versus-row">
+      <div class="versus-card"><div class="name">TF-IDF</div><div class="tag">what we already know</div></div>
+      <div class="versus-vs">vs</div>
+      <div class="versus-card"><div class="name">BM25</div><div class="tag">what search engines actually run</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="wrap">
+    <p class="eyebrow">Before we start, the obvious question</p>
+    <h2>We already have dense embeddings. Why learn a second retriever?</h2>
+    <p class="body-copy">Last class we saw embeddings place meaning into a few hundred dimensions, so "how do plants make food using light" lands right next to "photosynthesis converts sunlight into glucose" even though the two sentences share almost no words. That part is real and it works.</p>
+    <div class="recall-strip">What embeddings are genuinely good at: paraphrase, synonyms, intent, meaning that survives when the wording changes completely.</div>
+    <p class="body-copy" style="margin-top:20px;">So here is the fair question to ask before we spend a whole notebook on something older than embeddings: if meaning already works, what is left to fix?</p>
+    <div class="gap-row">
+      <div class="card gap-item">
+        <span class="mark">1</span>
+        <div><div class="t">No guarantee on exact tokens</div><div class="d">An error code, a SKU, a citation gets folded into a vector like every other word. Embeddings compare "roughly similar," they were never built to promise "this exact string is present."</div></div>
+      </div>
+      <div class="card gap-item">
+        <span class="mark">2</span>
+        <div><div class="t">The wins are often razor thin</div><div class="d">In our own notebook 4 numbers, dense embeddings found the right document on a tricky query, but its top score beat the second place score by as little as <b>0.06</b>. Correct today, one similar document away from wrong.</div></div>
+      </div>
+      <div class="card gap-item">
+        <span class="mark">3</span>
+        <div><div class="t">Every query costs a model call</div><div class="d">Dense search needs an embedding model to run at query time. That is latency and, on a hosted API, money. Per query, every time.</div></div>
+      </div>
+      <div class="card gap-item">
+        <span class="mark">4</span>
+        <div><div class="t">You cannot ask it why</div><div class="d">A cosine similarity of 0.548 is just a number. It does not tell you which words mattered or how rare they were. Nothing to debug when it ranks something oddly.</div></div>
+      </div>
+    </div>
+    <div class="hook-verdict">Dense embeddings are not wrong, they are fuzzy by design. That fuzziness is exactly what makes them bad at exact, rare, cheap, explainable matching. BM25 is the tool built for precisely that gap, which is why production search almost always runs both.</div>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="wrap">
+    <p class="eyebrow">So, a 30 second recap</p>
+    <h2>TF-IDF in one line</h2>
+    <p class="body-copy">Score a word by how often it shows up in this document, and how rare it is across every document. Common words like "the" score low everywhere. Rare words like "ERR_2048" score high wherever they appear.</p>
+    <div class="formula-row">
+      <div class="formula-piece">score<span class="cap">what we compute</span></div>
+      <div class="formula-op">=</div>
+      <div class="formula-piece">TF<span class="cap">count in this doc</span></div>
+      <div class="formula-op">&times;</div>
+      <div class="formula-piece">IDF<span class="cap">rarity across all docs</span></div>
+    </div>
+    <div class="recap-note">This part is fine. Nobody is replacing IDF today. The part we are about to break is <b>TF</b>, the raw count.</div>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="wrap">
+    <p class="eyebrow">The problem</p>
+    <h2>Raw counts have no ceiling</h2>
+    <p class="body-copy">Two documents, both about dogs. Same query: "dog".</p>
+    <div class="dog-row">
+      <div class="card dog-card">
+        <div class="count">1&times;</div>
+        <div class="label">Doc 1 says "dog" once</div>
+        <div class="verdict">You read it. It's about a dog.</div>
+      </div>
+      <div class="card dog-card">
+        <div class="count">100&times;</div>
+        <div class="label">Doc 2 says "dog" a hundred times</div>
+        <div class="verdict">You already knew that by the fifth mention.</div>
+      </div>
+    </div>
+    <div class="question-box">TF-IDF's answer: Doc 2 is exactly <b>100 times</b> more relevant than Doc 1. Double the count, double the score, forever, with no limit.<br><br>Is that actually true?</div>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="wrap">
+    <p class="eyebrow">What BM25 changes</p>
+    <h2>Two curves, one argument</h2>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Same chart, both formulas</div>
+        <svg width="260" height="210" viewBox="0 0 260 210" role="img" aria-label="Chart comparing TF-IDF as a straight rising line against BM25 as a flat curve near the bottom">
+          <line x1="34" y1="20" x2="34" y2="176" stroke="#8A8D90" stroke-width="1"/>
+          <line x1="34" y1="176" x2="246" y2="176" stroke="#8A8D90" stroke-width="1"/>
+          <text x="2" y="26" font-family="Arial" font-size="10" fill="#5B5F63">score</text>
+          <text x="205" y="196" font-family="Arial" font-size="10" fill="#5B5F63">word count</text>
+          <line x1="34" y1="176" x2="240" y2="24" stroke="#D93A2B" stroke-width="2.5"/>
+          <text x="150" y="60" font-family="ui-monospace,monospace" font-size="11" fill="#D93A2B" font-weight="700">TF-IDF</text>
+          <polyline points="34,176 55,110 76,92 97,84 129,78 161,75 202,73 240,72" fill="none" stroke="#1E8E3E" stroke-width="2.5"/>
+          <line x1="34" y1="70" x2="246" y2="70" stroke="#1E8E3E" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+          <text x="150" y="66" font-family="ui-monospace,monospace" font-size="11" fill="#1E8E3E" font-weight="700">BM25</text>
+          <text x="150" y="66" font-family="ui-monospace,monospace" font-size="9.5" fill="#1E8E3E"></text>
+        </svg>
+        <p class="chart-caption">TF-IDF keeps climbing forever. BM25 rises fast at first, then flattens and hits a wall.</p>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Zoomed in: just the BM25 shape</div>
+        <svg width="230" height="210" viewBox="0 0 230 210" role="img" aria-label="Zoomed chart showing the BM25 curve rising quickly then flattening toward its ceiling">
+          <line x1="34" y1="20" x2="34" y2="176" stroke="#8A8D90" stroke-width="1"/>
+          <line x1="34" y1="176" x2="216" y2="176" stroke="#8A8D90" stroke-width="1"/>
+          <text x="2" y="26" font-family="Arial" font-size="10" fill="#5B5F63">score</text>
+          <text x="170" y="196" font-family="Arial" font-size="10" fill="#5B5F63">word count</text>
+          <polyline points="34,176 46,88 60,58 76,42 96,32 122,26 155,23 190,22 216,21" fill="none" stroke="#1E8E3E" stroke-width="2.5"/>
+          <line x1="34" y1="20" x2="216" y2="20" stroke="#1E8E3E" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+          <text x="60" y="16" font-family="ui-monospace,monospace" font-size="9.5" fill="#1E8E3E">ceiling = k1 + 1</text>
+          <text x="40" y="150" font-family="Arial" font-size="9.5" fill="#5B5F63">1</text>
+          <text x="70" y="150" font-family="Arial" font-size="9.5" fill="#5B5F63">5</text>
+          <text x="90" y="150" font-family="Arial" font-size="9.5" fill="#5B5F63">10</text>
+        </svg>
+        <p class="chart-caption">The first few mentions matter the most. Mention six, ten and fifty barely move the needle.</p>
+      </div>
+    </div>
+    <div class="headline-sentence"><b>TF-IDF</b> trusts the raw count and rewards repetition forever. <b>BM25</b> says the first few mentions prove the topic, and every mention after that matters less and less. That is called <b>saturation</b>, and it is the whole idea.</div>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="wrap">
+    <p class="eyebrow">The same argument, in numbers</p>
+    <h2>How much more relevant, really?</h2>
+    <p class="body-copy">Same word, same document, just counted more times. Score shown relative to saying the word once.</p>
+    <table class="multiples">
+      <tr><th>word appears this many times</th><th>1</th><th>5</th><th>10</th><th>20</th><th>50</th><th>100</th></tr>
+      <tr class="tfidf"><td>TF-IDF says</td><td>1&times;</td><td>5&times;</td><td>10&times;</td><td>20&times;</td><td>50&times;</td><td>100&times;</td></tr>
+      <tr class="bm25"><td>BM25 says</td><td>1&times;</td><td>1.9&times;</td><td>2.2&times;</td><td>2.3&times;</td><td>2.4&times;</td><td>2.5&times;</td></tr>
+    </table>
+    <div class="recap-note">By the time you've repeated a word 20 times, BM25 has basically made up its mind. TF-IDF is still climbing, and will keep climbing however long you keep typing the word.</div>
+  </div>
+</section>
+
+<section id="s7">
+  <div class="wrap">
+    <p class="eyebrow">Under the hood</p>
+    <h2>What actually changed in the formula</h2>
+    <div class="anatomy-row">
+      <div class="card anatomy-card shared">
+        <span class="badge">unchanged</span>
+        <div class="t">IDF, rarity</div>
+        <div class="d">Same idea as TF-IDF. A word that appears in 1 of 16 documents is worth far more than a word in all 16.</div>
+      </div>
+      <div class="card anatomy-card new1">
+        <span class="badge">new</span>
+        <div class="t">TF, but capped</div>
+        <div class="d">Controlled by a knob called <b>k1</b>. It sets how quickly repetition stops paying off. Typical value: 1.2 to 2.0.</div>
+      </div>
+      <div class="card anatomy-card new2">
+        <span class="badge">new</span>
+        <div class="t">Length normalization</div>
+        <div class="d">Controlled by a knob called <b>b</b>. A long document doesn't win just for having more words to repeat things in. Typical value: 0.75.</div>
+      </div>
+    </div>
+    <div class="ceiling-box">as word count &rarr; infinity, BM25's term score &rarr; (k1 + 1), never further</div>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="wrap">
+    <p class="eyebrow">Back to our own corpus</p>
+    <h2>This is why BM25 won decisively today</h2>
+    <div class="card win-card">
+      <div class="doc-line">doc 0: "Error ERR_CONN_TIMEOUT occurs when the database connection exceeds the 30 second limit..."</div>
+      <div class="query-line">query: "ERR_CONN_TIMEOUT"</div>
+      <div class="score-row">
+        <span class="score-badge hit">BM25 top1, score 0.826</span>
+        <span class="score-badge thin">Dense top1, score 0.548, but fuzzy</span>
+      </div>
+    </div>
+    <p class="body-copy" style="margin-top:20px;">ERR_CONN_TIMEOUT appears in exactly one of our sixteen documents. That gives it a huge IDF. It only needs to appear once for BM25 to be certain, so the saturation cap never even gets tested. Rare, exact tokens are BM25's home turf, and its score tells you exactly why it's confident. Dense also finds it here, but as a softer, harder to explain signal.</p>
+  </div>
+</section>
+
+<section id="s9">
+  <div class="wrap">
+    <p class="eyebrow">Being honest about the limit</p>
+    <h2>Saturation doesn't fix everything</h2>
+    <div class="card win-card" id="s9-card">
+      <div class="doc-line">doc 4: "Myocardial infarction results from coronary artery occlusion, causing ischemic damage to cardiac muscle."</div>
+      <div class="query-line">query: "what is a heart attack?"</div>
+      <div class="score-row">
+        <span class="score-badge miss">BM25 score, 0.000</span>
+      </div>
+    </div>
+    <p class="body-copy" style="margin-top:20px;">Not one word is shared between the query and the document. BM25 only ever looks at literal tokens, so a perfect saturation formula still scores this a flat zero. Fixing raw counts was never going to fix vocabulary gaps, that is exactly where dense embeddings take over, and neither method alone covers both jobs.</p>
+  </div>
+</section>
+
+<section id="s10">
+  <div class="wrap">
+    <p class="eyebrow">A third option</p>
+    <h2>Meet SPLADE: sparse, but learned</h2>
+    <p class="body-copy">BM25 counts words that are literally there. Dense turns a whole sentence into one blurry vector. SPLADE sits in between: it still builds a sparse vector, one slot per vocabulary word, exactly like BM25's index. The difference is who decides the weight in each slot.</p>
+    <div class="splade-flow">
+      <div class="card splade-box"><div class="k">input</div><div class="v">one document</div></div>
+      <div class="splade-arrow">&rarr;</div>
+      <div class="card splade-box"><div class="k">a trained model</div><div class="v">weighs every vocabulary word</div></div>
+      <div class="splade-arrow">&rarr;</div>
+      <div class="card splade-box"><div class="k">output</div><div class="v">30,522 numbers,<br>99.66% exactly zero</div></div>
+    </div>
+    <p class="body-copy" style="margin-top:22px;">Doc 0 only ever says "Error ERR_CONN_TIMEOUT ... database connection ... limit ... pool timeout." But the model is also allowed to switch on words that fit the meaning, even if that exact word was never typed.</p>
+    <div class="token-cloud">
+      <span class="token">error</span>
+      <span class="token">database</span>
+      <span class="token">connection</span>
+      <span class="token">limit</span>
+      <span class="token">pool</span>
+      <span class="token expansion">errors</span>
+      <span class="token expansion">timing</span>
+    </div>
+    <div class="token-legend">
+      <span><span class="legend-dot plain"></span>word actually in the document</span>
+      <span><span class="legend-dot exp"></span>expansion: never written, added by the model</span>
+    </div>
+  </div>
+</section>
+
+<section id="s11">
+  <div class="wrap">
+    <p class="eyebrow">Put it to the same test</p>
+    <h2>SPLADE matches dense, and it still has BM25 inside it</h2>
+    <p class="body-copy">Same six queries we've been using all class, one retriever added to the table. Look closely: SPLADE does not beat dense here, it ties it. Both hit all six.</p>
+    <table class="matrix3">
+      <tr><th>query</th><th>BM25</th><th>Dense</th><th>SPLADE</th></tr>
+      <tr><td>exact code</td><td class="hit">HIT</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+      <tr><td>synonym gap</td><td class="miss">miss</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+      <tr><td>paraphrase</td><td class="miss">miss</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+      <tr><td>exact SKU</td><td class="hit">HIT</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+      <tr><td>lay &rarr; technical</td><td class="miss">miss</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+      <tr><td>version number</td><td class="miss">miss</td><td class="hit">HIT</td><td class="hit">HIT</td></tr>
+    </table>
+    <div class="cost-note">On this small, clean corpus, dense already hits everything, so SPLADE has nothing left to prove on hit rate alone. Its real edge is underneath the hit or miss: it's a sparse, inverted-index-friendly vector like BM25, so it plugs into keyword-style search infrastructure, and it stays inspectable, you can list the exact weighted words behind a score, which a dense vector never gives you. The cost is real too: a full neural network runs per document and per query, closer to dense's cost than to BM25's instant lookup.</div>
+  </div>
+</section>
+
+<section id="s12">
+  <div class="wrap">
+    <p class="eyebrow">Why this isn't just academic</p>
+    <h2>Every major search engine made this switch</h2>
+    <div class="timeline">
+      <div class="tl-step"><div class="yr">1970s&ndash;90s</div><div class="t">TF-IDF, the original ranking idea</div></div>
+      <div class="tl-step"><div class="yr">2015&ndash;16</div><div class="t">Lucene, then Elasticsearch, switch their default to BM25</div></div>
+      <div class="tl-step"><div class="yr">Today</div><div class="t">BM25 is still the standard sparse retriever, paired with dense search</div></div>
+    </div>
+    <p class="body-copy" style="margin-top:26px;">This is not a minor tuning detail. It is the reason keyword search on any real product, from your codebase search to your email search, behaves the way it does.</p>
+  </div>
+</section>
+
+<section id="s13">
+  <div class="wrap">
+    <p class="eyebrow">Notebook 06 &middot; today's plan</p>
+    <h2>What we'll actually run, in order</h2>
+    <div class="plan-list">
+      <div class="plan-item"><span class="n">1</span><span class="t">Index the same 16 documents with BM25, dense embeddings, and SPLADE</span></div>
+      <div class="plan-item"><span class="n">2</span><span class="t">Watch BM25 win instantly on exact codes and SKUs</span></div>
+      <div class="plan-item"><span class="n">3</span><span class="t">Watch BM25 score exactly 0.000 on vocabulary gap questions</span></div>
+      <div class="plan-item"><span class="n">4</span><span class="t">Turn the k1 and b knobs ourselves and watch scores shift</span></div>
+      <div class="plan-item"><span class="n">5</span><span class="t">Look inside SPLADE's own vocabulary vector and see the expansion terms ourselves</span></div>
+      <div class="plan-item"><span class="n">6</span><span class="t">Fuse BM25 and dense results with Reciprocal Rank Fusion, a preview of notebook 07</span></div>
+    </div>
+    <div class="today-cta">Let's open notebook 06 <span class="arrow">&rarr;</span></div>
+  </div>
+</section>
+
+<script>
+  (function(){
+    var sections = Array.prototype.slice.call(document.querySelectorAll('section'));
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.progress-nav button'));
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var target = document.getElementById(btn.getAttribute('data-target'));
+        if(target){ target.scrollIntoView({behavior:'smooth'}); }
+      });
+    });
+    if('IntersectionObserver' in window){
+      var map = {};
+      sections.forEach(function(sec, i){ map[sec.id] = buttons[i]; });
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            buttons.forEach(function(b){ b.classList.remove('active'); });
+            var btn = map[entry.target.id];
+            if(btn){ btn.classList.add('active'); }
+          }
+        });
+      }, { threshold: 0.55 });
+      sections.forEach(function(sec){ io.observe(sec); });
+    }
+  })();
+</script>

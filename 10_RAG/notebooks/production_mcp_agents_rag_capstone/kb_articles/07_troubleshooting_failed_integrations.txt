@@ -1,0 +1,8 @@
+Troubleshooting Failed Integrations
+
+If an integration or webhook stops working, check three things first: (1) API keys expire
+automatically after 90 days of inactivity — regenerate the key if it's expired, (2) confirm
+the webhook URL configured on your end is still correct and reachable, and (3) if you use an
+IP allowlist, make sure our servers' IP range, 203.0.113.0/24, is allowed through your
+firewall. You can review exactly what was sent and received under Settings > Integrations >
+Logs — logs are retained for 30 days.

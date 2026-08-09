@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching Deck: Notebook 05, Vector Databases</title>
+<style>
+  :root {
+    --bg: #fafbfb; --surface: #ffffff; --surface-alt: #f2f3f3; --border: #e4e7ea;
+    --text: #16191f; --text-secondary: #5f6b7a;
+    --accent: #c2540a; --accent-dark: #7c3607; --accent-soft: #fdece0;
+    --teach: #8a6d00; --teach-soft: #fdf6e0;
+    --good: #037f0c; --good-soft: #e9f6ea; --bad: #cc1f1f; --bad-soft: #fdeeee;
+    --code-bg: #241a12; --code-text: #f2e6da;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --radius: 10px; --rail-color: rgba(194, 84, 10, 0.3);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15.5px; line-height: 1.6; }
+  h1, h2, h3 { font-family: var(--sans); margin: 0; }
+  section.slide { min-height: 100vh; scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center; padding: 68px 116px 68px 76px; border-bottom: 1px solid var(--border); position: relative; }
+  .slide-inner { max-width: 1080px; margin: 0 auto; width: 100%; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 14px; }
+  .eyebrow::before { content: ""; width: 20px; height: 2px; background: var(--accent); display: inline-block; }
+  h2.slide-title { font-size: 32px; font-weight: 700; margin-bottom: 10px; text-wrap: balance; letter-spacing: -0.01em; color: var(--text); }
+  .slide-lede { color: var(--text-secondary); font-size: 16.5px; max-width: 76ch; margin-bottom: 24px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; box-shadow: 0 1px 2px rgba(16,24,32,0.04); }
+  .panel + .panel { margin-top: 14px; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .panel-header h3 { font-size: 15px; font-weight: 700; }
+  .teach { display: none; background: var(--teach-soft); border: 1px solid #f0e0a6; border-left: 4px solid var(--teach); border-radius: 8px; padding: 16px 20px; margin-top: 16px; }
+  body.trainer-mode .teach { display: block; }
+  .teach .eyebrow { color: var(--teach); margin-bottom: 8px; } .teach .eyebrow::before { background: var(--teach); }
+  .teach p { margin: 0 0 6px; font-size: 14.5px; } .teach p:last-child { margin-bottom: 0; }
+  .teach ul { margin: 6px 0 0; padding-left: 20px; } .teach li { font-size: 14.5px; margin-bottom: 4px; }
+  .grid { display: grid; gap: 16px; } .grid-2 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  code.inline { font-family: var(--mono); background: var(--surface-alt); padding: 1px 6px; border-radius: 4px; font-size: 0.88em; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .stat-badge { background: var(--accent-soft); color: var(--accent-dark); border-radius: 8px; padding: 9px 15px; font-family: var(--mono); font-size: 13.5px; font-weight: 700; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin: 7px 0; }
+  .bar-row .lbl { width: 130px; font-size: 12.5px; color: var(--text-secondary); flex-shrink: 0; font-family: var(--mono); }
+  .bar-row .track { flex: 1; height: 18px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; }
+  .bar-row .fill { height: 100%; border-radius: 4px 0 0 4px; background: var(--accent); }
+  .bar-row .val { width: 90px; text-align: right; font-family: var(--mono); font-size: 12.5px; font-weight: 700; flex-shrink: 0; }
+  table.rule { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); font-size: 13.5px; }
+  table.rule th, table.rule td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.rule th { background: var(--surface-alt); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  table.rule tr:last-child td { border-bottom: none; }
+  table.agenda { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  table.agenda th, table.agenda td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+  table.agenda th { background: var(--surface-alt); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  table.agenda td.time { font-family: var(--mono); color: var(--accent-dark); font-weight: 700; white-space: nowrap; }
+  table.agenda tr:last-child td { border-bottom: none; }
+  .faq-item { padding: 14px 0; border-bottom: 1px solid var(--border); } .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-weight: 700; font-size: 14.5px; margin-bottom: 5px; color: var(--accent-dark); }
+  .faq-a { font-size: 14px; color: var(--text-secondary); }
+  .rail { position: fixed; top: 0; right: 36px; height: 100vh; display: flex; align-items: center; z-index: 50; }
+  .rail-line { position: relative; height: 78%; border-right: 2px dotted var(--rail-color); display: flex; flex-direction: column; justify-content: space-between; }
+  .rail-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); transform: translateX(6px); cursor: pointer; transition: all 0.25s ease; position: relative; }
+  .rail-dot:hover { border-color: var(--accent); }
+  .rail-dot.active { background: var(--accent); border-color: var(--accent); transform: translateX(6px) scale(1.25); }
+  .rail-dot .tip { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); background: var(--text); color: white; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+  .rail-dot:hover .tip { opacity: 1; }
+  @media (max-width: 780px) { .rail { display: none; } section.slide { padding: 48px 24px; } }
+  .slide-num { position: absolute; top: 42px; right: 116px; font-family: var(--mono); font-size: 12px; color: var(--text-secondary); }
+  @media (max-width: 780px) { .slide-num { display: none; } }
+  #s-cover { background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); }
+  .cover-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); }
+  .mode-toggle { position: fixed; bottom: 22px; left: 22px; z-index: 200; display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px 8px 12px; box-shadow: 0 4px 14px rgba(16,24,32,0.10); font-size: 12px; font-weight: 600; color: var(--text-secondary); opacity: 0.55; transition: opacity 0.2s ease; }
+  .mode-toggle:hover { opacity: 1; }
+  .mode-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex-shrink: 0; }
+  .mode-toggle.trainer-on .dot { background: var(--teach); }
+  .mode-toggle button { border: none; background: var(--surface-alt); border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--text); font-family: var(--sans); }
+  .mode-toggle button:hover { background: var(--border); }
+  @media print { .mode-toggle { display: none; } }
+
+  /* library shelf mock for ANN analogy */
+  .shelf { display: flex; gap: 14px; align-items: center; margin: 14px 0; }
+  .shelf-box { flex: 1; border-radius: 10px; padding: 20px; text-align: center; }
+  .shelf-box.slow { background: var(--bad-soft); border: 1px solid #f3caca; }
+  .shelf-box.fast { background: var(--good-soft); border: 1px solid #c6e6c9; }
+  .shelf-box .big { font-family: var(--mono); font-size: 24px; font-weight: 700; }
+  .shelf-box .lbl { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* dial mock */
+  .dial-row { display: flex; align-items: center; gap: 16px; margin: 10px 0; }
+  .dial-track { flex: 1; height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--good-soft), var(--accent-soft), var(--bad-soft)); position: relative; }
+  .dial-marker { position: absolute; top: -5px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+  .dial-caption { font-size: 12px; color: var(--text-secondary); width: 140px; flex-shrink: 0; }
+
+  /* pipeline chain */
+  .pipeline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 10px 0; }
+  .pipe-box { background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+  .pipe-box.now { background: var(--accent); border-color: var(--accent-dark); color: white; box-shadow: 0 3px 10px rgba(194,84,10,0.3); }
+  .pipe-arrow { color: var(--text-secondary); font-size: 16px; }
+
+  /* brute-force scan grid */
+  .scan-wrap { display: flex; align-items: center; gap: 28px; margin: 10px 0; flex-wrap: wrap; }
+  .scan-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; width: 320px; }
+  .scan-dot { width: 100%; aspect-ratio: 1; border-radius: 50%; background: var(--surface-alt); border: 1.5px solid var(--border); animation: scanPulse 2.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .scan-dot { animation: none; } }
+  @keyframes scanPulse { 0%, 100% { background: var(--surface-alt); } 50% { background: var(--accent-soft); border-color: var(--accent); } }
+  .scan-dot.query { background: var(--accent); border-color: var(--accent-dark); animation: none; position: relative; }
+  .scan-dot.query::after { content: "?"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; }
+  .scan-caption { max-width: 220px; font-size: 13px; color: var(--text-secondary); }
+  .scan-caption strong { color: var(--text); }
+
+  /* HNSW graph */
+  .graph-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+  .graph-legend { display: flex; gap: 18px; margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); flex-wrap: wrap; }
+  .graph-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* callout: always-visible explanation, not a trainer note */
+  .callout { background: var(--accent-soft); border: 1px solid #f0c9a6; border-left: 4px solid var(--accent); border-radius: 8px; padding: 16px 20px; margin-top: 14px; }
+  .callout .callout-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-dark); margin-bottom: 6px; }
+  .callout p { margin: 0; font-size: 14px; }
+
+  .example-banner { background: var(--surface-alt); border: 1px dashed var(--border); border-radius: 8px; padding: 10px 16px; font-family: var(--mono); font-size: 13px; color: var(--text); margin: 4px 0 14px; }
+  .example-banner b { color: var(--accent-dark); }
+
+  .walkthrough { margin: 10px 0 0; padding-left: 0; list-style: none; }
+  .walkthrough li { counter-increment: step; display: flex; gap: 10px; margin-bottom: 9px; font-size: 13.5px; align-items: flex-start; }
+  .walkthrough { counter-reset: step; }
+  .walkthrough li::before { content: counter(step); flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: white; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+
+  /* IVF cluster diagram */
+  .ivf-wrap { position: relative; width: 100%; max-width: 600px; aspect-ratio: 2 / 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin: 10px 0; overflow: hidden; }
+  .ivf-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .blob { position: absolute; border-radius: 50%; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 5px; padding: 10px; transition: background-color 0.5s ease, border-color 0.5s ease, opacity 0.5s ease; }
+  .blob.active { background: var(--accent-soft); border: 2.5px solid var(--accent); opacity: 1; }
+  .blob.skipped { background: var(--surface-alt); border: 2px dashed var(--border); opacity: 0.6; }
+  .blob-dot { width: 8px; height: 8px; border-radius: 50%; transition: background-color 0.5s ease; }
+  .blob.active .blob-dot { background: var(--accent-dark); }
+  .blob.skipped .blob-dot { background: var(--text-secondary); }
+  .query-marker { position: absolute; width: 20px; height: 20px; background: var(--text); transform: translate(-50%,-50%) rotate(45deg); border-radius: 4px; z-index: 5; transform-box: fill-box; transform-origin: center; }
+  .query-label { position: absolute; font-size: 11.5px; font-weight: 700; color: var(--text); font-family: var(--mono); background: var(--surface); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); transform: translate(-50%, -32px); white-space: nowrap; z-index: 5; }
+
+  /* shared animation helpers for the HNSW and IVF diagrams */
+  .pulse-once { animation: pulseOnce 0.6s ease; transform-box: fill-box; transform-origin: center; }
+  @keyframes pulseOnce { 0% { transform: scale(1); } 40% { transform: scale(1.4); } 100% { transform: scale(1); } }
+  .ring-ping { animation: ringPing 1s ease-out; transform-box: fill-box; transform-origin: center; }
+  @keyframes ringPing { 0% { opacity: 0.55; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
+  #hnsw-node2, #hnsw-node3, #hnsw-node2-text, #hnsw-node3-text, #hnsw-answer-label {
+    transition: fill 0.4s ease, r 0.4s ease, opacity 0.4s ease;
+  }
+
+  /* layered stack: FAISS / Chroma / Pinecone */
+  .stack-row { display: flex; gap: 20px; align-items: flex-end; margin: 14px 0; }
+  .stack-col { flex: 1; display: flex; flex-direction: column-reverse; gap: 6px; }
+  .stack-col-title { text-align: center; font-weight: 700; font-size: 14px; margin-top: 10px; order: 4; }
+  .stack-layer { border-radius: 8px; padding: 14px 10px; text-align: center; font-size: 11.5px; font-weight: 700; line-height: 1.3; height: 64px; display: flex; align-items: center; justify-content: center; }
+  .stack-layer.filled { background: var(--accent); color: white; }
+  .stack-layer.empty { background: var(--surface-alt); color: var(--text-secondary); border: 1.5px dashed var(--border); }
+</style>
+</head>
+<body>
+
+<div class="mode-toggle" id="mode-toggle">
+  <span class="dot"></span>
+  <span id="mode-label">Student view, safe to present</span>
+  <button id="mode-btn" type="button">Show trainer notes</button>
+</div>
+
+<nav class="rail"><div class="rail-line" id="rail-line"></div></nav>
+
+<section class="slide" id="s-cover">
+  <div class="slide-inner">
+    <div class="eyebrow">Teaching deck, Notebook 05</div>
+    <h2 class="slide-title" style="font-size:44px;">Vector Databases</h2>
+    <div class="slide-lede">
+      What happens after the embedding. We built vectors in Notebook 04. Now we need
+      somewhere fast to search millions of them, and the answer is almost never "check
+      every single one."
+    </div>
+    <div class="cover-badges">
+      <span class="badge">40 to 45 minutes</span>
+      <span class="badge">FAISS, HNSW, IVF, Chroma, Pinecone</span>
+      <span class="badge">Real recall and speed numbers</span>
+    </div>
+  </div>
+  <div class="slide-num">01 / 17</div>
+</section>
+
+<section class="slide" id="s-fit">
+  <div class="slide-inner">
+    <div class="eyebrow">Where this fits</div>
+    <h2 class="slide-title">You have vectors now. Where do they live?</h2>
+    <div class="pipeline">
+      <div class="pipe-box">Documents</div><div class="pipe-arrow">-></div>
+      <div class="pipe-box">Chunk</div><div class="pipe-arrow">-></div>
+      <div class="pipe-box">Embed</div><div class="pipe-arrow">-></div>
+      <div class="pipe-box now">Store &amp; search</div><div class="pipe-arrow">-></div>
+      <div class="pipe-box">Retrieve</div><div class="pipe-arrow">-></div>
+      <div class="pipe-box">Generate</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Point at the pipeline and say it plainly: embeddings are numbers sitting in RAM right now with nowhere to live. Today is just "where do they live, and how do we search them fast." Keep it that simple going in.</p>
+    </div>
+  </div>
+  <div class="slide-num">02 / 17</div>
+</section>
+
+<section class="slide" id="s-brute">
+  <div class="slide-inner">
+    <div class="eyebrow">The problem, made visible</div>
+    <h2 class="slide-title">Checking every single vector</h2>
+    <div class="slide-lede">This is exact search. Every dot below is a stored vector. To answer the question, this approach compares it against every single one, no shortcuts.</div>
+    <div class="scan-wrap">
+      <div class="scan-grid" id="scan-grid"></div>
+      <div class="scan-caption">Fine at a few hundred vectors. Once you're at millions, comparing against every single one starts taking real, noticeable time, on every question, every time.</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Let this animation run for a few seconds before saying anything, the dots gently pulsing is meant to feel like "checking, checking, checking." Then say: this is called exact search, and it's exactly this simple, and exactly this slow at scale.</p>
+    </div>
+  </div>
+  <div class="slide-num">03 / 17</div>
+</section>
+
+<section class="slide" id="s-ann">
+  <div class="slide-inner">
+    <div class="eyebrow">The fix</div>
+    <h2 class="slide-title">Approximate Nearest Neighbor, ANN for short</h2>
+    <div class="slide-lede">Instead of checking every vector, build a shortcut structure that finds the closest ones almost every time, in a fraction of the time. That's the entire idea behind every vector database.</div>
+    <div class="shelf">
+      <div class="shelf-box slow">
+        <div class="big">Read every book</div>
+        <div class="lbl">exact search, always correct, painfully slow at scale</div>
+      </div>
+      <div class="shelf-box fast">
+        <div class="big">Use the index</div>
+        <div class="lbl">ANN search, almost always correct, fast</div>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Library analogy works well here. Nobody reads every book to find one topic, they use the index card system. That index is a little imperfect but nobody cares because it's fast and right almost every time. FAISS, HNSW, and IVF are all just different ways of building that index.</p>
+    </div>
+  </div>
+  <div class="slide-num">04 / 17</div>
+</section>
+
+<section class="slide" id="s-exact">
+  <div class="slide-inner">
+    <div class="eyebrow">The baseline, measured live</div>
+    <h2 class="slide-title">50,000 vectors, checked one by one</h2>
+    <div class="slide-lede">Before building any shortcut, we measured exact search itself. This is the ground truth every shortcut gets graded against.</div>
+    <div class="stats">
+      <span class="stat-badge">0.255 ms per query</span>
+      <span class="stat-badge">100% recall, by definition</span>
+      <span class="stat-badge">50,000 vectors, 128 dimensions</span>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Fifty thousand vectors sounds like nothing, and 0.255 milliseconds sounds fast. That's the trap. Ask the class what happens at 500 million vectors instead of 50,000. This is why exact search stops being an option long before you'd expect.</p>
+    </div>
+  </div>
+  <div class="slide-num">05 / 17</div>
+</section>
+
+<section class="slide" id="s-hnsw-graph">
+  <div class="slide-inner">
+    <div class="eyebrow">FAISS, tool one</div>
+    <h2 class="slide-title">HNSW, walking a map instead of scanning a list</h2>
+    <div class="slide-lede">HNSW builds a layered graph of connections between vectors. A search starts at the sparse top layer, takes a few long jumps, then drops into denser layers to home in on the answer, touching only a handful of vectors along the way.</div>
+    <div class="example-banner">Example question: <b>"What's the refund window if I cancel my subscription?"</b></div>
+    <div class="graph-wrap">
+      <svg viewBox="0 0 600 280" width="100%" height="280" role="img" aria-label="HNSW layered graph diagram with a numbered example walk">
+        <text x="8" y="36" font-size="11" font-weight="700" fill="#5f6b7a" font-family="ui-monospace, monospace">LAYER 2</text>
+        <text x="8" y="49" font-size="9.5" fill="#9aa3ab" font-family="ui-monospace, monospace">few nodes</text>
+        <text x="8" y="136" font-size="11" font-weight="700" fill="#5f6b7a" font-family="ui-monospace, monospace">LAYER 1</text>
+        <text x="8" y="149" font-size="9.5" fill="#9aa3ab" font-family="ui-monospace, monospace">more nodes</text>
+        <text x="8" y="226" font-size="11" font-weight="700" fill="#5f6b7a" font-family="ui-monospace, monospace">LAYER 0</text>
+        <text x="8" y="239" font-size="9.5" fill="#9aa3ab" font-family="ui-monospace, monospace">every vector</text>
+
+        <line x1="170" y1="40" x2="330" y2="40" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="40" x2="490" y2="40" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="40" x2="330" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="490" y1="40" x2="430" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="490" y1="40" x2="530" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="130" y1="140" x2="230" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="230" y1="140" x2="330" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="140" x2="430" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="430" y1="140" x2="530" y2="140" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="130" y1="140" x2="110" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="130" y1="140" x2="165" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="140" x2="330" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="140" x2="385" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="430" y1="140" x2="440" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="530" y1="140" x2="495" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="530" y1="140" x2="550" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="110" y1="230" x2="165" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="165" y1="230" x2="220" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="220" y1="230" x2="275" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="275" y1="230" x2="330" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="330" y1="230" x2="385" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="385" y1="230" x2="440" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="440" y1="230" x2="495" y2="230" stroke="#d8dce0" stroke-width="2"/>
+        <line x1="495" y1="230" x2="550" y2="230" stroke="#d8dce0" stroke-width="2"/>
+
+        <line id="hnsw-hop1" x1="170" y1="40" x2="230" y2="140" stroke="#c2540a" stroke-width="3.5"/>
+        <line id="hnsw-hop2" x1="230" y1="140" x2="220" y2="230" stroke="#c2540a" stroke-width="3.5"/>
+
+        <circle cx="330" cy="40" r="7" fill="#a9b2ba"/>
+        <circle cx="490" cy="40" r="7" fill="#a9b2ba"/>
+        <circle cx="130" cy="140" r="7" fill="#a9b2ba"/>
+        <circle cx="330" cy="140" r="7" fill="#a9b2ba"/>
+        <circle cx="430" cy="140" r="7" fill="#a9b2ba"/>
+        <circle cx="530" cy="140" r="7" fill="#a9b2ba"/>
+        <circle cx="110" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="165" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="275" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="330" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="385" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="440" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="495" cy="230" r="6" fill="#c7cdd3"/>
+        <circle cx="550" cy="230" r="6" fill="#c7cdd3"/>
+
+        <circle id="hnsw-node1" cx="170" cy="40" r="13" fill="#c2540a"/>
+        <text x="170" y="44" font-size="12" font-weight="700" fill="white" text-anchor="middle">1</text>
+        <circle id="hnsw-ripple" cx="220" cy="230" r="14" fill="#7c3607" fill-opacity="0.55" opacity="0"/>
+        <circle id="hnsw-node2" cx="230" cy="140" r="7" fill="#a9b2ba"/>
+        <text id="hnsw-node2-text" x="230" y="144" font-size="12" font-weight="700" fill="white" text-anchor="middle" opacity="0">2</text>
+        <circle id="hnsw-node3" cx="220" cy="230" r="6" fill="#c7cdd3"/>
+        <text id="hnsw-node3-text" x="220" y="234" font-size="12" font-weight="700" fill="white" text-anchor="middle" opacity="0">3</text>
+
+        <text x="170" y="18" font-size="11" fill="#5f6b7a" text-anchor="middle" font-family="ui-monospace, monospace">fixed entry point</text>
+        <text id="hnsw-answer-label" x="220" y="256" font-size="11" fill="#7c3607" text-anchor="middle" font-weight="700" font-family="ui-monospace, monospace" opacity="0">the answer</text>
+      </svg>
+      <div class="graph-legend">
+        <span><span class="legend-dot" style="background:#c2540a;"></span>path actually walked</span>
+        <span><span class="legend-dot" style="background:#a9b2ba;"></span>nodes never touched</span>
+        <span><span class="legend-dot" style="background:#7c3607;"></span>the answer</span>
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-top:14px;">
+      <div class="callout">
+        <div class="callout-label">Why does it always start at node 1?</div>
+        <p>It's not chosen based on the question. One entry point gets fixed the moment the index is built, usually just whichever vector was added first. Every single search, no matter what's being asked, starts at that exact same node and greedily works outward from there.</p>
+      </div>
+      <div class="panel" style="padding:18px 20px;">
+        <div class="callout-label" style="color:var(--text-secondary);">Walking through the example above</div>
+        <ol class="walkthrough">
+          <li>Start at node 1, the fixed entry point. Every question lands here first, including this one.</li>
+          <li>Compare the question to node 1's neighbors. Node 2 is closer to "refund window," so jump there.</li>
+          <li>No neighbor beats node 2 at this layer, so drop down and land on node 3, the closest match.</li>
+        </ol>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Read the three numbered steps out loud against the graph before saying anything else. Then ask the room the question they're probably already thinking: why node 1, why not somewhere closer to begin with. The answer is the callout, it's fixed at build time, the algorithm never picks a custom starting point per question.</p>
+    </div>
+  </div>
+  <div class="slide-num">06 / 17</div>
+</section>
+
+<section class="slide" id="s-hnsw">
+  <div class="slide-inner">
+    <div class="eyebrow">HNSW's one knob</div>
+    <h2 class="slide-title">efSearch, how far you're willing to wander</h2>
+    <div class="slide-lede">Turn efSearch up and the walk explores more paths before stopping: slower, but closer to the exact answer.</div>
+    <div class="bar-row"><div class="lbl">efSearch=16</div><div class="track"><div class="fill" style="width:44%;"></div></div><div class="val">0.435 recall</div></div>
+    <div class="bar-row"><div class="lbl">efSearch=32</div><div class="track"><div class="fill" style="width:59%;"></div></div><div class="val">0.588 recall</div></div>
+    <div class="bar-row"><div class="lbl">efSearch=64</div><div class="track"><div class="fill" style="width:75%;"></div></div><div class="val">0.752 recall</div></div>
+    <div class="bar-row"><div class="lbl">efSearch=128</div><div class="track"><div class="fill" style="width:88%;"></div></div><div class="val">0.882 recall</div></div>
+    <div class="bar-row"><div class="lbl">efSearch=256</div><div class="track"><div class="fill" style="width:96%;"></div></div><div class="val">0.959 recall</div></div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Run this cell live, don't just show the bars. Ask someone to guess what happens at efSearch=256 before you scroll to the number. Watching it climb toward, but never quite reach, 100 percent is the whole lesson in one table.</p>
+    </div>
+  </div>
+  <div class="slide-num">07 / 17</div>
+</section>
+
+<section class="slide" id="s-ivf-cluster">
+  <div class="slide-inner">
+    <div class="eyebrow">FAISS, tool two</div>
+    <h2 class="slide-title">IVF, sort into neighborhoods first, then only visit the closest ones</h2>
+    <div class="slide-lede">Before any question ever arrives, IVF groups every vector into clusters. When a question comes in, it only searches inside the nearest couple of clusters and ignores the rest completely.</div>
+    <div class="ivf-wrap" id="ivf-wrap">
+      <svg class="ivf-lines" viewBox="0 0 600 300" preserveAspectRatio="none">
+        <line id="ivf-line-a" x1="480" y1="55" x2="233" y2="95" stroke="#c2540a" stroke-width="2.5"/>
+        <line id="ivf-line-b" x1="480" y1="55" x2="360" y2="195" stroke="#c2540a" stroke-width="2.5"/>
+      </svg>
+      <div class="blob skipped" style="top:8%; left:3%; width:110px; height:110px;"></div>
+      <div class="blob skipped" id="ivf-blob-a" style="top:10%; left:28%; width:130px; height:130px;"></div>
+      <div class="blob skipped" id="ivf-blob-b" style="top:45%; left:50%; width:120px; height:120px;"></div>
+      <div class="blob skipped" style="top:55%; left:5%; width:100px; height:100px;"></div>
+      <div class="blob skipped" style="top:60%; left:75%; width:110px; height:110px;"></div>
+      <div class="query-marker" id="ivf-query" style="top:18.3%; left:80%;"></div>
+      <div class="query-label" style="top:18.3%; left:80%;">incoming question</div>
+    </div>
+    <div class="graph-legend">
+      <span><span class="legend-dot" style="background:#c2540a;"></span>searched, the question gets compared to these</span>
+      <span><span class="legend-dot" style="background:#a9b2ba;"></span>skipped, nothing inside gets touched at all</span>
+      <span><span class="legend-dot" style="background:#16191f; border-radius:3px; transform:rotate(45deg);"></span>the incoming question</span>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Follow the two dashed lines from the question down to the two orange clusters, those are the only neighborhoods that get searched. The three gray circles off to the side are skipped completely, not one vector inside them gets compared. That's nprobe, literally how many of these circles you bother checking.</p>
+    </div>
+  </div>
+  <div class="slide-num">08 / 17</div>
+</section>
+
+<section class="slide" id="s-ivf">
+  <div class="slide-inner">
+    <div class="eyebrow">IVF's one knob</div>
+    <h2 class="slide-title">nprobe, how many neighborhoods you bother checking</h2>
+    <div class="bar-row"><div class="lbl">nprobe=1</div><div class="track"><div class="fill" style="width:4%;"></div></div><div class="val">0.038 recall</div></div>
+    <div class="bar-row"><div class="lbl">nprobe=4</div><div class="track"><div class="fill" style="width:11%;"></div></div><div class="val">0.112 recall</div></div>
+    <div class="bar-row"><div class="lbl">nprobe=16</div><div class="track"><div class="fill" style="width:28%;"></div></div><div class="val">0.278 recall</div></div>
+    <div class="bar-row"><div class="lbl">nprobe=64</div><div class="track"><div class="fill" style="width:64%;"></div></div><div class="val">0.637 recall</div></div>
+    <div class="bar-row"><div class="lbl">nprobe=128</div><div class="track"><div class="fill" style="width:87%;"></div></div><div class="val">0.873 recall</div></div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Compare this to the HNSW numbers a couple of slides back. At a similar rough time budget, HNSW gets noticeably higher recall. Say plainly that this is why most vector databases default to HNSW today, IVF just doesn't win this comparison as often anymore.</p>
+    </div>
+  </div>
+  <div class="slide-num">09 / 17</div>
+</section>
+
+<section class="slide" id="s-dial">
+  <div class="slide-inner">
+    <div class="eyebrow">The dial you're actually turning</div>
+    <h2 class="slide-title">Pick the operating point your product needs</h2>
+    <div class="slide-lede">There's no universal right answer. A support chatbot might be fine at 90 percent recall if it's instant. A legal search tool probably wants 99 percent and can tolerate a slower response.</div>
+    <div class="dial-row">
+      <div class="dial-caption">Faster, less accurate</div>
+      <div class="dial-track"><div class="dial-marker" style="left:calc(50% - 10px);"></div></div>
+      <div class="dial-caption" style="text-align:right;">Slower, more accurate</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Ask the room: would you rather your product be a little wrong sometimes and instant, or occasionally slow and always right. There's no correct answer, that's the point, the answer depends entirely on what you're building.</p>
+    </div>
+  </div>
+  <div class="slide-num">10 / 17</div>
+</section>
+
+<section class="slide" id="s-stack">
+  <div class="slide-inner">
+    <div class="eyebrow">The part that confuses everyone</div>
+    <h2 class="slide-title">FAISS, Chroma, and Pinecone are the same engine, wrapped differently</h2>
+    <div class="slide-lede">All three search the same way underneath, usually HNSW. What changes is how much of the surrounding work is done for you.</div>
+    <div class="stack-row">
+      <div class="stack-col">
+        <div class="stack-layer empty">hosting, scaling, someone else's servers</div>
+        <div class="stack-layer empty">storage, metadata, filtering, persistence</div>
+        <div class="stack-layer filled">ANN engine, HNSW</div>
+        <div class="stack-col-title">FAISS</div>
+      </div>
+      <div class="stack-col">
+        <div class="stack-layer empty">hosting, scaling, someone else's servers</div>
+        <div class="stack-layer filled">storage, metadata, filtering, persistence</div>
+        <div class="stack-layer filled">ANN engine, HNSW</div>
+        <div class="stack-col-title">Chroma</div>
+      </div>
+      <div class="stack-col">
+        <div class="stack-layer filled">hosting, scaling, someone else's servers</div>
+        <div class="stack-layer filled">storage, metadata, filtering, persistence</div>
+        <div class="stack-layer filled">ANN engine, HNSW</div>
+        <div class="stack-col-title">Pinecone</div>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>This is the single most useful slide in the whole notebook for clearing up confusion. FAISS is the bare engine you wire up yourself. Chroma wraps that engine with an actual small database around it, still yours to run. Pinecone wraps it again with someone else running the whole thing on their servers. Same bottom layer, every time.</p>
+    </div>
+  </div>
+  <div class="slide-num">11 / 17</div>
+</section>
+
+<section class="slide" id="s-chroma">
+  <div class="slide-inner">
+    <div class="eyebrow">Chroma, in practice</div>
+    <h2 class="slide-title">The engine, plus documents, filtering, and disk storage</h2>
+    <div class="grid grid-2">
+      <div class="panel">
+        <div class="panel-header"><h3>Semantic search</h3></div>
+        <p style="font-size:13.5px; margin:0;">Query: "How do I get my money back?" Top hit: the refund policy sentence, no shared words needed.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Metadata filtering</h3></div>
+        <p style="font-size:13.5px; margin:0;">Same idea, but only search where topic is hr and year is 2024. This is how you enforce tenants and access rules in a real product.</p>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>The filtering demo is the one to slow down on. This is the feature that turns "cool vector search demo" into "something you could actually ship to a company with different customers and permissions."</p>
+    </div>
+  </div>
+  <div class="slide-num">12 / 17</div>
+</section>
+
+<section class="slide" id="s-pinecone">
+  <div class="slide-inner">
+    <div class="eyebrow">Pinecone, in practice</div>
+    <h2 class="slide-title">The engine, plus somebody else running it for you</h2>
+    <div class="slide-lede">Same underlying idea again. Pinecone owns the infrastructure, scales automatically, and adds namespaces so one index can hold cleanly separated partitions.</div>
+    <div class="stats">
+      <span class="stat-badge">query "how do I get my money back", filtered to billing</span>
+      <span class="stat-badge">top match score 0.357</span>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Be honest about the trade here. Zero ops sounds free, it isn't, you're paying in dollars and in being locked into their platform instead of paying in engineering time. Frame it as a real decision, not a strictly better option.</p>
+    </div>
+  </div>
+  <div class="slide-num">13 / 17</div>
+</section>
+
+<section class="slide" id="s-choosing">
+  <div class="slide-inner">
+    <div class="eyebrow">Choosing a store</div>
+    <h2 class="slide-title">The engine is the same everywhere. The decision is ops.</h2>
+    <table class="rule">
+      <tr><th>Option</th><th>What it is</th><th>Reach for it when</th></tr>
+      <tr><td>FAISS</td><td>In-process library</td><td>You want raw control, or you're learning how ANN actually works</td></tr>
+      <tr><td>Chroma</td><td>Embedded database</td><td>Local dev, small to mid projects, you want filtering without a server</td></tr>
+      <tr><td>Pinecone</td><td>Managed serverless</td><td>Production scale, zero ops, and the hosted cost is fine</td></tr>
+      <tr><td>pgvector</td><td>Postgres extension</td><td>You already run Postgres, don't add a new system just for vectors</td></tr>
+      <tr><td>Qdrant / Weaviate</td><td>Self-host or managed</td><td>Strong filtering or hybrid search, under roughly 50 million vectors</td></tr>
+      <tr><td>Milvus</td><td>Distributed database</td><td>Billions of vectors, and you have the ops team to run it</td></tr>
+    </table>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Someone always asks "which one is best." There isn't one. Answer with the question back: how many vectors, who's maintaining it, and what's the budget. That's the actual decision.</p>
+    </div>
+  </div>
+  <div class="slide-num">14 / 17</div>
+</section>
+
+<section class="slide" id="s-agenda">
+  <div class="slide-inner">
+    <div class="eyebrow">Suggested run of the session</div>
+    <h2 class="slide-title">Roughly 40 to 45 minutes</h2>
+    <table class="agenda">
+      <tr><th>Time</th><th>Segment</th></tr>
+      <tr><td class="time">0 to 5 min</td><td>Recap embeddings, land "we need somewhere fast to search these"</td></tr>
+      <tr><td class="time">5 to 10 min</td><td>The brute-force scan diagram, then the exact search baseline number</td></tr>
+      <tr><td class="time">10 to 25 min</td><td>HNSW graph diagram and its knob, then IVF cluster diagram and its knob</td></tr>
+      <tr><td class="time">25 to 32 min</td><td>The layered stack diagram, FAISS versus Chroma versus Pinecone</td></tr>
+      <tr><td class="time">32 to 40 min</td><td>Chroma and Pinecone demos, live if the API keys are set</td></tr>
+      <tr><td class="time">40 to 45 min</td><td>Choosing table, hand off to sparse retrieval</td></tr>
+    </table>
+  </div>
+  <div class="slide-num">15 / 17</div>
+</section>
+
+<section class="slide" id="s-faq">
+  <div class="slide-inner">
+    <div class="eyebrow">Questions to expect</div>
+    <h2 class="slide-title">What students usually ask here</h2>
+    <div class="panel">
+      <div class="faq-item"><div class="faq-q">Is Chroma just a worse version of Pinecone then?</div><div class="faq-a">No, it's a different trade, not a worse one. Chroma means you run it yourself with no ongoing cost beyond your own server. Pinecone means someone else runs it and you pay them instead. Neither is strictly better, they fit different situations.</div></div>
+      <div class="faq-item"><div class="faq-q">Why not just always use exact search if my dataset is small?</div><div class="faq-a">You can, and FAISS's flat index is exactly that. The moment your corpus grows into the millions, exact search stops being practical, so many teams pick an ANN index from the start even at small scale, just to avoid a rewrite later.</div></div>
+      <div class="faq-item"><div class="faq-q">Do I need to understand HNSW internals to use a vector database?</div><div class="faq-a">Not to use one, but you'll hit a wall the first time recall looks wrong and you don't know which knob to turn. Today's session is exactly that knob.</div></div>
+    </div>
+  </div>
+  <div class="slide-num">16 / 17</div>
+</section>
+
+<section class="slide" id="s-next" style="min-height:70vh;">
+  <div class="slide-inner">
+    <div class="eyebrow">Next</div>
+    <h2 class="slide-title">Dense search has a blind spot</h2>
+    <p class="slide-lede">Notebook 06 shows exactly where dense embeddings fail, on a labeled corpus with known right answers, and why keyword search still earns its place in a real pipeline.</p>
+  </div>
+  <div class="slide-num">17 / 17</div>
+</section>
+
+<script>
+const modeToggle = document.getElementById('mode-toggle');
+const modeLabel = document.getElementById('mode-label');
+const modeBtn = document.getElementById('mode-btn');
+modeBtn.addEventListener('click', () => {
+  const isTrainer = document.body.classList.toggle('trainer-mode');
+  modeToggle.classList.toggle('trainer-on', isTrainer);
+  modeLabel.textContent = isTrainer ? 'Trainer view, notes visible, do not project like this' : 'Student view, safe to present';
+  modeBtn.textContent = isTrainer ? 'Hide trainer notes' : 'Show trainer notes';
+});
+
+const scanGrid = document.getElementById('scan-grid');
+const queryIndex = 27;
+for (let i = 0; i < 40; i++) {
+  const d = document.createElement('div');
+  d.className = 'scan-dot' + (i === queryIndex ? ' query' : '');
+  d.style.animationDelay = (i % 8) * 0.12 + 's';
+  scanGrid.appendChild(d);
+}
+
+const ivfWrap = document.getElementById('ivf-wrap');
+const blobDotCounts = [4, 5, 4, 3, 3];
+Array.from(ivfWrap.querySelectorAll('.blob')).forEach((blob, i) => {
+  for (let j = 0; j < blobDotCounts[i]; j++) {
+    const dot = document.createElement('div');
+    dot.className = 'blob-dot';
+    blob.appendChild(dot);
+  }
+});
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---- HNSW: animate the walk, node by node, top layer to bottom ----
+function initHNSW() {
+  const hop1 = document.getElementById('hnsw-hop1');
+  const hop2 = document.getElementById('hnsw-hop2');
+  const node1 = document.getElementById('hnsw-node1');
+  const node2 = document.getElementById('hnsw-node2');
+  const node2Text = document.getElementById('hnsw-node2-text');
+  const node3 = document.getElementById('hnsw-node3');
+  const node3Text = document.getElementById('hnsw-node3-text');
+  const answerLabel = document.getElementById('hnsw-answer-label');
+  const ripple = document.getElementById('hnsw-ripple');
+  if (!hop1 || !hop2) return;
+
+  const len1 = hop1.getTotalLength();
+  const len2 = hop2.getTotalLength();
+
+  function reset() {
+    [hop1, hop2].forEach(l => { l.style.transition = 'none'; });
+    hop1.style.strokeDasharray = len1; hop1.style.strokeDashoffset = len1;
+    hop2.style.strokeDasharray = len2; hop2.style.strokeDashoffset = len2;
+    [node2, node3, node2Text, node3Text, answerLabel].forEach(el => { el.style.transition = 'none'; });
+    node2.style.fill = '#a9b2ba'; node2.style.r = '7px';
+    node3.style.fill = '#c7cdd3'; node3.style.r = '6px';
+    node2Text.style.opacity = 0; node3Text.style.opacity = 0; answerLabel.style.opacity = 0;
+  }
+
+  function playOnce() {
+    reset();
+    void hop1.getBoundingClientRect(); // force reflow so the reset above actually takes hold
+
+    if (reduceMotion) {
+      hop1.style.strokeDashoffset = 0; hop2.style.strokeDashoffset = 0;
+      node2.style.fill = '#c2540a'; node2.style.r = '12px'; node2Text.style.opacity = 1;
+      node3.style.fill = '#7c3607'; node3.style.r = '14px'; node3Text.style.opacity = 1;
+      answerLabel.style.opacity = 1;
+      return;
+    }
+
+    setTimeout(() => node1.classList.add('pulse-once'), 250);
+    setTimeout(() => node1.classList.remove('pulse-once'), 900);
+
+    setTimeout(() => {
+      hop1.style.transition = 'stroke-dashoffset 0.9s ease-in-out';
+      hop1.style.strokeDashoffset = 0;
+    }, 500);
+
+    setTimeout(() => {
+      node2.style.transition = 'fill 0.35s ease, r 0.35s ease';
+      node2.style.fill = '#c2540a'; node2.style.r = '12px';
+      node2Text.style.transition = 'opacity 0.3s ease';
+      node2Text.style.opacity = 1;
+    }, 1450);
+
+    setTimeout(() => {
+      hop2.style.transition = 'stroke-dashoffset 0.9s ease-in-out';
+      hop2.style.strokeDashoffset = 0;
+    }, 1750);
+
+    setTimeout(() => {
+      node3.style.transition = 'fill 0.35s ease, r 0.35s ease';
+      node3.style.fill = '#7c3607'; node3.style.r = '14px';
+      node3Text.style.transition = 'opacity 0.3s ease';
+      node3Text.style.opacity = 1;
+      answerLabel.style.transition = 'opacity 0.3s ease';
+      answerLabel.style.opacity = 1;
+      ripple.style.opacity = 1;
+      ripple.classList.add('ring-ping');
+    }, 2700);
+
+    setTimeout(() => { ripple.classList.remove('ring-ping'); ripple.style.opacity = 0; }, 3750);
+  }
+
+  playOnce();
+  if (!reduceMotion) setInterval(playOnce, 6800);
+}
+
+// ---- IVF: animate the question reaching out to the two searched clusters ----
+function initIVF() {
+  const lineA = document.getElementById('ivf-line-a');
+  const lineB = document.getElementById('ivf-line-b');
+  const blobA = document.getElementById('ivf-blob-a');
+  const blobB = document.getElementById('ivf-blob-b');
+  const query = document.getElementById('ivf-query');
+  if (!lineA || !lineB) return;
+
+  const lenA = lineA.getTotalLength();
+  const lenB = lineB.getTotalLength();
+
+  function reset() {
+    [lineA, lineB].forEach(l => { l.style.transition = 'none'; });
+    lineA.style.strokeDasharray = lenA; lineA.style.strokeDashoffset = lenA;
+    lineB.style.strokeDasharray = lenB; lineB.style.strokeDashoffset = lenB;
+    blobA.classList.remove('active'); blobA.classList.add('skipped');
+    blobB.classList.remove('active'); blobB.classList.add('skipped');
+  }
+
+  function playOnce() {
+    reset();
+    void lineA.getBoundingClientRect();
+
+    if (reduceMotion) {
+      lineA.style.strokeDashoffset = 0; lineB.style.strokeDashoffset = 0;
+      blobA.classList.remove('skipped'); blobA.classList.add('active');
+      blobB.classList.remove('skipped'); blobB.classList.add('active');
+      return;
+    }
+
+    setTimeout(() => query.classList.add('pulse-once'), 250);
+    setTimeout(() => query.classList.remove('pulse-once'), 900);
+
+    setTimeout(() => {
+      lineA.style.transition = 'stroke-dashoffset 0.7s ease-in-out';
+      lineA.style.strokeDashoffset = 0;
+    }, 500);
+    setTimeout(() => { blobA.classList.remove('skipped'); blobA.classList.add('active'); }, 1150);
+
+    setTimeout(() => {
+      lineB.style.transition = 'stroke-dashoffset 0.7s ease-in-out';
+      lineB.style.strokeDashoffset = 0;
+    }, 1350);
+    setTimeout(() => { blobB.classList.remove('skipped'); blobB.classList.add('active'); }, 2000);
+  }
+
+  playOnce();
+  if (!reduceMotion) setInterval(playOnce, 6800);
+}
+
+initHNSW();
+initIVF();
+
+const slides = Array.from(document.querySelectorAll('section.slide'));
+const railLine = document.getElementById('rail-line');
+slides.forEach((s) => {
+  const dot = document.createElement('div');
+  dot.className = 'rail-dot';
+  const title = s.querySelector('.slide-title') ? s.querySelector('.slide-title').textContent : s.id;
+  dot.innerHTML = `<span class="tip">${title}</span>`;
+  dot.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
+  railLine.appendChild(dot);
+});
+const dots = Array.from(railLine.querySelectorAll('.rail-dot'));
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      dots.forEach(d => d.classList.remove('active'));
+      if (dots[idx]) dots[idx].classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

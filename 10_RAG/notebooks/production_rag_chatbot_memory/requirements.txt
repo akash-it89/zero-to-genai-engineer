@@ -1,0 +1,33 @@
+# Requirements for the Production RAG Chatbot + Memory Streamlit app
+# (app.py + rag_agent_pipeline.py)
+#   pip install -r requirements.txt
+#
+# Same RAG stack as ../production_rag_chatbot/requirements.txt (rag_agent_pipeline.py
+# imports rag_pipeline.py directly from that sibling project), plus the LangGraph /
+# LangChain agent + middleware stack from Notebook 11.
+
+streamlit
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+pypdf
+docx2txt
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+openai
+langchain-openai
+python-dotenv
+
+# Notebook 11 / agent stack
+langchain
+langgraph
+langgraph-checkpoint-sqlite
+
+# eval_pipeline.py -- retrieval metrics (Recall@K/NDCG/MCC) + RAGAS/DeepEval
+# generation-quality scoring, see eval_pipeline.py's module docstring for a
+# ragas/langchain-community compatibility note before upgrading either package.
+scikit-learn
+ragas
+deepeval

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching Deck: Notebook 02, Ingestion &amp; Chunking (LangChain)</title>
+<style>
+  :root {
+    --bg: #fafbfb;
+    --surface: #ffffff;
+    --surface-alt: #f2f3f3;
+    --border: #e4e7ea;
+    --text: #16191f;
+    --text-secondary: #5f6b7a;
+    --accent: #0972d3;
+    --accent-dark: #033160;
+    --accent-soft: #eaf3fd;
+    --teach: #8a6d00;
+    --teach-soft: #fdf6e0;
+    --good: #037f0c;
+    --good-soft: #e9f6ea;
+    --bad: #cc1f1f;
+    --bad-soft: #fdeeee;
+    --code-bg: #1b2530;
+    --code-text: #e6edf3;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --radius: 10px;
+    --rail-color: rgba(9, 114, 211, 0.3);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y proximity; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-size: 15.5px; line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: var(--sans); margin: 0; }
+  section.slide {
+    min-height: 100vh; scroll-snap-align: start; display: flex; flex-direction: column;
+    justify-content: center; padding: 68px 116px 68px 76px; border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .slide-inner { max-width: 1040px; margin: 0 auto; width: 100%; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 14px;
+  }
+  .eyebrow::before { content: ""; width: 20px; height: 2px; background: var(--accent); display: inline-block; }
+  h2.slide-title { font-size: 32px; font-weight: 700; margin-bottom: 10px; text-wrap: balance; letter-spacing: -0.01em; color: var(--text); }
+  .slide-lede { color: var(--text-secondary); font-size: 16.5px; max-width: 76ch; margin-bottom: 26px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; box-shadow: 0 1px 2px rgba(16,24,32,0.04); }
+  .panel + .panel { margin-top: 14px; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .panel-header h3 { font-size: 15px; font-weight: 700; }
+
+  .teach {
+    background: var(--teach-soft); border: 1px solid #f0e0a6; border-left: 4px solid var(--teach);
+    border-radius: 8px; padding: 16px 20px; margin-top: 16px;
+  }
+  .teach .eyebrow { color: var(--teach); margin-bottom: 8px; }
+  .teach .eyebrow::before { background: var(--teach); }
+  .teach p { margin: 0 0 6px; font-size: 14.5px; }
+  .teach p:last-child { margin-bottom: 0; }
+  .teach ul { margin: 6px 0 0; padding-left: 20px; }
+  .teach li { font-size: 14.5px; margin-bottom: 4px; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 900px) { .compare { grid-template-columns: 1fr; } }
+  .compare-card { border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--border); }
+  .compare-card.bad { background: var(--bad-soft); border-color: #f3caca; }
+  .compare-card.good { background: var(--good-soft); border-color: #c6e6c9; }
+  .compare-card .tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; margin-bottom: 10px; }
+  .compare-card.bad .tag { background: var(--bad); color: white; }
+  .compare-card.good .tag { background: var(--good); color: white; }
+  .compare-card pre { margin: 0; font-family: var(--mono); font-size: 12.5px; white-space: pre-wrap; }
+
+  code.inline { font-family: var(--mono); background: var(--surface-alt); padding: 1px 6px; border-radius: 4px; font-size: 0.88em; }
+  pre.code {
+    background: var(--code-bg); color: var(--code-text); border-radius: 8px; padding: 16px 18px;
+    font-family: var(--mono); font-size: 12.8px; overflow-x: auto; line-height: 1.55; margin: 0;
+  }
+  .code-label { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+  /* ramp diagram */
+  .ramp { display: flex; align-items: flex-end; gap: 6px; margin: 8px 0 4px; }
+  .ramp-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .ramp-bar { width: 100%; background: linear-gradient(180deg, var(--accent), var(--accent-dark)); border-radius: 6px 6px 0 0; }
+  .ramp-label { font-size: 11.5px; text-align: center; color: var(--text-secondary); font-weight: 600; line-height: 1.3; }
+  .ramp-num { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 700; }
+
+  /* stat badges */
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .stat-badge { background: var(--accent-soft); color: var(--accent-dark); border-radius: 8px; padding: 8px 14px; font-family: var(--mono); font-size: 13px; font-weight: 700; }
+
+  /* format grid cards */
+  .format-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .format-card .fmt-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+  .format-card .fmt-issue { font-size: 13.5px; color: var(--bad); margin-bottom: 4px; }
+  .format-card .fmt-fix { font-size: 13.5px; color: var(--good); }
+
+  /* maturity path bar under the ramp */
+  .maturity-path { margin-top: 18px; }
+  .mp-track { height: 8px; border-radius: 999px; background: var(--surface-alt); border: 1px solid var(--border); overflow: hidden; }
+  .mp-fill { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-soft), var(--accent)); }
+  .mp-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+
+  /* window diagram */
+  .window-flow { display: flex; align-items: center; gap: 14px; margin: 10px 0; flex-wrap: wrap; }
+  .window-box { border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; background: var(--surface-alt); }
+  .window-box.match { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .arrow { font-family: var(--mono); color: var(--text-secondary); font-size: 20px; }
+
+  /* nested parent/child diagram */
+  .nest-flow { display: flex; align-items: center; gap: 14px; margin: 10px 0; flex-wrap: wrap; }
+  .nest-outer {
+    border: 1.5px dashed var(--border); border-radius: 10px; padding: 18px;
+    background: var(--surface-alt); position: relative; min-width: 260px;
+  }
+  .nest-outer-label { position: absolute; top: -10px; left: 14px; background: var(--bg); padding: 0 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  .nest-inner {
+    border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 8px;
+    padding: 10px 14px; font-size: 13px; font-weight: 600; margin-top: 6px;
+  }
+
+  table.agenda { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  table.agenda th, table.agenda td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+  table.agenda th { background: var(--surface-alt); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  table.agenda td.time { font-family: var(--mono); color: var(--accent-dark); font-weight: 700; white-space: nowrap; }
+  table.agenda tr:last-child td { border-bottom: none; }
+
+  .faq-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-weight: 700; font-size: 14.5px; margin-bottom: 5px; color: var(--accent-dark); }
+  .faq-a { font-size: 14px; color: var(--text-secondary); }
+
+  ol.numbered { margin: 0; padding-left: 20px; } ol.numbered li { margin-bottom: 8px; font-size: 14.5px; }
+  ul.plain { margin: 0; padding-left: 20px; } ul.plain li { margin-bottom: 8px; font-size: 14.5px; }
+
+  /* right dotted rail */
+  .rail { position: fixed; top: 0; right: 36px; height: 100vh; display: flex; align-items: center; z-index: 50; }
+  .rail-line { position: relative; height: 78%; border-right: 2px dotted var(--rail-color); display: flex; flex-direction: column; justify-content: space-between; }
+  .rail-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); transform: translateX(6px); cursor: pointer; transition: all 0.25s ease; position: relative; }
+  .rail-dot:hover { border-color: var(--accent); }
+  .rail-dot.active { background: var(--accent); border-color: var(--accent); transform: translateX(6px) scale(1.25); }
+  .rail-dot .tip { position: absolute; right: 22px; top: 50%; transform: translateY(-50%); background: var(--text); color: white; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+  .rail-dot:hover .tip { opacity: 1; }
+  @media (max-width: 780px) { .rail { display: none; } section.slide { padding: 48px 24px; } }
+
+  .slide-num { position: absolute; top: 42px; right: 116px; font-family: var(--mono); font-size: 12px; color: var(--text-secondary); }
+  @media (max-width: 780px) { .slide-num { display: none; } }
+
+  #s-cover { background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); }
+  .cover-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); }
+
+  .pipeline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 10px 0; }
+  .pipe-box { background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+  .pipe-box.now { background: var(--accent); border-color: var(--accent-dark); color: white; box-shadow: 0 3px 10px rgba(9,114,211,0.3); }
+  .pipe-arrow { color: var(--text-secondary); font-size: 16px; }
+
+  /* session timeline bar */
+  .timeline { display: flex; width: 100%; border-radius: 8px; overflow: hidden; height: 34px; margin: 4px 0 20px; border: 1px solid var(--border); }
+  .tl-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; }
+  .tl-seg:nth-child(1) { background: #6badea; }
+  .tl-seg:nth-child(2) { background: #3d8fdb; }
+  .tl-seg:nth-child(3) { background: var(--accent); }
+  .tl-seg:nth-child(4) { background: var(--accent-dark); }
+  .tl-seg:nth-child(5) { background: #021e40; }
+
+  /* faq cards */
+  .faq-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .faq-card .faq-q { font-weight: 700; font-size: 14px; margin-bottom: 6px; color: var(--accent-dark); }
+  .faq-card .faq-a { font-size: 13.5px; color: var(--text-secondary); }
+
+  /* student/trainer mode toggle */
+  .teach { display: none; }
+  body.trainer-mode .teach { display: block; }
+  .mode-toggle {
+    position: fixed; bottom: 22px; left: 22px; z-index: 200;
+    display: flex; align-items: center; gap: 9px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 14px 8px 12px; box-shadow: 0 4px 14px rgba(16,24,32,0.10);
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    opacity: 0.55; transition: opacity 0.2s ease;
+  }
+  .mode-toggle:hover { opacity: 1; }
+  .mode-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex-shrink: 0; }
+  .mode-toggle.trainer-on .dot { background: var(--teach); }
+  .mode-toggle button {
+    border: none; background: var(--surface-alt); border-radius: 999px; padding: 5px 11px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--text); font-family: var(--sans);
+  }
+  .mode-toggle button:hover { background: var(--border); }
+  @media print { .mode-toggle { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="mode-toggle" id="mode-toggle">
+  <span class="dot"></span>
+  <span id="mode-label">Student view &mdash; safe to present</span>
+  <button id="mode-btn" type="button">Show trainer notes</button>
+</div>
+
+
+<nav class="rail"><div class="rail-line" id="rail-line"></div></nav>
+
+<section class="slide" id="s-cover">
+  <div class="slide-inner">
+    <div class="eyebrow">Teaching Deck · Notebook 02</div>
+    <h2 class="slide-title" style="font-size:44px;">Ingestion &amp; Chunking, the LangChain way</h2>
+    <div class="slide-lede">
+      This is the point where a PDF stops being a PDF and turns into text you can actually retrieve.
+      Most of the RAG session gets spent on vector DBs and rerankers, but honestly, if you mess this
+      part up nothing downstream saves you.
+    </div>
+    <div class="cover-badges">
+      <span class="badge">~45–55 min session</span>
+      <span class="badge">6 chunking strategies</span>
+      <span class="badge">4 document formats</span>
+      <span class="badge">Twin of Notebook 03 (LlamaIndex)</span>
+    </div>
+  </div>
+  <div class="slide-num">01 / 13</div>
+</section>
+
+<section class="slide" id="s-fit">
+  <div class="slide-inner">
+    <div class="eyebrow">Where this fits</div>
+    <h2 class="slide-title">We covered why retrieval last week. Today's the how.</h2>
+    <div class="slide-lede">Notebook 01 was the pitch: a raw LLM hallucinates because it has nothing to ground it in. Fine, but grounded in what? And how do you actually get from a folder of PDFs to something an LLM can use? That's today.</div>
+    <div class="pipeline">
+      <div class="pipe-box now">Documents</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box now">Parse</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box now">Chunk</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box">Embed</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box">Store</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box">Retrieve</div><div class="pipe-arrow">→</div>
+      <div class="pipe-box">Generate</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Draw this on the whiteboard before you even open the notebook. Ask them straight: "if step 2 or 3 is broken, can step 5, the vector database, fix it for you?" Let it go quiet. Nobody answers yes, and that silence is basically the whole session.</p>
+    </div>
+  </div>
+  <div class="slide-num">02 / 13</div>
+</section>
+
+<section class="slide" id="s-headline">
+  <div class="slide-inner">
+    <div class="eyebrow">Part 1 · Ingestion</div>
+    <h2 class="slide-title">The money demo: one PDF, two extractors</h2>
+    <div class="slide-lede"><code class="inline">PyPDFLoader</code> extracts raw text. <code class="inline">PyMuPDF4LLMLoader</code> reconstructs layout. Same file, same table, and the table barely survives one of them.</div>
+    <div class="compare">
+      <div class="compare-card bad">
+        <span class="tag">Naive: PyPDFLoader</span>
+        <pre>Region
+Shipments
+On-Time %
+Revenue ($M)
+Northwest
+128,400
+97.2%
+14.6
+West
+204,910
+98.1%
+...</pre>
+      </div>
+      <div class="compare-card good">
+        <span class="tag">Layout-aware: PyMuPDF4LLMLoader</span>
+        <pre>|Region|Shipments|On-Time %|Revenue|
+|---|---|---|---|
+|Northwest|128,400|97.2%|14.6|
+|West|204,910|98.1%|23.9|
+...</pre>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Cover the right panel first. Show them just the naive output and ask "which number is Northwest's on-time rate?" Nobody will be sure. Rows and columns are gone, it's just a list of numbers now. Then uncover the Markdown version. That's it, that's the whole demo, don't over-explain it.</p>
+    </div>
+  </div>
+  <div class="slide-num">03 / 13</div>
+</section>
+
+<section class="slide" id="s-formats">
+  <div class="slide-inner">
+    <div class="eyebrow">Part 1 · Ingestion</div>
+    <h2 class="slide-title">Four formats, four different failure modes</h2>
+    <div class="slide-lede">Every format quietly destroys something different if you use the wrong loader.</div>
+    <div class="grid grid-4">
+      <div class="format-card">
+        <div class="fmt-name">PDF</div>
+        <div class="fmt-issue">Tables flatten to number soup</div>
+        <div class="fmt-fix">→ layout-aware parser (pymupdf4llm)</div>
+      </div>
+      <div class="format-card">
+        <div class="fmt-name">HTML</div>
+        <div class="fmt-issue">Nav/boilerplate mixed with content</div>
+        <div class="fmt-fix">→ structure-aware loader (BSHTMLLoader)</div>
+      </div>
+      <div class="format-card">
+        <div class="fmt-name">Word</div>
+        <div class="fmt-issue">Clause numbering / structure lost</div>
+        <div class="fmt-fix">→ Docx2txtLoader preserves paragraph order</div>
+      </div>
+      <div class="format-card">
+        <div class="fmt-name">Scanned image</div>
+        <div class="fmt-issue">It's just pixels. No text underneath at all.</div>
+        <div class="fmt-fix">→ OCR (RapidOCR), imperfect but real text</div>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Run the OCR cell live, don't just show a screenshot. Let them find the garbage themselves, <code class="inline">"causedby"</code>, <code class="inline">"INTERNALMEMO"</code>, stuff like that. Point out that this noise doesn't stay contained, it flows straight into your chunks and then your embeddings. Some pipelines add a confidence gate before chunking for exactly this reason.</p>
+    </div>
+  </div>
+  <div class="slide-num">04 / 13</div>
+</section>
+
+<section class="slide" id="s-ramp">
+  <div class="slide-inner">
+    <div class="eyebrow">Part 2 · Chunking</div>
+    <h2 class="slide-title">Six strategies, and they build on each other</h2>
+    <div class="slide-lede">Don't treat these as six separate options to pick from. It's more of a ladder. Start at the bottom, only climb when your retrieval quality actually needs it.</div>
+    <div class="ramp">
+      <div class="ramp-step"><div class="ramp-bar" style="height:40px;"></div><div class="ramp-num">1</div><div class="ramp-label">Fixed-size</div></div>
+      <div class="ramp-step"><div class="ramp-bar" style="height:64px;"></div><div class="ramp-num">2</div><div class="ramp-label">Recursive</div></div>
+      <div class="ramp-step"><div class="ramp-bar" style="height:88px;"></div><div class="ramp-num">3</div><div class="ramp-label">Semantic</div></div>
+      <div class="ramp-step"><div class="ramp-bar" style="height:112px;"></div><div class="ramp-num">4</div><div class="ramp-label">Sentence-<br>window</div></div>
+      <div class="ramp-step"><div class="ramp-bar" style="height:136px;"></div><div class="ramp-num">5</div><div class="ramp-label">Parent /<br>small-to-big</div></div>
+      <div class="ramp-step"><div class="ramp-bar" style="height:160px;"></div><div class="ramp-num">6</div><div class="ramp-label">Doc-type-<br>aware</div></div>
+    </div>
+    <div class="maturity-path" aria-hidden="true">
+      <div class="mp-track">
+        <div class="mp-fill"></div>
+      </div>
+      <div class="mp-labels">
+        <span>cheap, quick to set up</span>
+        <span>more setup, better recall</span>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Tell them straight up: when someone says "our RAG is broken," the fix is almost never a bigger model. Nine times out of ten it's one step up this ladder. I say this line at least twice a session, it's worth repeating.</p>
+    </div>
+  </div>
+  <div class="slide-num">05 / 13</div>
+</section>
+
+<section class="slide" id="s-12">
+  <div class="slide-inner">
+    <div class="eyebrow">Strategy 1 &amp; 2</div>
+    <h2 class="slide-title">Fixed-size vs. Recursive</h2>
+    <div class="slide-lede">Same chunk size target, two very different boundary decisions.</div>
+    <div class="compare">
+      <div class="compare-card bad">
+        <span class="tag">TokenTextSplitter, naive</span>
+        <p style="font-size:13.5px; margin:0 0 8px;">Cuts blindly every N tokens. Watch a boundary land mid-table.</p>
+        <pre>chunk_size=80, chunk_overlap=10
+→ 4 chunks | tokens 58/70/78</pre>
+      </div>
+      <div class="compare-card good">
+        <span class="tag">RecursiveCharacterTextSplitter, default</span>
+        <p style="font-size:13.5px; margin:0 0 8px;">Tries \n\n, then \n, then a plain space, in that order. Whichever one gives a natural break and still fits, wins.</p>
+        <pre>chunk_size=400, chunk_overlap=60
+→ 3 chunks | tokens 46/83/132</pre>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <ul>
+        <li>Run both live, print the previews side by side in the terminal so it's not abstract.</li>
+        <li>Ask which one's table still looks intact. Let them find it themselves, don't just tell them.</li>
+        <li>The takeaway to land: recursive is the sane default for general text. Start there 9 times out of 10.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-num">06 / 13</div>
+</section>
+
+<section class="slide" id="s-semantic">
+  <div class="slide-inner">
+    <div class="eyebrow">Strategy 3</div>
+    <h2 class="slide-title">Semantic chunking: cut at meaning, not length</h2>
+    <div class="slide-lede">Embed adjacent sentences, cut where the similarity between them drops off. You're finding an actual topic change instead of just counting characters and cutting blindly.</div>
+    <div class="panel">
+      <div class="code-label">langchain_experimental.text_splitter</div>
+      <pre class="code">semantic = SemanticChunker(embeddings, breakpoint_threshold_type="percentile")
+sem_chunks = semantic.create_documents([contract])
+→ 2 chunks | tokens 31/141/252</pre>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Be honest about the cost here. It's calling an embedding model during indexing, not just at query time, so it's slower and pricier than recursive splitting. I tell students to reach for this only when one document mixes wildly different topics, not as a default choice. Also worth mentioning: it lives in <code class="inline">langchain_experimental</code> still, not core LangChain, so expect API drift.</p>
+    </div>
+  </div>
+  <div class="slide-num">07 / 13</div>
+</section>
+
+<section class="slide" id="s-window">
+  <div class="slide-inner">
+    <div class="eyebrow">Strategy 4</div>
+    <h2 class="slide-title">Sentence-window: retrieve small, expand at answer time</h2>
+    <div class="slide-lede">Index one precise sentence for matching; hand the model its neighbors so it has enough context to actually answer.</div>
+    <div class="window-flow">
+      <div class="window-box match">Matched sentence: "...home-internet stipend of $45/month..."</div>
+      <div class="arrow">→</div>
+      <div class="window-box">Expanded window: "...Remote-Work Reimbursement... $45/month... <strong>Contractors are not eligible.</strong>"</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Honestly the best "aha" in the whole notebook, don't rush it. Ask the class: if we only returned the matched sentence, what fact would the model never even see? Answer: contractors aren't eligible, and that's a compliance detail you really don't want silently dropped. Worth mentioning LangChain has no built-in for this, it's a manual metadata trick. Notebook 03 turns it into a one-liner in LlamaIndex, so tease that for tomorrow.</p>
+    </div>
+  </div>
+  <div class="slide-num">08 / 13</div>
+</section>
+
+<section class="slide" id="s-parent">
+  <div class="slide-inner">
+    <div class="eyebrow">Strategy 5</div>
+    <h2 class="slide-title">Parent-document: small-to-big retrieval</h2>
+    <div class="slide-lede">Embed the small child chunks for precise matching. When one hits, hand back its whole parent section instead, so the model isn't working off a fragment.</div>
+    <div class="nest-flow">
+      <div class="nest-outer">
+        <span class="nest-outer-label">Parent chunk · 600 chars</span>
+        <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:2px;">full Remote-Work Reimbursement clause</div>
+        <div class="nest-inner">Child (150 chars) matched: "...home-internet stipend..."</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="window-box">Returned to the model: the entire parent clause, not just the child</div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Put this right next to strategy 4 and make them compare. Sentence-window fixes context with a fixed number of neighboring sentences. Parent-document fixes it using the document's actual structure, section boundaries. Ask which one a legal-contract system would want and why. Clause boundaries mean something, an arbitrary sentence count doesn't.</p>
+    </div>
+  </div>
+  <div class="slide-num">09 / 13</div>
+</section>
+
+<section class="slide" id="s-doctype">
+  <div class="slide-inner">
+    <div class="eyebrow">Strategy 6</div>
+    <h2 class="slide-title">Document-type-aware: stop using one splitter for everything</h2>
+    <div class="grid grid-3">
+      <div class="format-card"><div class="fmt-name">Code</div><div class="fmt-fix">Split on function/class boundaries (<code class="inline">from_language</code>)</div></div>
+      <div class="format-card"><div class="fmt-name">Markdown</div><div class="fmt-fix">Split on <code class="inline">#</code>/<code class="inline">##</code> headers</div></div>
+      <div class="format-card"><div class="fmt-name">HTML</div><div class="fmt-fix">Split on tag structure (h1/h2/table)</div></div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Make sure your Markdown demo doc actually has more than one heading. If it only has one, the splitter quietly returns 1 chunk and looks completely broken. We built this exact demo against a single-heading doc the first time and spent ten minutes convinced the splitter was buggy. It wasn't, the test doc was just wrong. Tell students this story, it's a real lesson: check that your demo is actually demonstrating what you think it is before you trust it.</p>
+    </div>
+  </div>
+  <div class="slide-num">10 / 13</div>
+</section>
+
+<section class="slide" id="s-contextual">
+  <div class="slide-inner">
+    <div class="eyebrow">Bonus · 2024 technique, now near-standard</div>
+    <h2 class="slide-title">Contextual Retrieval: a 7th lever you can stack on top</h2>
+    <div class="slide-lede">All six strategies so far are about where you cut. This one's different, it's about what you add to a chunk before you embed it, and you can bolt it onto any strategy above.</div>
+    <div class="panel">
+      <p style="margin:0 0 10px; font-size:14.5px;">An LLM writes a short blurb (50 to 100 tokens), something like: "this chunk is from Northwind's Q2 report, Northeast region." That blurb gets prepended before embedding and BM25 indexing.</p>
+      <div class="stats">
+        <span class="stat-badge">~35% fewer failed retrievals (context alone)</span>
+        <span class="stat-badge">~49% (+ contextual BM25)</span>
+        <span class="stat-badge">~67% (+ reranking)</span>
+      </div>
+    </div>
+    <div class="teach">
+      <div class="eyebrow">For the trainer</div>
+      <p>Yes, it's one more LLM call per chunk, but it happens at indexing time, not on every query, so it's cheap and you can cache it. I don't build this live in class, just flag that it exists. Pairs well with reranking, which we get to in Notebook 08.</p>
+    </div>
+  </div>
+  <div class="slide-num">11 / 13</div>
+</section>
+
+<section class="slide" id="s-agenda">
+  <div class="slide-inner">
+    <div class="eyebrow">Suggested session flow</div>
+    <h2 class="slide-title">Roughly 50 minutes, here's how it splits</h2>
+    <div class="timeline">
+      <div class="tl-seg" style="width:10%;" title="Recap + pipeline diagram">5m</div>
+      <div class="tl-seg" style="width:20%;" title="Ingestion demos">10m</div>
+      <div class="tl-seg" style="width:40%;" title="Chunking strategies 1-6">20m</div>
+      <div class="tl-seg" style="width:14%;" title="Contextual Retrieval">7m</div>
+      <div class="tl-seg" style="width:16%;" title="Summary + handoff">8m</div>
+    </div>
+    <table class="agenda">
+      <tr><th>Time</th><th>Segment</th></tr>
+      <tr><td class="time">0–5 min</td><td>Recap Notebook 01, show the pipeline diagram, tell them today is parsing plus chunking</td></tr>
+      <tr><td class="time">5–15 min</td><td>Ingestion: run the PDF naive vs. layout-aware demo live, then a quick pass on HTML/Word/OCR</td></tr>
+      <tr><td class="time">15–35 min</td><td>Chunking strategies 1 through 6, live in the notebook, in order. Don't skip the ramp framing, it's the thread that ties everything together</td></tr>
+      <tr><td class="time">35–42 min</td><td>Contextual Retrieval as a bonus concept, no live coding needed here</td></tr>
+      <tr><td class="time">42–50 min</td><td>Summary table, then hand off to Notebook 03 (same ideas, different library)</td></tr>
+    </table>
+  </div>
+  <div class="slide-num">12 / 13</div>
+</section>
+
+<section class="slide" id="s-faq">
+  <div class="slide-inner">
+    <div class="eyebrow">Anticipate these questions</div>
+    <h2 class="slide-title">What students usually ask at this point</h2>
+    <div class="grid grid-2">
+      <div class="faq-card">
+        <div class="faq-q">"Why not just always use strategy 6, the most advanced one?"</div>
+        <div class="faq-a">Cost and complexity climb with the ramp. Semantic and small-to-big both need extra embedding calls and more infrastructure to run. Start simple, escalate only once retrieval quality actually demands it.</div>
+      </div>
+      <div class="faq-card">
+        <div class="faq-q">"Can't I just make the chunk size bigger and be done with it?"</div>
+        <div class="faq-a">No. Go too large and you blur several topics into one embedding, which hurts precision. There's no free lunch here, chunk size is a real knob you have to tune, not something you max out and forget.</div>
+      </div>
+      <div class="faq-card">
+        <div class="faq-q">"Should I always turn overlap on?"</div>
+        <div class="faq-a">Overlap cuts down on information lost at boundary cuts, but it costs you storage and you'll retrieve redundant text. 10 to 20% is the usual range. Anything much bigger is just waste.</div>
+      </div>
+      <div class="faq-card">
+        <div class="faq-q">"Which one should I actually use in my own project?"</div>
+        <div class="faq-a">Recursive by default, basically always. Add sentence-window if answers feel starved of context. Add parent-document for long structured docs like contracts or manuals. Save semantic chunking for corpora that actually mix unrelated topics.</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">13 / 13</div>
+</section>
+
+<script>
+const slides = Array.from(document.querySelectorAll('section.slide'));
+const railLine = document.getElementById('rail-line');
+slides.forEach((s) => {
+  const dot = document.createElement('div');
+  dot.className = 'rail-dot';
+  const title = s.querySelector('.slide-title') ? s.querySelector('.slide-title').textContent : s.id;
+  dot.innerHTML = `<span class="tip">${title}</span>`;
+  dot.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
+  railLine.appendChild(dot);
+});
+const dots = Array.from(railLine.querySelectorAll('.rail-dot'));
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      dots.forEach(d => d.classList.remove('active'));
+      if (dots[idx]) dots[idx].classList.add('active');
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => observer.observe(s));
+
+const modeToggle = document.getElementById('mode-toggle');
+const modeLabel = document.getElementById('mode-label');
+const modeBtn = document.getElementById('mode-btn');
+modeBtn.addEventListener('click', () => {
+  const isTrainer = document.body.classList.toggle('trainer-mode');
+  modeToggle.classList.toggle('trainer-on', isTrainer);
+  modeLabel.textContent = isTrainer ? 'Trainer view \u2014 notes visible, do not project like this' : 'Student view \u2014 safe to present';
+  modeBtn.textContent = isTrainer ? 'Hide trainer notes' : 'Show trainer notes';
+});
+</script>
+</body>
+</html>

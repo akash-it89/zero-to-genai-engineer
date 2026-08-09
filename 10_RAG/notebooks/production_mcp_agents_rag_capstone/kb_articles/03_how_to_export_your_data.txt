@@ -1,0 +1,7 @@
+How to Export Your Data
+
+You can export your data at any time from Settings > Data > Export. Choose either CSV or JSON
+format. Exports of up to 100,000 rows are generated instantly and available for download
+immediately. Larger exports are processed in the background and emailed to you as a download
+link within 24 hours. Free tier accounts are limited to 1 export per calendar month; Pro and
+Enterprise accounts have unlimited exports.

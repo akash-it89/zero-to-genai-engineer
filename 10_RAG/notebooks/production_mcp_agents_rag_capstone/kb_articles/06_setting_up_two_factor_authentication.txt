@@ -1,0 +1,8 @@
+Setting Up Two-Factor Authentication
+
+Enable two-factor authentication from Settings > Security > Enable 2FA. We support
+authenticator apps using TOTP (Google Authenticator, Authy, etc.) as well as SMS-based codes.
+When you enable 2FA, the system generates 10 single-use backup codes — store these somewhere
+safe, since each code only works once and they are the only way back into your account if you
+lose access to your authenticator device. Two-factor authentication is mandatory for all
+Enterprise accounts and cannot be disabled by individual users on an Enterprise workspace.

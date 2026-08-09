@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Local state
+*.sqlite
+*.sqlite3
+uploads/
+chroma_index/
+.chroma_*/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.ipynb_checkpoints/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.env
+playwright-report/
+test-results/

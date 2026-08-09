@@ -1,0 +1,3 @@
+How to Change Your Billing Email
+
+Go to Settings > Billing > Update Email. Changes take effect on your next invoice, not retroactively.

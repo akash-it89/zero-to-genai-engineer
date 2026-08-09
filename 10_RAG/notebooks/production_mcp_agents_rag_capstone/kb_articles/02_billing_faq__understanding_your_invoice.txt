@@ -1,0 +1,7 @@
+Billing FAQ: Understanding Your Invoice
+
+Invoices are generated automatically on the 1st of every month and reflect usage from the
+previous billing cycle. Payment is due within 14 days of the invoice date. If payment is not
+received, a 5-day grace period applies before any penalty — after the grace period, a late
+fee of 1.5% of the outstanding balance is added per month until the invoice is paid. We accept
+credit card payments on all plans; ACH bank transfer is available only on the Enterprise plan.

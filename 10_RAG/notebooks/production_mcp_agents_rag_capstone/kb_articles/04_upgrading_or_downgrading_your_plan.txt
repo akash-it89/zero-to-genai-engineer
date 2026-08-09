@@ -1,0 +1,7 @@
+Upgrading or Downgrading Your Plan
+
+Upgrading your plan takes effect immediately, and billing is prorated for the remainder of
+the current cycle. Downgrading takes effect at the start of your next billing cycle — you
+keep your current plan's features until then, so there is no service interruption.
+Enterprise plans require contacting our sales team directly and carry a minimum 12-month
+contract term; Enterprise accounts cannot be self-service downgraded from the dashboard.

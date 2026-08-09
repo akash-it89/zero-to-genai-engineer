@@ -1,0 +1,82 @@
+[
+  {
+    "query": "How do I fix a 502 Bad Gateway error from our API?",
+    "gold_id": 8,
+    "type": "mixed"
+  },
+  {
+    "query": "What did Python 3.11 add for error messages?",
+    "gold_id": 91,
+    "type": "exact"
+  },
+  {
+    "query": "Why is my Postgres query slow even though the column has an index?",
+    "gold_id": 88,
+    "type": "semantic"
+  },
+  {
+    "query": "How should we store user passwords securely?",
+    "gold_id": 24,
+    "type": "semantic"
+  },
+  {
+    "query": "My pod is stuck in CrashLoopBackOff \u2014 what does that mean?",
+    "gold_id": 27,
+    "type": "exact"
+  },
+  {
+    "query": "What are the tax advantages of a Roth 401k?",
+    "gold_id": 77,
+    "type": "mixed"
+  },
+  {
+    "query": "How much notice is required to end the agreement early?",
+    "gold_id": 58,
+    "type": "semantic"
+  },
+  {
+    "query": "What causes a heart attack?",
+    "gold_id": 16,
+    "type": "semantic"
+  },
+  {
+    "query": "What is the price and size of product SKU7788XL?",
+    "gold_id": 13,
+    "type": "exact"
+  },
+  {
+    "query": "What port does HTTPS use by default?",
+    "gold_id": 74,
+    "type": "exact"
+  },
+  {
+    "query": "Why must I use the same embedding model for indexing and querying?",
+    "gold_id": 38,
+    "type": "semantic"
+  },
+  {
+    "query": "How do I reduce noisy per-request HTTP logs from our service?",
+    "gold_id": 1,
+    "type": "semantic"
+  },
+  {
+    "query": "How can I cut LLM cost when the same long prompt prefix repeats?",
+    "gold_id": 72,
+    "type": "semantic"
+  },
+  {
+    "query": "How do I undo the last commit but keep my changes staged?",
+    "gold_id": 0,
+    "type": "exact"
+  },
+  {
+    "query": "Which AWS service should I use to store large files cheaply?",
+    "gold_id": 14,
+    "type": "mixed"
+  },
+  {
+    "query": "How do I stop a single user from overwhelming the API with requests?",
+    "gold_id": 61,
+    "type": "semantic"
+  }
+]
