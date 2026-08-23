@@ -1,0 +1,24 @@
+# Requirements for the Self-Correcting Agentic RAG Streamlit app (app.py + graph.py)
+#   pip install -r requirements.txt
+#
+# Same stack as ../notebooks/03_agentic_rag_capstone.ipynb, plus streamlit for the UI, and
+# the Module 10 rag_pipeline.py dependencies since graph.py imports it directly.
+
+streamlit
+langgraph>=0.6
+langchain>=1.0
+langchain-openai
+langchain-core
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+pypdf
+docx2txt
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+ragas          # check_groundedness() -- optional: falls back to an LLM-judge prompt if missing
+pytest         # tests/test_graph.py
+python-dotenv
+numpy<2

@@ -1,0 +1,28 @@
+# Requirements for the 11_LangGraph notebooks (01-03)
+#   pip install -r requirements.txt
+#
+# Notebook 03 (the capstone) also imports 10_RAG/notebooks/production_rag_chatbot/rag_pipeline.py
+# directly, so it needs that notebook's dependencies too (bm25s, sentence-transformers, chromadb, ...).
+# Install ../../10_RAG/notebooks/requirements.txt first if you haven't already run Module 10.
+
+numpy<2
+
+# ── Notebooks 01-02 — LangGraph fundamentals, agents, HITL, multi-agent ──
+langgraph>=0.6
+langchain>=1.0
+langchain-openai
+langchain-core
+python-dotenv
+
+# ── Notebook 03 — Agentic RAG capstone (reuses Module 10's rag_pipeline.py) ──
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+pypdf
+docx2txt
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+ragas          # RAGAS Faithfulness in check_groundedness() -- optional, has an LLM-judge fallback
+pytest         # ../capstone_agentic_rag/tests/test_graph.py
