@@ -1,0 +1,85 @@
+{
+  "reflection": {
+    "source": "official",
+    "url": "https://raw.githubusercontent.com/langchain-ai/langgraphjs/main/examples/reflection/img/reflection.png",
+    "file": "reflection_architecture.png",
+    "mermaid_backup": "reflection_mermaid.png",
+    "langgraph_file": "reflection_langgraph.png"
+  },
+  "rewoo": {
+    "source": "official",
+    "url": "https://raw.githubusercontent.com/langchain-ai/langgraphjs/main/examples/rewoo/img/rewoo.png",
+    "file": "rewoo_architecture.png",
+    "mermaid_backup": "rewoo_mermaid.png",
+    "langgraph_file": "rewoo_langgraph.png"
+  },
+  "tot": {
+    "source": "official",
+    "url": "https://raw.githubusercontent.com/langchain-ai/langgraph/f239b39060096ab2c8bff0d6303781efee174a5c/docs/docs/tutorials/tot/img/tot.png",
+    "file": "tot_architecture.png",
+    "mermaid_backup": "tot_mermaid.png",
+    "langgraph_file": "tot_langgraph.png"
+  },
+  "cot": {
+    "source": "mermaid-cli",
+    "file": "cot_architecture.png"
+  },
+  "react": {
+    "source": "mermaid-cli",
+    "file": "react_architecture.png",
+    "langgraph_file": "react_langgraph.png"
+  },
+  "reflexion": {
+    "source": "mermaid-cli",
+    "file": "reflexion_architecture.png",
+    "langgraph_file": "reflexion_langgraph.png"
+  },
+  "critic": {
+    "source": "mermaid-cli",
+    "file": "critic_architecture.png",
+    "langgraph_file": "critic_langgraph.png"
+  },
+  "plan_execute": {
+    "source": "mermaid-cli",
+    "file": "plan_execute_architecture.png",
+    "langgraph_file": "plan_execute_langgraph.png"
+  },
+  "self_discover": {
+    "source": "mermaid-cli",
+    "file": "self_discover_architecture.png",
+    "langgraph_file": "self_discover_langgraph.png"
+  },
+  "self_rag": {
+    "source": "mermaid-cli",
+    "file": "self_rag_architecture.png"
+  },
+  "lats": {
+    "source": "mermaid-cli",
+    "file": "lats_architecture.png"
+  },
+  "llm_compiler": {
+    "source": "mermaid-cli",
+    "file": "llm_compiler_architecture.png"
+  },
+  "got": {
+    "source": "mermaid-cli",
+    "file": "got_architecture.png"
+  },
+  "sql_agent": {
+    "source": "mermaid-cli",
+    "file": "sql_agent_architecture.png",
+    "langgraph_file": "sql_agent_langgraph.png"
+  },
+  "patterns_family_map": {
+    "source": "mermaid-cli",
+    "file": "patterns_family_map.png"
+  },
+  "patterns_decision_tree": {
+    "source": "mermaid-cli",
+    "file": "patterns_decision_tree.png"
+  },
+  "chinook_er": {
+    "source": "mermaid-cli",
+    "file": "chinook_er.png"
+  }
+}

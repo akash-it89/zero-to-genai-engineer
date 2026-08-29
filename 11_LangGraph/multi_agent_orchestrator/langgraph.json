@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "helpdesk_orchestrator": "./studio.py:graph"
+  },
+  "env": "../../10_RAG/.env",
+  "python_version": "3.11"
+}

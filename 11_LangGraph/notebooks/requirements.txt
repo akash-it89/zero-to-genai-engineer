@@ -1,20 +1,38 @@
-# Requirements for the 11_LangGraph notebooks (01-03)
+# Requirements for the 11_LangGraph notebooks (01-05)
 #   pip install -r requirements.txt
 #
-# Notebook 03 (the capstone) also imports 10_RAG/notebooks/production_rag_chatbot/rag_pipeline.py
-# directly, so it needs that notebook's dependencies too (bm25s, sentence-transformers, chromadb, ...).
-# Install ../../10_RAG/notebooks/requirements.txt first if you haven't already run Module 10.
+# Notebook 03 starts the Module 10 helpdesk MCP server. Install
+# ../../10_RAG/notebooks/production_mcp_agents_rag_capstone/requirements.txt
+# (or this module's multi_agent_orchestrator/requirements.txt) if you have not
+# run Module 10 Notebook 16.
 
 numpy<2
 
-# ── Notebooks 01-02 — LangGraph fundamentals, agents, HITL, multi-agent ──
+# ── Notebooks 01-02 — LangGraph fundamentals, agents, HITL ──
 langgraph>=0.6
 langchain>=1.0
 langchain-openai
 langchain-core
 python-dotenv
 
-# ── Notebook 03 — Agentic RAG capstone (reuses Module 10's rag_pipeline.py) ──
+# ── Notebook 03 — hierarchical orchestrator ──
+langgraph-supervisor>=0.0.27
+langchain-mcp-adapters
+mcp>=1.0.0
+nest_asyncio
+tavily-python
+ddgs
+
+# ── Notebook 04 — agent reasoning patterns masterclass ──
+pydantic
+matplotlib
+pandas
+
+# ── Notebook 05 — SQL agent ──
+langchain-community
+requests
+
+# ── Optional — self-correcting RAG side project (capstone_agentic_rag/) ──
 langchain-community
 langchain-text-splitters
 langchain-pymupdf4llm

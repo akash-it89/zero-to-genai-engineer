@@ -1,10 +1,31 @@
+<div align="center">
+
 # Session 00 — How Search Engines Work
+
+**M00 · Foundations · no API key**
+
+*Build a TF-IDF search engine from scratch — the idea under every RAG system you will write later.*
+
+</div>
 
 > **The big question:** How does Google decide which result is most relevant to your query?
 
 This session introduces the core idea behind every search system — TF-IDF — and shows you how to build one from scratch in Python. No machine learning needed. Just math and logic.
 
 By the end of this session, you will understand the engine that sat beneath Google before deep learning changed everything. That foundation makes everything in GenAI — embeddings, RAG, retrieval — click into place.
+
+## Start here
+
+Open [`notebooks/01_search_engine.ipynb`](notebooks/01_search_engine.ipynb) (Colab badge below, or local Jupyter). Then notebook 02.
+
+**Browser lab:** [How Search Engines Work](https://nursnaaz.github.io/tutorial/how-search-engines-work) (~45 min). Do this before or with notebook 01.
+
+```text
+00_How_Search_Engine_Works/
+├── README.md          ← you are here
+├── notebooks/         ← 01 search engine · 02 TF-IDF math
+└── slides/            ← PDFs for class
+```
 
 ---
 
@@ -33,13 +54,13 @@ Run these in order in **Google Colab** or locally with Jupyter.
 
 ## Slides
 
-PDF slides for each topic are in the [`slides/`](slides/) folder.
+Class slides (hosted):
 
-| File | Topic |
+| Presentation | Topic |
 |---|---|
-| [00_genai_intro.pdf](slides/00_genai_intro.pdf) | What is GenAI — the landscape in 2025/26 |
-| [00_how_search_engine_works.pdf](slides/00_how_search_engine_works.pdf) | From crawling to TF-IDF ranking |
-| [00_claude_code_leak_summary.pdf](slides/00_claude_code_leak_summary.pdf) | The Claude Code system prompt leak — what it reveals about how LLMs are instructed |
+| [GenAI intro](https://nursnaaz.github.io/zero-to-genai-engineer/00_How_Search_Engine_Works/slides/00_genai_intro.pdf) | What is GenAI |
+| [How search engines work](https://nursnaaz.github.io/zero-to-genai-engineer/00_How_Search_Engine_Works/slides/00_how_search_engine_works.pdf) | From crawling to TF-IDF ranking |
+| [Claude Code leak](https://nursnaaz.github.io/zero-to-genai-engineer/00_How_Search_Engine_Works/slides/00_claude_code_leak_summary.pdf) | The Claude Code system prompt leak |
 
 ---
 
@@ -54,3 +75,7 @@ jupyter notebook notebooks/01_search_engine.ipynb
 ```
 
 For Colab: open the notebook link and click **"Open in Colab"**.
+
+---
+
+**Course nav:** [Pre-work](../prereq/) · [All sessions](../README.md) · [S01 Text to Numbers →](../01_Text_to_Numbers/)

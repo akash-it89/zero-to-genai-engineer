@@ -1,262 +1,222 @@
-# Session 11 — LangGraph (Stateful Agents)
-### M10 — Complete
+<div align="center">
 
-> **What was MISSING from S10:** Module 10 built a genuinely production-grade RAG pipeline —
-> hybrid retrieval, reranking, a groundedness guardrail, conversational memory — but
-> `ProductionRAGChatbot.chat()` is a **straight line**: retrieve → rerank → guardrail →
-> generate, every time, no matter what. It can't retry a bad retrieval, can't rewrite a vague
-> question, can't pause and ask a human when it's genuinely stuck, and its "memory" is a
-> Python list living inside one process. LangGraph is the fix: it turns that straight line
-> into a **graph with cycles, persistent state, and a pause button** — which is exactly what
-> "agent" means once you stop hand-waving the word.
+# Session 11 — LangGraph
 
-> **Where this sits relative to S10f:** Module 10's Notebook 11 already used `create_agent` +
-> LangChain 1.0's `middleware=` system to add memory, `HumanInTheLoopMiddleware`,
-> `ModelRetryMiddleware`/`ModelFallbackMiddleware`, `Store`-backed long-term memory, and
-> `response_format=ProviderStrategy(schema=...)` structured output — all of that is real,
-> already built, and this module doesn't re-teach it. What `create_agent` + middleware
-> *doesn't* give you is custom, multi-step control flow specific to your own business logic —
-> there's no `RetrievalGradingMiddleware` or `QueryRewriteMiddleware`, because "grade this
-> retrieval, rewrite the query, try again, then escalate" isn't a generic concern any
-> off-the-shelf middleware could anticipate. That's a `StateGraph` you build yourself. This
-> module teaches the primitives (`interrupt()`, `Command`, `checkpointer`, `Store`) that both
-> `create_agent`'s middleware *and* the capstone's bespoke retry loop are built from — so you
-> can reach for a middleware when the concern is generic, and hand-build a graph when it isn't.
+### M10 · Stateful agents · Complete
+
+*Turn a straight-line RAG chain into a graph with loops, durable memory, and a pause button.*
+
+[![LangGraph](https://img.shields.io/badge/LangGraph-0.6+-00A3A1?style=for-the-badge)](https://docs.langchain.com/oss/python/langgraph)
+[![LangChain](https://img.shields.io/badge/LangChain-1.0-1C3C3C?style=for-the-badge)](https://python.langchain.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+
+[Start here](#-start-here) · [Path](#-learning-path) · [Why graphs](#-why-a-graph) · [Apps](#-run-the-apps)
+
+</div>
 
 ---
 
-## What This Session Covers
+> **What was MISSING from S10:** you shipped a production RAG pipeline — hybrid retrieval, reranking, guardrails, memory. `ProductionRAGChatbot.chat()` is still a **straight line**. It cannot retry a weak retrieval, rewrite a vague question, or pause for a human when it is stuck.
+>
+> LangGraph is that control flow: **cycles, durable state, and `interrupt()`.**
 
-| Day | Topic | Key Concepts |
-|-----|-------|--------------|
-| S11a | LangGraph Fundamentals & Agents | `StateGraph`, nodes, edges, conditional routing, `add_messages` reducer, tool-calling agents (`ToolNode`, `create_agent`), checkpointer memory, streaming |
-| S11b | Human-in-the-Loop & Multi-Agent | `interrupt()` / `Command(resume=...)`, long-term memory (`Store`), supervisor pattern with `Command(goto=...)` handoffs |
-| S11c | Capstone — Agentic RAG | Every Module 10 building block (hybrid search, rerank, groundedness) reused inside a self-correcting LangGraph agent: query rewriting, retrieval grading, hallucination checks, human escalation |
+S10 Notebook 11 already used `create_agent` + middleware for *generic* concerns (memory, approve-this-tool). This session teaches the **primitives** those helpers wrap — so you can build a loop no off-the-shelf middleware covers.
 
 ---
 
-## Contents
+## 🚀 Start here
 
-| File | Description |
-|------|--------------|
-| `notebooks/01_langgraph_fundamentals_and_agents.ipynb` | Graphs, state, conditional edges, tool-calling agents, memory, streaming |
-| `notebooks/02_human_in_the_loop_and_multi_agent.ipynb` | `interrupt()`-based approval flows, long-term memory, supervisor multi-agent pattern |
-| `notebooks/03_agentic_rag_capstone.ipynb` | **Flagship project** — Self-Correcting Agentic RAG, built on top of the Module 10 pipeline, then hardened with the rest of the Module 10 toolkit |
-| `capstone_agentic_rag/` | The production graph (`graph.py`), a Streamlit app (`app.py`), and a no-API-key pytest suite (`tests/test_graph.py`) |
+**Before this folder:** Session 10 notebooks **01–11**. Day 3 also needs Notebook **16** (MCP helpdesk).
 
----
+```bash
+# 1. Keys (or reuse 10_RAG/.env)
+cp 11_LangGraph/.env.example 11_LangGraph/.env
 
-## Why LangGraph (not just LangChain / LCEL)
+# 2. Install
+cd 11_LangGraph/notebooks
+pip install -r requirements.txt
 
-An LCEL chain (`prompt \| llm \| parser`) is a **DAG that runs once, forward, and stops.**
-That's fine for "retrieve then answer." It falls apart the moment the task needs any of:
+# 3. Open notebook 01
+```
 
-- **Loops** — "try again with a better query" (LCEL has no way back to an earlier step)
-- **Branching on model output** — "if the answer isn't grounded, regenerate; if it's still
-  bad, ask a human" (conditional logic belongs in code, not a pipe chain)
-- **Durable, resumable state** — pause mid-task (approval, rate limit, crash) and resume
-  *exactly where it left off*, not from the top
-- **Multiple cooperating agents** — a supervisor that hands work to specialists and gets
-  control back
+Then open [`notebooks/01_langgraph_fundamentals_and_agents.ipynb`](notebooks/01_langgraph_fundamentals_and_agents.ipynb).
 
-LangGraph models the whole thing as a **graph**: `State` (a typed, shared scratchpad) flows
-through `Nodes` (plain Python functions) connected by `Edges` (including conditional ones
-that branch on the current state). A `Checkpointer` snapshots that state after every node,
-which is what makes memory, crash-recovery, and human-in-the-loop all the same mechanism
-instead of three separate features.
+**Browser labs:** [ReAct, one tool](https://nursnaaz.github.io/tutorial/one-tool-one-loop) · [Human in the loop](https://nursnaaz.github.io/tutorial/human-in-the-loop) · [MCP as USB](https://nursnaaz.github.io/tutorial/mcp-as-usb) · [Securing agents](https://nursnaaz.github.io/tutorial/secured-agents)
+
+Class slides: [all decks](https://nursnaaz.github.io/zero-to-genai-engineer/). Each day also has a link in the table below. Day 3 is the notebook + Streamlit app.
 
 ---
 
-## Key Concepts & Latest API (verified against LangChain/LangGraph docs, Aug 2026)
+## 🗺️ Learning path
 
-LangChain and LangGraph both shipped **v1.0** in 2026. The headline change: `create_agent`
-(in the `langchain` package) is now the recommended way to build a tool-calling agent —
-built *on top of* the LangGraph runtime, with a middleware system for customizing the loop.
-`create_react_agent` (in `langgraph.prebuilt`) still works but is the legacy prebuilt; we
-teach the underlying `StateGraph` mechanics first so students understand what either
-high-level API is doing for them, not just how to call it.
+Do **S11a → S11c** in order. Then pick a bonus notebook or a portfolio app.
 
-| Concept | Import | What it does |
-|---|---|---|
-| `StateGraph` | `langgraph.graph` | Declares the state schema, then `add_node` / `add_edge` / `add_conditional_edges` / `compile()` |
-| `START`, `END` | `langgraph.graph` | Sentinel nodes marking graph entry/exit |
-| `MessagesState`, `add_messages` | `langgraph.graph` | Prebuilt chat-history state + reducer that appends instead of overwriting |
-| `create_agent` | `langchain.agents` | LangChain 1.0's high-level agent builder — model + tools + middleware, built on `StateGraph` |
-| `create_react_agent` | `langgraph.prebuilt` | Legacy prebuilt ReAct agent (still supported; `create_agent` is now recommended for new code) |
-| `ToolNode`, `tools_condition` | `langgraph.prebuilt` | Executes tool calls the model requested; routes back to the model or to `END` |
-| `Command` | `langgraph.types` | A node's return value that both updates state **and** picks the next node (`goto=`) — this is how multi-agent handoffs work |
-| `Send` | `langgraph.types` | Fans one node out into N parallel node executions (map-reduce over a list) |
-| `interrupt()` | `langgraph.types` | Pauses the graph mid-node, surfaces a payload to the caller, and waits — the primitive behind every human-in-the-loop pattern |
-| `Command(resume=...)` | `langgraph.types` | Resumes a graph paused by `interrupt()`, feeding the human's response back into the exact node that asked |
-| `MemorySaver` / `InMemorySaver` | `langgraph.checkpoint.memory` | In-process checkpointer — short-term memory keyed by `thread_id` |
-| `Store` (`InMemoryStore`) | `langgraph.store.memory` | Cross-thread, long-term memory (user facts that outlive a single conversation) |
-| `graph.stream(..., stream_mode=...)` | — | `"values"` (full state each step), `"updates"` (diff per node), `"messages"` (LLM tokens) |
-| `create_supervisor` | `langgraph_supervisor` (companion package) | One-line supervisor multi-agent setup on top of the same `Command(goto=...)` handoff mechanism |
+```text
+S11a  Fundamentals & agents     required
+  │    StateGraph · ToolNode · create_agent · checkpointer · stream
+  ▼
+S11b  Human-in-the-loop         required
+  │    interrupt() · Command(resume=...) · weather does NOT pause
+  ▼
+S11c  Multi-agent orchestrator  required
+  │    supervisor · RAG-as-tool · SQL/MCP · ticket writes pause
+  │
+  ├── S11d  Reasoning patterns  bonus (interview map + papers)
+  ├── S11e  SQL agent           bonus (Chinook, forced schema lookup)
+  ├── capstone_agentic_rag/     optional (self-correcting RAG)
+  └── [medium-article-agent](https://github.com/nursnaaz/medium-article-agent)     optional FastAPI + React
+```
 
-**Sources consulted:**
-- [LangChain & LangGraph Reach v1.0](https://www.langchain.com/blog/langchain-langgraph-1dot0)
-- [Interrupts — Docs by LangChain](https://docs.langchain.com/oss/python/langgraph/interrupts)
-- [Making it easier to build human-in-the-loop agents with interrupt](https://www.langchain.com/blog/making-it-easier-to-build-human-in-the-loop-agents-with-interrupt)
-- [create_react_agent reference](https://reference.langchain.com/python/langgraph.prebuilt/chat_agent_executor/create_react_agent)
-- [Self-Reflective RAG with LangGraph](https://www.langchain.com/blog/agentic-rag-with-langgraph)
-- [Human-in-the-loop — Docs by LangChain](https://docs.langchain.com/oss/python/langchain/human-in-the-loop)
+| Day | Open | What you do | Time |
+|---|---|---|---|
+| **S11a** | [01 — Fundamentals](notebooks/01_langgraph_fundamentals_and_agents.ipynb) | Draw a graph, wire nodes/edges, build ReAct by hand, then call `create_agent`. [Slides](https://nursnaaz.github.io/zero-to-genai-engineer/11_LangGraph/notebooks/teaching_decks/teach_01_langgraph_fundamentals.html) | ~2 hr |
+| **S11b** | [02 — HITL](notebooks/02_human_in_the_loop.ipynb) | Pause a risky tool, type yes/no, resume the same `thread_id`. [Slides](https://nursnaaz.github.io/zero-to-genai-engineer/11_LangGraph/notebooks/teaching_decks/teach_02_human_in_the_loop.html) | ~1 hr |
+| **S11c** | [03 — Orchestrator](notebooks/03_multi_agent_orchestrator.ipynb) then [the app](multi_agent_orchestrator/) | Route a ticket to RAG, web, or SQL; block writes until a human approves | ~2 hr |
+| **S11d** | [04 — Patterns](notebooks/04_agent_reasoning_patterns_masterclass.ipynb) | Name ReAct / Reflection / Reflexion / REWOO / ToT / Self-Discover and when to use each. [Slides](https://nursnaaz.github.io/zero-to-genai-engineer/11_LangGraph/notebooks/teaching_decks/teach_04_agent_reasoning_patterns.html) | ~2 hr |
+| **S11e** | [05 — SQL agent](notebooks/05_sql_agent_langgraph.ipynb) | Force list-tables → schema → check → run on Chinook (downloads DB on first run). [Slides](https://nursnaaz.github.io/zero-to-genai-engineer/11_LangGraph/notebooks/teaching_decks/teach_05_sql_agent.html) | ~1.5 hr |
 
-Because framework APIs move fast, every notebook's install cell pins nothing tighter than
-`langgraph>=0.6` / `langchain>=1.0` and prints the installed version on import — if an
-import in these notebooks breaks against a newer release, that printed version number is
-the first thing to check.
+Full notebook index: [`notebooks/README.md`](notebooks/README.md).
 
 ---
 
-## How to Teach This Effectively — the Plan
+## 📂 Folder map
 
-**1. Never open with the framework. Open with the pain.**
-Re-run `ProductionRAGChatbot.chat()` from Module 10 live, on a question deliberately chosen
-to need a second retrieval attempt (too vague the first time). Watch it confidently return
-a weak, unguarded answer because it has no way to say "let me try that search again." *That
-gap* is the entire motivation for S11 — don't state it, show it.
+```text
+11_LangGraph/
+├── README.md                         ← you are here
+├── .env.example
+├── notebooks/
+│   ├── 01_langgraph_fundamentals_and_agents.ipynb
+│   ├── 02_human_in_the_loop.ipynb
+│   ├── 03_multi_agent_orchestrator.ipynb
+│   ├── 04_agent_reasoning_patterns_masterclass.ipynb
+│   ├── 05_sql_agent_langgraph.ipynb
+│   ├── teaching_decks/               ← HTML slides (Days 1, 2, 4, 5)
+│   ├── assets/patterns/              ← architecture diagrams for 04 / 05
+│   └── requirements.txt
+├── multi_agent_orchestrator/         ← Day 3 Streamlit + LangGraph Studio
+└── capstone_agentic_rag/             ← optional self-correcting RAG
+```
 
-**2. Build the mental model before the API.**
-Draw the graph on a whiteboard/slide before writing code: boxes (nodes) and arrows (edges),
-one arrow forking into two with a diamond (conditional edge), one arrow pointing backward
-(the loop LCEL couldn't do). Only once students can draw an agent's control flow by hand
-should the `StateGraph` API show up — it's then just syntax for a picture they already
-understand.
-
-**3. Teach the primitive under every "magic" helper.**
-`create_agent` and `create_react_agent` both hide a `StateGraph` with a model node, a tools
-node, and a conditional edge between them. Build that graph by hand first (S11a Section 3)
-so the prebuilt helpers read as "the same four lines, packaged" instead of a black box.
-
-**4. Make state visible, always.**
-After every graph run, print the full state dict and — separately — call
-`graph.get_graph().draw_mermaid()` to render the actual graph. Students should never have to
-imagine what the graph looks like or what's in state; both are one line of code away, every
-single time.
-
-**5. HITL and memory are the payoff, not a bonus topic — and be precise about what's genuinely new.**
-Don't teach `interrupt()` as if S10 never touched it — Notebook 11 (S10f) already built a
-full working `interrupt()` + `Command(resume=...)` approval flow via
-`HumanInTheLoopMiddleware`, and used `checkpointer=`/`Store` for memory on `create_agent`.
-Overclaiming novelty here is a fast way to lose credibility with students who just did that
-notebook. The honest framing: S10f showed the *packaged* version for a generic concern
-(approve-this-one-tool-call); S11 shows the *primitive* it's built from, applied to a
-decision no generic middleware could package — "we retried retrieval and generation and are
-still not confident, escalate to a human." Same precision for memory: `ProductionRAGChatbot`
-(Notebook 13 specifically, not all of S10) stored history in a plain `self.history` list that
-dies when the process exits — *that* comparison is fair game; S10f's own `checkpointer=`
-usage is not something to reinvent, only to point back to.
-
-**6. The capstone must extend prior work, not restart from a tutorial.**
-The flagship project (`03_agentic_rag_capstone.ipynb`) literally imports
-`HybridIndex`, `Reranker`, and the exact prompts from
-`10_RAG/notebooks/production_rag_chatbot/rag_pipeline.py`. Nothing about retrieval, fusion,
-or reranking is retaught — LangGraph's job is to add what a straight Python chain
-structurally cannot (retry loops, self-grading, a human escape hatch), and to give the rest
-of Module 10's production concerns (RAGAS scoring, resilience, token budget, long-term
-memory, structured output) a place to live as real graph nodes instead of scattered
-standalone demos. Students should leave seeing LangGraph as "the orchestration layer on top
-of what I already built," not a separate, disconnected framework.
-
-**7. Assess with a trace, not just a final answer.**
-Because state and node transitions are fully inspectable, grade the *path* the agent took —
-did it correctly grade a weak retrieval as insufficient? did it rewrite the query sensibly?
-did it escalate instead of confidently hallucinating? — not only whether the final answer
-looks right. A correct answer reached by skipping the grading step is a bug, not a pass.
+Sibling portfolio (same LangGraph skills, product UI): [medium-article-agent](https://github.com/nursnaaz/medium-article-agent). Clone that repo; it is not in this course tree.
 
 ---
 
-## Real-World Use Cases for LangGraph (beyond this capstone)
+## 💡 Why a graph
 
-| Use case | Why a graph, not a chain |
+An LCEL chain (`prompt | llm | parser`) runs **once, forward, and stops**. Fine for “retrieve then answer.” It breaks when you need:
+
+| Need | Graph primitive |
 |---|---|
-| **Customer support triage** | Router node classifies the ticket; billing/technical/refund specialist subgraphs handle it; a supervisor collects and merges results |
-| **Code review agent** | Loop: run linter/tests → if failing, ask the model to fix → re-run → stop only when green (the exact "5-step loop pattern" from S09, now as a graph) |
-| **Approval-gated automation** (send email, execute a trade, delete a record) | `interrupt()` before the risky tool call; a human approves, edits, or rejects before the graph resumes |
-| **Deep research agent** | `Send` fans a topic out into parallel sub-searches; results are reduced back into one report node |
-| **Long-running personal assistant** | `Store`-backed long-term memory recalls user preferences across sessions that started days apart |
+| “Try the search again” | A **loop** (edge back to retrieve) |
+| “If ungrounded, regenerate; if still bad, ask a human” | **Conditional edges** |
+| Crash / refresh / come back tomorrow | **Checkpointer** (`thread_id`) |
+| Two specialists + a manager | `Command(goto=...)` / `create_supervisor` |
+| “Don’t send that email until I say so” | `interrupt()` + `Command(resume=...)` |
 
----
+Memory, crash recovery, and human-in-the-loop are **the same mechanism**: snapshot state after every node.
 
-## Capstone — Self-Correcting Agentic RAG
+### API you will actually type
 
-**The pitch:** the full Module 10 toolkit — hybrid retrieval, RRF fusion, cross-encoder
-reranking, the `min_rerank_score` guardrail, condense-question memory, RAGAS faithfulness
-scoring, token-budget trimming, long-term `Store` memory, resilient LLM calls, and structured
-output — reused, not re-taught (see the coverage map below for exactly where each one lives),
-wrapped in a LangGraph agent that can now do what a straight pipeline never could:
-
-```
-        ┌────────────┐
-        │  condense  │  (memory-aware question rewrite)
-        └─────┬──────┘
-              ▼
-        ┌────────────┐
-   ┌───▶│  retrieve  │  (Module 10's HybridIndex + Reranker, verbatim)
-   │    └─────┬──────┘
-   │          ▼
-   │   ┌───────────────┐   insufficient, retries left
-   │   │grade_documents│───────────────────┐
-   │   └─────┬─────────┘                   ▼
-   │      sufficient              ┌────────────────┐
-   │          ▼                   │  rewrite_query │
-   │    ┌────────────┐            └───────┬────────┘
-   │    │  generate  │◀───────────────────┘
-   │    └─────┬──────┘
-   │          ▼
-   │  ┌───────────────────┐  not grounded, retries left
-   │  │ check_groundedness│──────────────────┐
-   │  └─────┬─────────────┘                  │
-   │     grounded                            ▼
-   │        │                    retries exhausted (either check)
-   │        ▼                                ▼
-   │      END                     ┌────────────────────┐
-   └───────────────────────────── │  human_escalation   │
-                                   │     interrupt()      │
-                                   └──────────┬───────────┘
-                                              ▼
-                                             END
-```
-
-The diagram above is the **core teaching graph**, built inline in the notebook so the
-self-correction mechanism is easy to follow line by line. `capstone_agentic_rag/graph.py`
-ships the **production version**: two more nodes up front (`trim_history`,
-`recall_preferences`) and several nodes hardened with the rest of what Module 10 taught — see
-the coverage map below for exactly what and where.
-
-Run it end to end in `notebooks/03_agentic_rag_capstone.ipynb`, then ship it as a chat app
-from `capstone_agentic_rag/` (`streamlit run app.py`) — including a live trace panel showing
-which nodes fired, how many retries happened, and why (if it happened) the agent handed off
-to a human instead of guessing.
-
----
-
-## Coverage Map — Every Module 10 Tool, and Where It Lives Here
-
-An honest accounting, not a marketing claim: what's genuinely wired into the capstone, and
-what's a deliberate extension point rather than a re-implementation.
-
-| Module 10 tool / technique | Notebook it was taught in | Used in M11 how |
+| Concept | Import | Role |
 |---|---|---|
-| Recursive chunking | S10b (Notebook 02) | Reused via `chunk_documents()`, imported unmodified |
-| Dense embeddings (bge-small) + Chroma | S10c (Notebooks 04/05) | Reused via `HybridIndex`, imported unmodified |
-| BM25 sparse retrieval | S10d (Notebook 06) | Reused via `HybridIndex`, imported unmodified |
-| RRF hybrid fusion | S10d (Notebook 07) | Reused via `HybridIndex.search()`, imported unmodified |
-| Cross-encoder reranking | S10d (Notebook 08) | Reused via `Reranker`, imported unmodified |
-| `min_rerank_score` guardrail | Notebook 13 (`ProductionRAGChatbot`) | `grade_documents()` — fast heuristic pre-filter before the LLM judge |
-| **RAGAS Faithfulness** | S10e (Notebook 09) | `check_groundedness()` — the actual metric, scored live per turn, not just offline (falls back to an LLM-judge prompt if `ragas` isn't installed) |
-| Condense-question memory | Notebook 13 (`ProductionRAGChatbot`) | `condense()` — same prompt, reading graph state instead of a `self.history` list |
-| Short-term memory (checkpointer) | S10f (Notebook 11, §3–4) | `builder.compile(checkpointer=...)` — the same primitive `create_agent(checkpointer=...)` uses |
-| Token-budget trimming | S10f (Notebook 11, §5b) | `trim_history()` — same `RemoveMessage(id=REMOVE_ALL_MESSAGES)` pattern, applied by hand |
-| Long-term memory (`Store`) | S10f (Notebook 11, §6) | `recall_preferences()` + `remember_answer_style()` — same `Store`, a plain key instead of semantic search |
-| Resilience (retry/fallback) | S10f (Notebook 11, §10) | `resilient_invoke()` — the same idea as `ModelRetryMiddleware`, applied manually since these are bare `StateGraph` nodes |
-| Structured output | S10f (Notebook 11, §11) | `extract_structured_citations()` — `llm.with_structured_output()`, the same idea as `response_format=ProviderStrategy(schema=...)` |
-| Human-in-the-loop | S10f (Notebook 11, §9) | `human_escalation()` — the same `interrupt()`/`Command(resume=...)` primitive, applied to a decision no prebuilt middleware covers |
-| Observability | S10f (Notebook 11, §12) | Same pattern documented (3 `LANGSMITH_*` env vars, zero code change) — works identically for a `StateGraph`, not just `create_agent`; the Streamlit trace panel is this module's practical stand-in when LangSmith isn't configured |
-| Testing | S10f (Notebook 11, §13) | `capstone_agentic_rag/tests/test_graph.py` — the same trajectory-assertion philosophy, extended to test retry counts and routing decisions directly |
-| DeepEval | S10e (Notebook 10) | **Extension point, not implemented.** RAGAS alone covers the same "automated grounding check" teaching point; adding both would duplicate, not add, coverage |
-| FAISS · Pinecone | S10c (Notebook 05) | **Extension point.** `HybridIndex` uses Chroma; swapping the vector store is a `rag_pipeline.py` change, not an M11 one |
-| SPLADE | S10d (Notebook 06) | **Extension point.** BM25 is the sparse half of `HybridIndex`; SPLADE is a documented alternative, not additive here |
-| FlashRank / Cohere rerank | S10d (Notebook 08) | **Extension point.** The cross-encoder reranker is what `ProductionRAGChatbot` ships with; swapping rerankers doesn't change anything about the *graph* |
-| Multimodal RAG (images) | Notebook 15 | **Out of scope.** A text-document capstone; multimodal retrieval is its own project |
-| MCP agents | Notebook 16 | **Out of scope.** That notebook is already its own capstone in `10_RAG/`; duplicating it here would be redundant, not additive |
+| `StateGraph` | `langgraph.graph` | Schema + nodes + edges + `compile()` |
+| `START`, `END` | `langgraph.graph` | Entry / exit |
+| `MessagesState` | `langgraph.graph` | Chat history that **appends** |
+| `create_agent` | `langchain.agents` | High-level tool-calling agent (built on `StateGraph`) |
+| `ToolNode`, `tools_condition` | `langgraph.prebuilt` | Run tools; loop back or finish |
+| `Command` | `langgraph.types` | Update state **and** pick the next node |
+| `interrupt()` | `langgraph.types` | Pause mid-node for a human |
+| `MemorySaver` | `langgraph.checkpoint.memory` | Short-term memory by `thread_id` |
+| `InMemoryStore` | `langgraph.store.memory` | Long-term facts across threads |
+| `create_supervisor` | `langgraph_supervisor` | Hub-and-spoke multi-agent |
+
+We build the ReAct graph **by hand** in S11a before calling `create_agent`, so the helper is not a black box. `create_react_agent` still works; `create_agent` is what new code should use.
+
+---
+
+## 🖥️ Run the apps
+
+### Day 3 — Hierarchical helpdesk (required)
+
+S10 already has an MCP helpdesk (SQL + RAG). LangGraph puts a **team** on it:
+
+```text
+top_supervisor
+  ├── knowledge_team → rag_agent (search_knowledge_base) + search_agent (web)
+  └── ops_team       → sql_agent (reads) + ticket_agent (writes → interrupt())
+```
+
+```bash
+cd 11_LangGraph/multi_agent_orchestrator
+pip install -r requirements.txt
+python3 -m streamlit run app.py
+```
+
+Optional IDE: `langgraph dev` (opens LangGraph Studio). Full notes: [`multi_agent_orchestrator/README.md`](multi_agent_orchestrator/README.md).
+
+<p align="center">
+  <img src="multi_agent_orchestrator/docs/screenshots/app.png" alt="Helpdesk orchestrator Streamlit UI" width="920">
+</p>
+<p align="center"><em>Day 3 app — hierarchical teams, RAG + SQL over MCP, writes that pause for you.</em></p>
+
+Try: *“What is our refund policy?”* · *“How many open tickets does Jane Doe have?”* · *“Add a note that we offered a refund”* (then type **yes** or **no**).
+
+### Optional — Self-correcting Agentic RAG
+
+Same S10 `HybridIndex` + `Reranker`, now with grade → rewrite → RAGAS → escalate:
+
+```text
+condense → retrieve → grade_documents ──insufficient──► rewrite_query ─┐
+                ▲                                                     │
+                └─────────────────────────────────────────────────────┘
+                       │ sufficient
+                       ▼
+                  generate → check_groundedness → END
+                       │ not grounded, retries left → loop
+                       └── retries exhausted → human_escalation (interrupt)
+```
+
+```bash
+cd 11_LangGraph/capstone_agentic_rag
+pip install -r requirements.txt
+streamlit run app.py
+pytest tests/test_graph.py -v     # no API key — fakes LLM + retriever
+```
+
+<p align="center">
+  <img src="capstone_agentic_rag/docs/screenshots/app.png" alt="Self-Correcting Agentic RAG Streamlit UI" width="920">
+</p>
+<p align="center"><em>Grade → rewrite → groundedness loop, with a human pause when retries run out.</em></p>
+
+### Optional — Medium article agent
+
+Ingest PDF / PPTX / HTML / notebooks → draft → parallel reviewers → HITL → export Markdown. Does not auto-publish to Medium.
+
+**Clone:** [nursnaaz/medium-article-agent](https://github.com/nursnaaz/medium-article-agent)
+
+Python **3.12+**, Node 18+, `OPENAI_API_KEY`. Install and Docker are in that README. It does not use the S11 notebook env.
+
+---
+
+## ⚙️ Setup notes
+
+- Python **3.11+**. Use `python3 -m streamlit` so Streamlit sees the same env as LangGraph.
+- `OPENAI_API_KEY` in `11_LangGraph/.env`, `10_RAG/.env`, or the repo root.
+- Optional: `TAVILY_API_KEY` (otherwise DuckDuckGo via `ddgs`).
+- Notebook 05 downloads `Chinook.db` on first run (gitignored).
+- Notebook 03 starts `10_RAG/notebooks/production_mcp_agents_rag_capstone/`.
+
+---
+
+## ➡️ What's next
+
+S11 gives you **control flow**. Memory, MCP, guardrails, and the FastAPI apps are already in S10 / earlier sessions. What's still ahead: CrewAI, dedicated document/code modules, LLMOps, LoRA — see the [root syllabus](../README.md#-where-the-23-module-syllabus-stands).
+
+---
+
+<div align="center">
+
+**Course nav:** [← S10 RAG + Memory](../10_RAG/) · [All sessions](../README.md) · Next: CrewAI (see syllabus)
+
+</div>

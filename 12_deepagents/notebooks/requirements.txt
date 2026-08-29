@@ -1,0 +1,12 @@
+# Session 12 — LangChain vs LangGraph vs Deep Agents
+#   pip install -r requirements.txt
+#
+# Quotes around version pins are required on zsh.
+
+numpy<2
+langgraph>=0.6
+langchain>=1.0
+langchain-openai
+langchain-core
+python-dotenv
+deepagents>=0.2

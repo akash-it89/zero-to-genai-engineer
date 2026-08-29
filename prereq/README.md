@@ -1,7 +1,12 @@
-# GenAI Pre-work: Python, Math & Neural Networks
+<div align="center">
 
-> Complete this **before** attending the GenAI weekend session.
-> Total time: ~3 hours | Self-paced | No prior experience needed
+# Pre-work — Python, Math & Neural Networks
+
+**~3 hours · no prior experience · do this before S00**
+
+</div>
+
+> Complete this **before** the first weekend session. It covers **only** what the course assumes — nothing extra.
 
 ---
 
@@ -10,6 +15,21 @@
 The GenAI course (M00 onwards) assumes you can read Python code and have a basic mental model of how neural networks learn.
 
 This pre-work closes that gap — fast. It covers **only** what you need. Nothing extra.
+
+## Start here
+
+Open [`notebooks/01_python_for_genai.ipynb`](notebooks/01_python_for_genai.ipynb) in Colab or Jupyter. Then 02, then 03. Keep [`cheatsheet.md`](cheatsheet.md) for S00.
+
+```text
+prereq/
+├── README.md
+├── cheatsheet.md
+└── notebooks/
+    ├── README.md
+    ├── 01_python_for_genai.ipynb
+    ├── 02_math_intuition.ipynb
+    └── 03_neural_networks_intuition.ipynb
+```
 
 ---
 
@@ -57,3 +77,7 @@ Print it or keep it open during the M00 session.
 ## Questions?
 
 Post in the WhatsApp group. Mohamed will answer before the weekend session.
+
+---
+
+**Course nav:** [All sessions](../README.md) · [S00 Search engines →](../00_How_Search_Engine_Works/)

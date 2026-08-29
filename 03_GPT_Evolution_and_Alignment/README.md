@@ -1,7 +1,14 @@
-# 03 — GPT Evolution and Alignment
-### 🏁 M00 Foundation — Part 3 of 3 · Completes M00
+<div align="center">
 
-> **[▶ View the Paper Slides (interactive)](https://nursnaaz.github.io/zero-to-genai-engineer/03_GPT_Evolution_and_Alignment/GPT_Papers_Presentation.html)** — 14 slides covering all 11 papers, open in browser, arrow keys to navigate
+# Session 03 — GPT Evolution and Alignment
+
+**M00 complete · Foundation**
+
+*Train GPT from scratch, then walk GPT-1 → DPO through 11 papers.*
+
+[▶ Interactive paper slides](https://nursnaaz.github.io/zero-to-genai-engineer/03_GPT_Evolution_and_Alignment/GPT_Papers_Presentation.html)
+
+</div>
 
 > **M00 is now complete.** This is the final piece of the Foundation module:
 >
@@ -31,6 +38,21 @@ Text Prediction (GPT-1) → Scale (GPT-2 → GPT-3) → Alignment (RLHF → CAI 
 | **Encoder Models** | BERT, BART (contrast with GPT's decoder-only approach) |
 | **Alignment** | InstructGPT, HH-RLHF, Constitutional AI, RLAIF, DPO, SELF-REFINE |
 
+## Start here
+
+1. [▶ Paper slides](https://nursnaaz.github.io/zero-to-genai-engineer/03_GPT_Evolution_and_Alignment/GPT_Papers_Presentation.html)
+2. [`notebooks/NB2_GPT_TensorFlow_Minimal_Synthetic.ipynb`](notebooks/NB2_GPT_TensorFlow_Minimal_Synthetic.ipynb) (big picture)
+3. [`notebooks/NB1_GPT_PyTorch_Detailed_Holmes.ipynb`](notebooks/NB1_GPT_PyTorch_Detailed_Holmes.ipynb) (full implementation)
+
+Then optionally [`holmes_gpt_ui.py`](holmes_gpt_ui.py) and the [`paper_summaries/`](paper_summaries/) notebooks.
+
+**Browser:** [BERT for text classification](https://nursnaaz.github.io/tutorial/bert-classification) — run this when you hit the BERT paper.
+
+<p align="center">
+  <img src="docs/screenshots/app.png" alt="Holmes GPT Streamlit app — temperature, top-k, and prompt" width="920">
+</p>
+<p align="center"><em>Holmes GPT — the mini GPT you trained on Sherlock Holmes. Set temperature / top-k, pick an example prompt, and stream tokens.</em></p>
+
 ---
 
 ## 📁 Folder Structure
@@ -40,8 +62,8 @@ Text Prediction (GPT-1) → Scale (GPT-2 → GPT-3) → Alignment (RLHF → CAI 
 │
 ├── README.md                          ← you are here
 │
-├── GPT_Papers_Presentation.html       ← visual slideshow — 14 slides covering all 11 papers
-│                                         open in any browser, arrow keys to navigate
+├── GPT_Papers_Presentation.html       ← 14 slides covering all 11 papers
+│                                         open on Pages: https://nursnaaz.github.io/zero-to-genai-engineer/03_GPT_Evolution_and_Alignment/GPT_Papers_Presentation.html
 │
 ├── holmes_gpt_ui.py                   ← Streamlit UI — interactive text generation with trained GPT
 │                                         run: streamlit run holmes_gpt_ui.py
@@ -84,7 +106,7 @@ Text Prediction (GPT-1) → Scale (GPT-2 → GPT-3) → Alignment (RLHF → CAI 
     ├── finetuning_progress.png
     ├── next_token_probs.png
     ├── attn_L1_H1.png
-    └── gpt_shakespeare.pt             ← trained model checkpoint
+    └── gpt_shakespeare.pt             ← generated locally by NB1 (not in git; ~40MB)
 ```
 
 ---
@@ -302,3 +324,5 @@ Post in the WhatsApp group with:
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S02 Transformer](../02_Transformer_Architecture/) · [All sessions](../README.md) · [S04 BPE & Sampling →](../04_BPE_Temperature_Top_K_Top_P/)

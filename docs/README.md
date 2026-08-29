@@ -1,9 +1,7 @@
 # docs/
 
-Miscellaneous project files and sample data.
-
-## Contents
+Small sample files used in early experiments. **Not** a session. Start at the [course README](../README.md).
 
 | File | Purpose |
 |------|---------|
-| `notes.txt` | Sample text corpus (Python, ML, ChromaDB descriptions) — used as input data for RAG and embedding experiments |
+| `notes.txt` | Short text snippets (Python, ML, ChromaDB) — leftover sample corpus for embedding experiments |

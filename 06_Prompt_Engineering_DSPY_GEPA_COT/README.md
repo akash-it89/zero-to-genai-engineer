@@ -1,8 +1,34 @@
-# Session 06 — Prompt Optimization Deep Dive
+<div align="center">
 
-> Session 06 was taught as an **ad-hoc deep dive** into programmatic prompt optimisation — one of the most important and underrated skills for AI engineers. The content spans basic prompt writing all the way to state-of-the-art automatic optimisers.
+# Session 06 — Prompt Optimisation (DSPy · MIPROv2 · GEPA)
+
+**M03 + M04 · Complete**
+
+*Treat prompts as code: typed, versioned, and automatically improved against a metric.*
+
+</div>
+
+> Session 06 is a deep dive into programmatic prompt optimisation — from writing a signature to letting GEPA rewrite the instruction from its own mistakes.
 
 **What was MISSING from S05:** We could call APIs and run LLMs — but we were still writing prompts by hand and guessing at improvements. This session shows how to treat prompts as code: typed, versioned, and automatically optimised against a metric.
+
+## Start here
+
+**Browser (before DSPy):** [Zero-shot / few-shot / CoT](https://nursnaaz.github.io/tutorial/prompt-anatomy) · [JSON or bust](https://nursnaaz.github.io/tutorial/json-or-bust)
+
+```bash
+pip install -r requirements.txt
+# then open dspy_training.ipynb  (or dspy_training_ollama.ipynb for local-only)
+```
+
+```text
+06_Prompt_Engineering_DSPY_GEPA_COT/
+├── README.md
+├── dspy_training.ipynb              ← cloud (all 4 optimisers)
+├── dspy_training_ollama.ipynb       ← local, no API key
+├── requirements.txt
+└── *.json                           ← saved prompts from each optimiser
+```
 
 ## Files in This Folder
 
@@ -185,3 +211,5 @@ Each step improves on the one before. In production, you typically start at the 
 ---
 
 **What's MISSING? →** S07 adds LangChain: a unified interface so you can swap between OpenAI, Claude, Gemini, and Ollama without rewriting your code.
+
+**Course nav:** [← S05 Local LLMs](../05_Local_LLMs_and_API_Providers/) · [All sessions](../README.md) · [S07 LangChain →](../07_LangChain_Notebooks/)

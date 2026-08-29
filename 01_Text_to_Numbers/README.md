@@ -1,8 +1,37 @@
+<div align="center">
+
 # Session 01 — Text to Numbers
 
-> **The big question:** How does a computer understand language? It doesn't read words — it reads numbers. This session shows you every method humans have invented to turn text into numbers, from counting words in 1954 to dense neural embeddings in 2016.
+**M00 · Foundations**
+
+*Five ways to turn words into vectors — the math behind every recommender, RAG index, and chatbot you will build.*
+
+</div>
+
+> **The big question:** How does a computer understand language? It doesn't read words — it reads numbers.
 
 Every Generative AI system you build — RAG, agents, chatbots — depends on this foundation. You can't measure similarity between two pieces of text without it.
+
+## Start here
+
+1. [`notebooks/01_text_to_numbers.ipynb`](notebooks/01_text_to_numbers.ipynb) — five embedding methods
+2. [`notebooks/02_cosine_similarity.ipynb`](notebooks/02_cosine_similarity.ipynb) — why cosine similarity
+3. Optional: [`movie_recommender/`](movie_recommender/) — FastAPI + React
+
+**Browser lab:** [Cosine Similarity & Movie Recommender](https://nursnaaz.github.io/tutorial/cosine-similarity-movie-recommender)
+
+<p align="center">
+  <img src="movie_recommender/ReactApp.png" alt="CineMatch movie recommendations" width="920">
+</p>
+<p align="center"><em>CineMatch — five embedders, same 1,000 movies. Full setup in the [app README](movie_recommender/README.md).</em></p>
+
+```text
+01_Text_to_Numbers/
+├── README.md
+├── notebooks/
+├── slides/
+└── movie_recommender/     ← CineMatch app
+```
 
 ---
 
@@ -130,11 +159,7 @@ See [movie_recommender/README.md](movie_recommender/README.md) for full setup in
 
 ## Slides
 
-Session slides are in the [`slides/`](slides/) folder.
-
-| File | Contents |
-|---|---|
-| [M00-S01.pdf](slides/M00-S01.pdf) | Text to Numbers — BoW, TF-IDF, Word2Vec, GloVe, FastText |
+Class slides: [Text to Numbers](https://nursnaaz.github.io/zero-to-genai-engineer/01_Text_to_Numbers/slides/M00-S01.pdf) (BoW, TF-IDF, Word2Vec, GloVe, FastText). PDF also lives in [`slides/`](slides/).
 
 ---
 
@@ -149,3 +174,7 @@ cd movie_recommender/backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
+
+---
+
+**Course nav:** [← S00 Search](../00_How_Search_Engine_Works/) · [All sessions](../README.md) · [S02 Transformer →](../02_Transformer_Architecture/)

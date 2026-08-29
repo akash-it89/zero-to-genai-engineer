@@ -1,12 +1,40 @@
+<div align="center">
+
 # RAG Studio
 
+### Session 10 · M08 portfolio
+
+*Swap every stage of a RAG pipeline — then compare strategies on the same question.*
+
+</div>
+
 RAG Studio is a configurable RAG (Retrieval-Augmented Generation) workbench built as
-the M10 capstone project. Every stage of the pipeline — chunking, embeddings, vector
+the Session 10 / M08 portfolio project. Every stage of the pipeline — chunking, embeddings, vector
 store, query transform, retrieval, post-retrieval, reranking, generation,
 orchestration, caching, and guardrails — is a swappable module chosen from a live
 Options_Catalog, so you can define named **strategy variants** and compare them
 side by side on the same question, with governance-aware access control, tracing,
 and RAGAS/DeepEval evaluation built in.
+
+<p align="center">
+  <img src="docs/screenshots/app.png" alt="RAG Studio Ingest — upload documents and set access level" width="920">
+</p>
+<p align="center"><em>Ingest — upload files, pick an access level, then build an index for a saved variant.</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/strategies.png" alt="RAG Studio Build Strategies — compose a named pipeline variant" width="920">
+</p>
+<p align="center"><em>Build Strategies — swap chunker, embeddings, retrieval, reranker, and generator from the live catalog.</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/chat.png" alt="RAG Studio Chat — variant picker and grounded conversation" width="920">
+</p>
+<p align="center"><em>Chat — pick a variant and ask questions grounded in the ingested docs.</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/eval.png" alt="RAG Studio Evaluation Dashboard — RAGAS golden-set scoring" width="920">
+</p>
+<p align="center"><em>Evaluation Dashboard — score a golden set with RAGAS or DeepEval (faithfulness, answer relevancy, retrieval ablation).</em></p>
 
 The project has three tiers:
 
@@ -18,7 +46,7 @@ The project has three tiers:
 
 ## Prerequisites
 
-- Python 3.11 (this repo's `.venv` at `../../.venv` from this directory, or your own)
+- Python 3.11+
 - Node.js 18+ and npm
 - An `OPENAI_API_KEY` for core embedding/generation/judge features (optional keys
   unlock optional providers — see `.env.example`)
@@ -83,6 +111,10 @@ cd frontend && npm run build
 cd frontend && npm run test:e2e
 ```
 
+## Evaluation presentation
+
+[▶ RAG strategy evaluation (GitHub Pages)](https://nursnaaz.github.io/zero-to-genai-engineer/10_RAG/capstone_rag_studio/reports/rag_strategy_evaluation_presentation.html)
+
 ## The capstone notebook
 
 `capstone.ipynb` exercises the full pipeline **live** (the one place in this project
@@ -102,3 +134,5 @@ capstone_rag_studio/
 ├── requirements.txt
 └── .env.example
 ```
+
+← [Session 10](../README.md)

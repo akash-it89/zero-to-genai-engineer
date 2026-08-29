@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Architecture · Production-Ready Chatbots · Notebook 11</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0D0F14;
+  --panel:#13161E;
+  --panel-hi:#1A1F2C;
+  --ink:#EAF0F8;
+  --muted:#8794A8;
+  --muted-dim:#576070;
+  --line:rgba(234,240,248,0.09);
+  --line-hi:rgba(234,240,248,0.18);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --good:#34D399;
+  --warn:#FFD166;
+  --bad:#FF5C7A;
+  /* Amazon palette */
+  --amz-orange:#FF9900;
+  --amz-blue:#146EB4;
+  --amz-teal:#00A8A8;
+  --amz-green:#067D62;
+  --amz-purple:#8C4FFF;
+  --amz-red:#CC3333;
+  /* per-slide accent -- overridden inline */
+  --ac:#FF9900;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+body{
+  margin:0;
+  background:
+    radial-gradient(900px 500px at 10% -5%,rgba(255,153,0,.13),transparent 55%),
+    radial-gradient(800px 480px at 90% 5%,rgba(20,110,180,.11),transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:rgba(255,153,0,.3);}
+a{color:inherit;}
+
+/* ===== LEFT RAIL ===== */
+.rail{position:fixed;left:20px;top:0;bottom:0;width:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;}
+.rail-track{position:absolute;left:50%;top:6%;bottom:6%;width:2px;transform:translateX(-50%);background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-teal),var(--amz-green),var(--amz-purple),var(--amz-red),#fff);opacity:.18;}
+.rail-fill{position:absolute;left:0;top:0;width:100%;height:0%;background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-teal),var(--amz-green),var(--amz-purple),var(--amz-red),#fff);transition:height .25s linear;}
+.rail-nodes{position:relative;display:flex;flex-direction:column;justify-content:space-between;height:88%;z-index:2;}
+.rail-node{appearance:none;border:none;background:none;cursor:pointer;width:32px;height:20px;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
+.rail-dot{width:8px;height:8px;border-radius:50%;background:#1E2330;border:1.5px solid var(--line-hi);transition:all .22s ease;}
+.rail-node.active .rail-dot{background:var(--ac,#fff);border-color:var(--ac,#fff);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac,#fff) 22%,transparent),0 0 12px var(--ac,#fff);transform:scale(1.3);}
+.rail-tip{position:absolute;left:20px;top:50%;transform:translateY(-50%) translateX(-6px);font-family:var(--mono);font-size:10px;white-space:nowrap;color:var(--muted);background:var(--panel-hi);border:1px solid var(--line);padding:3px 8px;border-radius:3px;opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;}
+.rail-node:hover .rail-tip{opacity:1;transform:translateY(-50%) translateX(0);}
+@media(max-width:860px){.rail{display:none;}}
+
+/* ===== TOP BADGE ===== */
+.top-badge{position:fixed;top:16px;right:16px;z-index:60;background:rgba(13,15,20,.85);backdrop-filter:blur(10px);border:1px solid var(--line-hi);border-radius:8px;padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.top-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--amz-orange);box-shadow:0 0 6px var(--amz-orange);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ===== STAGE ===== */
+.stage{min-height:100vh;width:100%;padding:11vh 8vw 11vh calc(8vw + 18px);display:flex;flex-direction:column;justify-content:center;position:relative;border-top:1px solid var(--line);}
+@media(max-width:860px){.stage{padding:8vh 5vw;}}
+.wrap{max-width:1000px;margin:0 auto;width:100%;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--ac,#fff);}
+.eyebrow::before{content:"";width:18px;height:2px;background:var(--ac,#fff);display:inline-block;}
+h1,h2{font-family:var(--sans);text-wrap:balance;margin:0;color:#fff;letter-spacing:-.01em;}
+h1{font-size:clamp(30px,5vw,58px);font-weight:800;line-height:1.06;}
+h2{font-size:clamp(24px,3.2vw,40px);font-weight:800;line-height:1.12;}
+.sub{font-size:clamp(14px,1.5vw,17px);color:var(--muted);margin:14px 0 0;max-width:650px;line-height:1.65;}
+.rise{opacity:0;transform:translateY(20px);transition:opacity .55s cubic-bezier(.2,.8,.2,1),transform .55s cubic-bezier(.2,.8,.2,1);}
+.rise.in{opacity:1;transform:translateY(0);}
+.rise.d1{transition-delay:.07s;}.rise.d2{transition-delay:.15s;}.rise.d3{transition-delay:.23s;}.rise.d4{transition-delay:.31s;}.rise.d5{transition-delay:.39s;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;}
+.glow-rule{height:2px;width:50px;background:var(--ac,#fff);border-radius:2px;margin:20px 0 0;box-shadow:0 0 8px var(--ac,transparent);}
+.chip{font-family:var(--mono);font-size:11.5px;padding:5px 11px;border-radius:4px;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+
+/* code block */
+.code-block{background:#0a0c11;border:1px solid var(--line);border-radius:8px;padding:16px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;margin-top:14px;position:relative;}
+.code-block::before{content:attr(data-label);position:absolute;top:8px;right:12px;font-size:10px;color:var(--muted-dim);letter-spacing:.06em;}
+.kw{color:#CC99FF;}.fn{color:#79D4FF;}.st{color:#99F5A0;}.cm{color:#576070;font-style:italic;}.hl{background:rgba(255,153,0,.15);border-radius:2px;padding:0 2px;}
+
+/* two-col grid */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;}
+@media(max-width:780px){.two-col,.three-col{grid-template-columns:1fr;}}
+
+/* memory type card */
+.mem-card{padding:20px 22px;border-radius:8px;position:relative;overflow:hidden;}
+.mem-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#fff);}
+.mem-card .mc-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:6px;}
+.mem-card .mc-title{font-size:17px;font-weight:800;color:#fff;}
+.mem-card .mc-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55;}
+.mem-card .mc-where{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;}
+.mem-card .tag{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:4px;border:1px solid var(--line-hi);color:var(--muted);}
+
+/* flow diagram */
+.flow{display:flex;align-items:center;gap:0;margin-top:22px;flex-wrap:wrap;}
+.flow-node{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:90px;}
+.flow-box{padding:10px 14px;border-radius:6px;border:1px solid var(--line-hi);background:var(--panel-hi);font-family:var(--mono);font-size:11px;color:var(--ink);text-align:center;white-space:nowrap;}
+.flow-box.active{border-color:var(--ac);color:var(--ac);box-shadow:0 0 10px color-mix(in srgb,var(--ac) 20%,transparent);}
+.flow-box.dim{opacity:.35;}
+.flow-arrow{font-size:16px;color:var(--muted-dim);padding:0 4px;}
+.flow-lbl{font-size:10px;color:var(--muted-dim);font-family:var(--mono);text-align:center;}
+
+/* comparison table */
+.cmp-table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px;}
+.cmp-table th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);border-bottom:1px solid var(--line-hi);}
+.cmp-table td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--muted);}
+.cmp-table td:first-child{color:var(--ink);font-weight:600;}
+.cmp-table tr:hover td{background:rgba(255,255,255,.02);}
+.yes{color:var(--good)!important;font-weight:700;}.no{color:var(--bad)!important;}
+
+/* timeline */
+.timeline{display:flex;flex-direction:column;gap:0;margin-top:22px;max-width:640px;}
+.tl-item{display:flex;gap:16px;position:relative;}
+.tl-item+.tl-item::before{content:"";position:absolute;left:11px;top:-16px;width:2px;height:16px;background:var(--line-hi);}
+.tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--ac);background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ac);flex-shrink:0;margin-top:2px;}
+.tl-body{padding-bottom:22px;}
+.tl-title{font-size:15px;font-weight:700;color:#fff;}
+.tl-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.55;}
+
+/* callout box */
+.callout{margin-top:18px;padding:14px 18px;border-radius:7px;background:color-mix(in srgb,var(--ac) 8%,transparent);border-left:3px solid var(--ac);font-size:13.5px;color:var(--ink);line-height:1.6;max-width:700px;}
+.callout b{color:var(--ac);}
+
+/* deprecated pill */
+.dep{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:3px;background:rgba(255,92,122,.15);color:#FF9EB1;border:1px solid rgba(255,92,122,.3);text-decoration:line-through;margin-right:4px;}
+.rep{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:3px;background:rgba(52,211,153,.12);color:#6EF5C0;border:1px solid rgba(52,211,153,.3);}
+
+/* hero specific */
+.hero{border-top:none;background:none;}
+.hero h1{background:linear-gradient(92deg,#fff 35%,#FFB347 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:40px;max-width:900px;}
+@media(max-width:780px){.hero-grid{grid-template-columns:1fr 1fr;}}
+.hero-tile{padding:16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:6px;}
+.hero-tile .ht-n{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--ac);}
+.hero-tile .ht-l{font-size:12.5px;color:var(--muted);line-height:1.45;}
+
+/* animated token stream */
+.token-stream{display:flex;gap:4px;flex-wrap:wrap;margin-top:16px;max-width:580px;}
+.tok{font-family:var(--mono);font-size:13px;padding:3px 6px;border-radius:3px;background:var(--panel-hi);border:1px solid var(--line);opacity:0;animation:fadeIn .2s ease forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+
+/* interrupt flow */
+.int-flow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;}
+@media(max-width:700px){.int-flow{grid-template-columns:1fr;}}
+.int-phase{padding:18px 20px;border-radius:8px;}
+.int-phase.p1{border:1px solid rgba(255,153,0,.4);background:rgba(255,153,0,.05);}
+.int-phase.p2{border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.05);}
+.int-phase .ph-label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:8px;}
+.int-phase.p1 .ph-label{color:var(--amz-orange);}
+.int-phase.p2 .ph-label{color:var(--good);}
+.int-phase .ph-title{font-size:15px;font-weight:700;color:#fff;}
+.int-phase .ph-desc{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.55;}
+
+
+/* middleware stack */
+.mw-stack{display:flex;flex-direction:column;gap:0;margin-top:20px;max-width:560px;}
+.mw-layer{padding:11px 16px;border:1px solid var(--line);border-bottom:none;display:flex;align-items:center;gap:12px;transition:background .2s;}
+.mw-layer:first-child{border-radius:8px 8px 0 0;}
+.mw-layer:last-child{border-bottom:1px solid var(--line);border-radius:0 0 8px 8px;}
+.mw-layer:hover{background:var(--panel-hi);}
+.mw-n{font-family:var(--mono);font-size:10.5px;color:var(--ac);font-weight:700;width:20px;flex-shrink:0;}
+.mw-name{font-family:var(--mono);font-size:12px;color:var(--ink);flex:1;}
+.mw-tag{font-size:10.5px;color:var(--muted);font-style:italic;}
+.mw-arrow{text-align:center;color:var(--muted-dim);font-size:13px;padding:1px 0;}
+
+/* bar chart for cost viz */
+.cost-bars{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.cost-row{display:flex;align-items:center;gap:10px;}
+.cost-lbl{width:80px;font-size:12px;color:var(--muted);flex-shrink:0;font-family:var(--mono);}
+.cost-track{flex:1;height:20px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+.cost-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-family:var(--mono);font-size:10.5px;font-weight:700;color:#0D0F14;white-space:nowrap;transition:width 1.2s cubic-bezier(.2,.8,.2,1);}
+.cost-val{font-family:var(--mono);font-size:11.5px;color:var(--muted);width:44px;text-align:right;flex-shrink:0;}
+
+/* quiz */
+.quiz{margin-top:36px;max-width:680px;border-radius:10px;background:var(--panel-hi);border:1px solid var(--line-hi);padding:22px 24px;position:relative;overflow:hidden;}
+.quiz::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#fff);}
+.quiz-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:14px;}
+.quiz-q{font-size:16px;color:#fff;font-weight:600;line-height:1.5;margin-bottom:16px;}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-opt{text-align:left;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:11px 14px;cursor:pointer;transition:all .14s ease;line-height:1.5;}
+.quiz-opt:hover:not(:disabled){border-color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--panel));transform:translateX(3px);}
+.quiz-opt:disabled{cursor:default;}
+.quiz-opt .k{font-family:var(--mono);font-weight:700;color:var(--ac);margin-right:7px;}
+.quiz-opt.correct{border-color:var(--good);background:rgba(52,211,153,.1);}
+.quiz-opt.correct .k{color:var(--good);}
+.quiz-opt.incorrect{border-color:var(--bad);background:rgba(255,92,122,.1);animation:shake .38s ease;}
+.quiz-opt.incorrect .k{color:var(--bad);}
+.quiz-opt.dim{opacity:.4;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.quiz-fb{margin-top:16px;padding:12px 16px;border-radius:7px;font-size:13px;line-height:1.6;}
+.quiz-fb.ok{background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.28);color:#B9F3DA;}
+.quiz-fb.no{background:rgba(255,92,122,.09);border:1px solid rgba(255,92,122,.28);color:#FFC9D4;}
+.fb-v{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 5px;}
+.fb-e{margin:0;color:var(--ink);opacity:.9;}
+.quiz-next{margin-top:14px;font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 16px;border-radius:5px;cursor:pointer;border:1px solid var(--ac);background:transparent;color:var(--ac);transition:all .14s;}
+.quiz-next:hover{background:var(--ac);color:#0D0F14;}
+
+/* ===== INTERACTIVE WIDGETS ===== */
+.widget{margin-top:24px;border-radius:12px;background:var(--panel);border:1px solid var(--line-hi);padding:20px 22px;position:relative;overflow:hidden;max-width:760px;}
+.widget::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#fff);}
+.widget-hd{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:4px;}
+.widget-hd .live{width:6px;height:6px;border-radius:50%;background:var(--ac);animation:blink 1.6s infinite;}
+.widget-note{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+
+/* control buttons */
+.wbtn{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 15px;border-radius:7px;border:1px solid var(--line-hi);background:var(--panel-hi);color:var(--ink);cursor:pointer;transition:all .15s ease;}
+.wbtn:hover{border-color:var(--ac);transform:translateY(-1px);}
+.wbtn:active{transform:translateY(0);}
+.wbtn.accent{background:var(--ac);border-color:var(--ac);color:#0D0F14;}
+.wbtn.danger{border-color:var(--bad);color:#FF9EB1;}
+.wbtn.danger:hover{background:rgba(255,92,122,.12);}
+.wbtn.ok{border-color:var(--good);color:#6EF5C0;}
+.wbtn.ok:hover{background:rgba(52,211,153,.12);}
+.wbtn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.wbtn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+
+/* dual-thread chat sim */
+.chat-sim{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+@media(max-width:640px){.chat-sim{grid-template-columns:1fr;}}
+.chat-col{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#0b0d12;}
+.chat-col-hd{padding:8px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.chat-col.a .chat-col-hd{color:#5AC8FA;background:rgba(90,200,250,.06);}
+.chat-col.b .chat-col-hd{color:var(--warn);background:rgba(255,209,102,.06);}
+.chat-col-hd .badge{font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--muted);}
+.chat-body{padding:12px;min-height:150px;display:flex;flex-direction:column;gap:8px;}
+.bubble{max-width:88%;padding:7px 11px;border-radius:10px;font-size:12px;line-height:1.45;animation:bubbleIn .3s ease;}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.bubble.user{align-self:flex-end;background:var(--ac,#5AC8FA);color:#0D0F14;font-weight:500;}
+.chat-col.a .bubble.user{background:#5AC8FA;}
+.chat-col.b .bubble.user{background:var(--warn);}
+.bubble.bot{align-self:flex-start;background:var(--panel-hi);color:var(--ink);border:1px solid var(--line);}
+.bubble.bot.remember{border-color:var(--good);}
+.bubble.bot.forget{border-color:var(--bad);}
+
+/* message stack (token budget) */
+.msg-stack{margin-top:16px;display:flex;flex-direction:column;gap:5px;min-height:230px;}
+.msg-pill{padding:7px 12px;border-radius:6px;font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel-hi);transition:all .4s cubic-bezier(.2,.8,.2,1);transform-origin:top;}
+.msg-pill.summary{background:linear-gradient(90deg,rgba(6,125,98,.25),rgba(6,125,98,.08));border-color:var(--good);color:#B9F3DA;font-weight:700;}
+.msg-pill.dropped{opacity:0;height:0;padding:0;margin:0;border:none;overflow:hidden;}
+.msg-pill.kept{border-color:var(--amz-orange);}
+.msg-pill .mp-i{font-size:13px;}
+.msg-stack-meta{display:flex;gap:20px;margin-top:14px;font-family:var(--mono);font-size:11px;flex-wrap:wrap;}
+.msg-stack-meta .m-k{color:var(--muted-dim);}
+.msg-stack-meta .m-v{color:var(--ac);font-weight:700;font-size:15px;}
+
+/* streaming live */
+.stream-screen{margin-top:16px;background:#0b0d12;border:1px solid var(--line);border-radius:9px;padding:16px 18px;min-height:120px;font-size:14px;line-height:1.7;color:var(--ink);position:relative;}
+.stream-cursor{display:inline-block;width:8px;height:16px;background:var(--warn);margin-left:1px;vertical-align:middle;animation:curBlink .8s step-end infinite;}
+@keyframes curBlink{50%{opacity:0;}}
+.stream-mode-tag{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:9.5px;color:var(--muted-dim);}
+
+/* store search viz */
+.store-viz{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.store-viz{grid-template-columns:1fr;}}
+.store-facts{display:flex;flex-direction:column;gap:8px;}
+.fact-pill{padding:9px 12px;border-radius:7px;border:1px solid var(--line);background:var(--panel-hi);font-size:12px;color:var(--muted);transition:all .4s ease;display:flex;align-items:center;gap:8px;}
+.fact-pill .score{font-family:var(--mono);font-size:10px;color:var(--muted-dim);margin-left:auto;}
+.fact-pill.match{border-color:var(--amz-purple);background:rgba(140,79,255,.1);color:#fff;box-shadow:0 0 14px rgba(140,79,255,.2);}
+.fact-pill.match .score{color:var(--amz-purple);font-weight:700;}
+.query-box{padding:10px 12px;border-radius:7px;border:1px dashed var(--amz-purple);background:rgba(140,79,255,.05);font-size:12.5px;color:var(--ink);font-family:var(--mono);}
+
+/* pii redaction */
+.pii-demo{margin-top:16px;display:flex;flex-direction:column;gap:12px;}
+.pii-line{padding:12px 14px;border-radius:8px;font-family:var(--mono);font-size:12.5px;line-height:1.6;}
+.pii-line.raw{background:rgba(255,92,122,.06);border:1px solid rgba(255,92,122,.25);}
+.pii-line.clean{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.25);}
+.pii-line .pl-tag{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700;}
+.pii-line.raw .pl-tag{color:var(--bad);}
+.pii-line.clean .pl-tag{color:var(--good);}
+.pii-tok{padding:1px 4px;border-radius:3px;transition:all .5s ease;}
+.pii-tok.redacted{background:var(--good);color:#0D0F14;font-weight:700;}
+.pii-arrow{text-align:center;font-size:16px;color:var(--muted-dim);}
+
+/* interrupt sim */
+.hitl-sim{margin-top:16px;}
+.hitl-stage{padding:14px 16px;border-radius:9px;border:1px solid var(--line);background:#0b0d12;font-family:var(--mono);font-size:12px;line-height:1.6;min-height:70px;transition:all .3s ease;}
+.hitl-stage.paused{border-color:var(--amz-orange);background:rgba(255,153,0,.05);}
+.hitl-stage.approved{border-color:var(--good);background:rgba(52,211,153,.06);}
+.hitl-stage.rejected{border-color:var(--bad);background:rgba(255,92,122,.06);}
+.hitl-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;letter-spacing:.06em;margin-bottom:8px;}
+.hitl-badge.pause{background:rgba(255,153,0,.18);color:var(--amz-orange);}
+.hitl-badge.go{background:rgba(52,211,153,.18);color:var(--good);}
+.hitl-badge.stop{background:rgba(255,92,122,.18);color:var(--bad);}
+.hitl-email{margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--panel-hi);border:1px solid var(--line);font-size:11px;color:var(--muted);}
+
+/* resilience cascade */
+.cascade{margin-top:16px;display:flex;flex-direction:column;gap:0;}
+.cascade-node{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel-hi);transition:all .5s ease;}
+.cascade-node .cn-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1.5px solid var(--line-hi);}
+.cascade-node .cn-name{font-family:var(--mono);font-size:12px;color:var(--ink);flex:1;}
+.cascade-node .cn-status{font-family:var(--mono);font-size:10.5px;color:var(--muted-dim);}
+.cascade-node.failed{border-color:var(--bad);}
+.cascade-node.failed .cn-icon{border-color:var(--bad);color:var(--bad);background:rgba(255,92,122,.1);}
+.cascade-node.failed .cn-status{color:var(--bad);}
+.cascade-node.success{border-color:var(--good);}
+.cascade-node.success .cn-icon{border-color:var(--good);color:var(--good);background:rgba(52,211,153,.1);}
+.cascade-node.success .cn-status{color:var(--good);}
+.cascade-node.pending{opacity:.4;}
+.cascade-arrow{text-align:center;color:var(--muted-dim);font-size:13px;padding:2px 0;}
+
+</style>
+</head>
+<body>
+
+<!-- LEFT RAIL -->
+<nav class="rail" aria-label="Slides">
+  <div class="rail-nodes" id="railNodes">
+    <div class="rail-track"><div class="rail-fill" id="railFill"></div></div>
+    <button class="rail-node" data-s="s0" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">Intro</span></button>
+    <button class="rail-node" data-s="s1" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">The Problem</span></button>
+    <button class="rail-node" data-s="s2" style="--ac:#5AC8FA"><span class="rail-dot"></span><span class="rail-tip">Short-Term Memory</span></button>
+    <button class="rail-node" data-s="s3" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Persistent Memory</span></button>
+    <button class="rail-node" data-s="s4" style="--ac:var(--amz-green)"><span class="rail-dot"></span><span class="rail-tip">Token Budget</span></button>
+    <button class="rail-node" data-s="s5" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Long-Term Memory</span></button>
+    <button class="rail-node" data-s="s6" style="--ac:var(--warn)"><span class="rail-dot"></span><span class="rail-tip">Streaming</span></button>
+    <button class="rail-node" data-s="s7" style="--ac:var(--bad)"><span class="rail-dot"></span><span class="rail-tip">Guardrails</span></button>
+    <button class="rail-node" data-s="s8" style="--ac:#F72585"><span class="rail-dot"></span><span class="rail-tip">Human-in-Loop</span></button>
+    <button class="rail-node" data-s="s9" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Resilience</span></button>
+    <button class="rail-node" data-s="s10" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Everything Together</span></button>
+    <button class="rail-node" data-s="s11" style="--ac:#fff"><span class="rail-dot"></span><span class="rail-tip">Summary</span></button>
+  </div>
+</nav>
+
+<div class="top-badge"><span class="dot"></span>Notebook 11 · Phase 3 · Production Chatbots</div>
+
+
+<!-- S0 HERO -->
+<section class="stage hero" id="s0" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">GenAI 2026 · Module 10 · Notebook 11</div>
+  <h1 class="rise d1">Memory Architecture<br>for Production Chatbots</h1>
+  <p class="sub rise d2">Every notebook so far answers one question, forgets everything, and dies.<br>
+  A real product has to remember, protect, control cost, and survive failures.<br>
+  This deck builds each capability from first principles.</p>
+  <div class="hero-grid rise d3">
+    <div class="hero-tile" style="--ac:var(--amz-orange)"><div class="ht-n">7</div><div class="ht-l">Production requirements every chatbot must solve</div></div>
+    <div class="hero-tile" style="--ac:#5AC8FA"><div class="ht-n">4</div><div class="ht-l">Distinct memory strategies with different tradeoffs</div></div>
+    <div class="hero-tile" style="--ac:var(--amz-purple)"><div class="ht-n">1</div><div class="ht-l">Unified API — <code style="font-size:11px">create_agent</code> for all of it</div></div>
+    <div class="hero-tile" style="--ac:var(--good)"><div class="ht-n">∞</div><div class="ht-l">Composable middlewares — add as many as you need</div></div>
+  </div>
+  <div class="chip-row rise d4">
+    <span class="chip">langchain</span><span class="chip">langgraph</span><span class="chip">create_agent</span><span class="chip">InMemorySaver</span><span class="chip">SqliteSaver</span><span class="chip">InMemoryStore</span><span class="chip">interrupt()</span>
+  </div>
+</div>
+</section>
+
+<!-- S1 THE PROBLEM -->
+<section class="stage" id="s1" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">The Problem</div>
+  <h2 class="rise d1">Every call starts from zero</h2>
+  <p class="sub rise d2">A bare <code>create_agent</code> with no memory config is 100% stateless.<br>Two consecutive calls share absolutely nothing — just like every raw LLM API call you've ever made.</p>
+  <div class="code-block rise d3" data-label="stateless_agent.py"><span class="cm"># Turn 1 — works fine</span>
+r1 = bare_agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"Hi, my name is Noordeen."</span>})
+<span class="cm"># → "Hi Noordeen! How can I help?"</span>
+
+<span class="cm"># Turn 2 — blank slate</span>
+r2 = bare_agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"What's my name?"</span>})
+<span class="cm"># → "I'm sorry, I don't know your name."  ← no shared state at all</span></div>
+  <div class="two-col rise d4">
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--bad);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--bad);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">WITHOUT MEMORY</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.6;">Each <code>.invoke()</code> is an isolated API call. The model sees only what you pass in that single call. No history, no context, no continuity.</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12.5px;color:var(--bad);">✗ Forgets your name instantly</div>
+        <div style="font-size:12.5px;color:var(--bad);">✗ Can't refer back to anything</div>
+        <div style="font-size:12.5px;color:var(--bad);">✗ Every turn is turn 1</div>
+      </div>
+    </div>
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--good);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--good);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">WITH MEMORY</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.6;">A <code>checkpointer=</code> snapshots state after every turn. The same <code>thread_id</code> on the next call resumes exactly where it left off.</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12.5px;color:var(--good);">✓ Full conversation history</div>
+        <div style="font-size:12.5px;color:var(--good);">✓ Cross-turn references work</div>
+        <div style="font-size:12.5px;color:var(--good);">✓ Multiple users, zero interference</div>
+      </div>
+    </div>
+  </div>
+  <div class="callout rise d5"><b>Real-world consequence:</b> Amazon Alexa, Google Assistant, any customer-support bot — none of them would be usable without persistent memory. "I just told you my order number!" is the #1 user complaint in stateless chatbot deployments.</div>
+</div>
+</section>
+
+
+<!-- S2 SHORT-TERM MEMORY -->
+<section class="stage" id="s2" style="--ac:#5AC8FA">
+<div class="wrap">
+  <div class="eyebrow rise">Memory Type 1</div>
+  <h2 class="rise d1">Short-Term Memory<br><span style="color:#5AC8FA">One conversation, remembered</span></h2>
+  <p class="sub rise d2"><strong>What:</strong> The conversation history for a single chat session.<br>
+  <strong>Where:</strong> Lives in a <code>checkpointer</code>, scoped to a <code>thread_id</code>.<br>
+  <strong>Why:</strong> Every follow-up question ("What about the second option?") needs context from earlier in the same chat.</p>
+
+  <div class="two-col rise d3">
+    <div>
+      <div class="code-block" data-label="short_term.py"><span class="kw">from</span> langgraph.checkpoint.memory <span class="kw">import</span> <span class="fn">InMemorySaver</span>
+
+agent = <span class="fn">create_agent</span>(
+  model=MODEL, tools=[],
+  <span class="hl">checkpointer=InMemorySaver()</span>  <span class="cm"># ← this line</span>
+)
+<span class="cm"># Same thread_id = same conversation</span>
+config_a = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"chat-a"</span>}}
+agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"My name is Noordeen."</span>}, config_a)
+agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"What's my name?"</span>}, config_a)
+<span class="cm"># → "Your name is Noordeen."  ✓
+
+# Different thread_id = completely separate chat</span>
+config_b = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"chat-b"</span>}}
+agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"What's my name?"</span>}, config_b)
+<span class="cm"># → "I don't know your name."   ← fresh slate</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#5AC8FA;font-weight:700;margin-bottom:8px;">HOW IT WORKS</div>
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-dot" style="border-color:#5AC8FA;color:#5AC8FA;">1</div><div class="tl-body"><div class="tl-title">User sends turn 1</div><div class="tl-desc">Checkpointer snapshots state, keyed by thread_id</div></div></div>
+          <div class="tl-item"><div class="tl-dot" style="border-color:#5AC8FA;color:#5AC8FA;">2</div><div class="tl-body"><div class="tl-title">User sends turn 2 (same thread_id)</div><div class="tl-desc">Checkpointer loads snapshot → model sees full history</div></div></div>
+          <div class="tl-item"><div class="tl-dot" style="border-color:var(--muted-dim);color:var(--muted-dim);">3</div><div class="tl-body"><div class="tl-title">Different user (new thread_id)</div><div class="tl-desc">Zero state shared — completely independent</div></div></div>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 16px;border-left:3px solid var(--warn);">
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;"><span style="color:var(--warn);font-weight:700;">⚠ InMemorySaver limitation:</span> lives only in RAM. Dies the moment the Python process exits. Fine for a notebook, not for production. Section 3 fixes this.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget rise d4" style="--ac:#5AC8FA">
+    <div class="widget-hd"><span class="live"></span>Interactive · Two threads, one agent</div>
+    <p class="widget-note">Click a message to send it. Thread A and Thread B share the same agent object — but different <code>thread_id</code>s. Watch A remember and B forget.</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" onclick="chatSend('a','My name is Noordeen.')">→ Tell Thread A your name</button>
+      <button class="wbtn" id="askA" onclick="chatSend('a','What is my name?')" disabled>Ask Thread A "what's my name?"</button>
+      <button class="wbtn" onclick="chatSend('b','What is my name?')">Ask Thread B "what's my name?"</button>
+      <button class="wbtn" onclick="chatReset()">Reset</button>
+    </div>
+    <div class="chat-sim">
+      <div class="chat-col a">
+        <div class="chat-col-hd"><span>Thread A</span><span class="badge">thread_id: chat-a</span></div>
+        <div class="chat-body" id="chatA"></div>
+      </div>
+      <div class="chat-col b">
+        <div class="chat-col-hd"><span>Thread B</span><span class="badge">thread_id: chat-b</span></div>
+        <div class="chat-body" id="chatB"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz rise d5">
+    <div class="quiz-eyebrow">🎯 Check your understanding</div>
+    <div class="quiz-q" id="q2-q">Two users are chatting with the same agent object simultaneously. User A's thread_id is "alice-session", User B's is "bob-session". User B types "What did User A just say?" — what happens?</div>
+    <div class="quiz-opts" id="q2-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q2',0,false,'Thread IDs are completely isolated — different thread = completely different memory namespace.')"><span class="k">A</span> The agent can see User A's messages because they share the same agent object</button>
+      <button class="quiz-opt" onclick="answerQuiz('q2',1,true,'Correct! The checkpointer scopes state to thread_id. Different IDs = zero shared state, even on the same agent.')"><span class="k">B</span> The agent has no idea — thread_id scopes memory completely</button>
+      <button class="quiz-opt" onclick="answerQuiz('q2',2,false,'Only thread_id matters for memory isolation, not the agent object.')"><span class="k">C</span> You'd need a separate agent object per user for isolation</button>
+    </div>
+    <div class="quiz-fb" id="q2-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+<!-- S3 PERSISTENT MEMORY -->
+<section class="stage" id="s3" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Memory Type 1b</div>
+  <h2 class="rise d1">Persistent Memory<br><span style="color:var(--amz-teal)">Survives process restarts</span></h2>
+  <p class="sub rise d2"><strong>What:</strong> Short-term memory backed by a database instead of RAM.<br>
+  <strong>Where:</strong> <code>SqliteSaver</code> for local apps, <code>PostgresSaver</code>/<code>MongoDBSaver</code> for scale.<br>
+  <strong>Why:</strong> A user closes their laptop and comes back tomorrow. Their conversation must still be there.</p>
+
+  <div class="code-block rise d3" data-label="persistent.py"><span class="kw">from</span> langgraph.checkpoint.sqlite <span class="kw">import</span> <span class="fn">SqliteSaver</span>
+<span class="kw">import</span> sqlite3
+
+<span class="cm"># Process #1 — agent stores a fact</span>
+conn = sqlite3.<span class="fn">connect</span>(<span class="st">"chat.db"</span>, check_same_thread=<span class="kw">False</span>)
+agent_v1 = <span class="fn">create_agent</span>(model=MODEL, tools=[], <span class="hl">checkpointer=SqliteSaver(conn)</span>)
+agent_v1.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"My favorite language is Python."</span>}, config)
+<span class="kw">del</span> agent_v1  <span class="cm"># ← simulate process restart</span>
+
+<span class="cm"># Process #2 — brand new object, same SQLite file</span>
+conn2 = sqlite3.<span class="fn">connect</span>(<span class="st">"chat.db"</span>, check_same_thread=<span class="kw">False</span>)
+agent_v2 = <span class="fn">create_agent</span>(model=MODEL, tools=[], <span class="hl">checkpointer=SqliteSaver(conn2)</span>)
+r = agent_v2.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"What's my favorite language?"</span>}, config)
+<span class="cm"># → "Your favorite language is Python."  ✓ survived the restart</span></div>
+
+  <div class="three-col rise d4">
+    <div class="mem-card card" style="--ac:var(--amz-teal)">
+      <div class="mc-eyebrow">Dev / Notebook</div>
+      <div class="mc-title">InMemorySaver</div>
+      <div class="mc-sub">RAM only. Zero setup. Dies on process exit. Use this in notebooks and tests.</div>
+      <div class="mc-where"><span class="tag">RAM</span><span class="tag">No persistence</span></div>
+    </div>
+    <div class="mem-card card" style="--ac:var(--amz-orange)">
+      <div class="mc-eyebrow">Small Apps</div>
+      <div class="mc-title">SqliteSaver</div>
+      <div class="mc-sub">Local SQLite file. Survives restarts. One pip install. Perfect for a local product or prototype.</div>
+      <div class="mc-where"><span class="tag">File on disk</span><span class="tag">Survives restart</span></div>
+    </div>
+    <div class="mem-card card" style="--ac:var(--amz-blue)">
+      <div class="mc-eyebrow">Production Scale</div>
+      <div class="mc-title">PostgresSaver</div>
+      <div class="mc-sub">Real database. Handles concurrent users, millions of conversations. Same code, different class name.</div>
+      <div class="mc-where"><span class="tag">Postgres / Mongo</span><span class="tag">Scale</span></div>
+    </div>
+  </div>
+  <div class="callout rise d5"><b>Key insight:</b> Swapping from <code>InMemorySaver</code> to <code>SqliteSaver</code> to <code>PostgresSaver</code> is a one-word change — only the class name changes. The rest of your code is identical. This is the entire design point of the checkpointer abstraction.</div>
+</div>
+</section>
+
+
+<!-- S4 TOKEN BUDGET -->
+<section class="stage" id="s4" style="--ac:var(--amz-green)">
+<div class="wrap">
+  <div class="eyebrow rise">Cost Control</div>
+  <h2 class="rise d1">Token Budget<br><span style="color:var(--amz-green)">Don't let cost grow forever</span></h2>
+  <p class="sub rise d2"><strong>The problem:</strong> Every stored message gets re-sent to the model on every turn. A 200-turn conversation sends 200 messages per call. Cost and latency grow linearly — the #1 production cost bug in chat systems.</p>
+
+  <div class="cost-bars rise d3" style="max-width:560px;margin-top:20px;">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);margin-bottom:4px;">TOKENS SENT PER TURN (unbounded history)</div>
+    <div class="cost-row"><div class="cost-lbl">Turn 1</div><div class="cost-track"><div class="cost-fill" data-w="4" style="background:#34D399;">~50</div></div><div class="cost-val">50 tok</div></div>
+    <div class="cost-row"><div class="cost-lbl">Turn 10</div><div class="cost-track"><div class="cost-fill" data-w="20" style="background:var(--warn);">~500</div></div><div class="cost-val">500 tok</div></div>
+    <div class="cost-row"><div class="cost-lbl">Turn 50</div><div class="cost-track"><div class="cost-fill" data-w="55" style="background:#FF7A45;">~2500</div></div><div class="cost-val">2.5K tok</div></div>
+    <div class="cost-row"><div class="cost-lbl">Turn 200</div><div class="cost-track"><div class="cost-fill" data-w="100" style="background:var(--bad);">~10,000</div></div><div class="cost-val">10K tok</div></div>
+  </div>
+
+  <div class="two-col rise d4" style="margin-top:28px;">
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amz-green);font-weight:700;margin-bottom:10px;">OPTION A — SUMMARIZATION</div>
+      <div class="code-block" data-label="summarize.py"><span class="fn">SummarizationMiddleware</span>(
+  model=MODEL,
+  trigger=(<span class="st">"tokens"</span>, 500),  <span class="cm"># fires when >500 tokens</span>
+  keep=(<span class="st">"messages"</span>, 4),    <span class="cm"># keep last 4 verbatim</span>
+)
+<span class="cm"># Old turns → LLM-generated summary
+# Latest N turns → kept verbatim
+# Old facts survive inside the summary ✓</span></div>
+      <div class="callout" style="margin-top:12px;"><b>Cost:</b> One extra LLM call when it fires. <b>Benefit:</b> Old facts survive — the summary carries them.</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);font-weight:700;margin-bottom:10px;">OPTION B — TRIMMING</div>
+      <div class="code-block" data-label="trim.py"><span class="cm">@before_model</span>
+<span class="kw">def</span> <span class="fn">keep_last_n</span>(state, runtime):
+  N = 6
+  <span class="kw">if</span> len(state[<span class="st">"messages"</span>]) <= N:
+    <span class="kw">return</span> <span class="kw">None</span>
+  <span class="kw">return</span> {<span class="st">"messages"</span>: [
+    <span class="fn">RemoveMessage</span>(id=REMOVE_ALL_MESSAGES),
+    *state[<span class="st">"messages"</span>][-N:]
+  ]}
+<span class="cm"># Old turns simply dropped — gone forever
+# Zero extra LLM calls — cheap ✓
+# But: "My name is Noordeen" from turn 1 vanishes ✗</span></div>
+      <div class="callout" style="margin-top:12px;border-left-color:var(--bad);"><b>Cost:</b> Zero extra calls. <b>Risk:</b> Facts in dropped messages are permanently gone.</div>
+    </div>
+  </div>
+
+  <div class="widget rise d5" style="--ac:var(--amz-green)">
+    <div class="widget-hd"><span class="live"></span>Interactive · Watch the strategies fire</div>
+    <p class="widget-note">Add turns until the history crosses the token trigger, then apply a strategy. Watch what happens to the very first message — "My name is Noordeen" (turn 1).</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" onclick="msgAdd()">+ Add a turn</button>
+      <button class="wbtn ok" onclick="msgSummarize()">Apply Summarization</button>
+      <button class="wbtn danger" onclick="msgTrim()">Apply Trimming</button>
+      <button class="wbtn" onclick="msgReset()">Reset</button>
+    </div>
+    <div class="msg-stack" id="msgStack"></div>
+    <div class="msg-stack-meta">
+      <div><span class="m-k">MESSAGES</span> <span class="m-v" id="msgCount">1</span></div>
+      <div><span class="m-k">EST. TOKENS</span> <span class="m-v" id="msgTokens">50</span></div>
+      <div><span class="m-k">TURN-1 FACT</span> <span class="m-v" id="msgFact" style="font-size:12px;">alive ✓</span></div>
+    </div>
+  </div>
+
+  <table class="cmp-table rise d5">
+    <thead><tr><th>Strategy</th><th>Extra LLM calls?</th><th>Old facts survive?</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td>Summarization</td><td class="no">Yes (when triggered)</td><td class="yes">Yes — compressed</td><td>Facts must survive; cost is secondary</td></tr>
+      <tr><td>Trimming</td><td class="yes">No</td><td class="no">No — dropped</td><td>Conversation is episodic; old turns are disposable</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- S5 LONG-TERM MEMORY -->
+<section class="stage" id="s5" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Memory Type 2</div>
+  <h2 class="rise d1">Long-Term Memory<br><span style="color:var(--amz-purple)">Remembers you across sessions</span></h2>
+  <p class="sub rise d2"><strong>What:</strong> Facts about a user that persist across entirely separate conversations, days apart.<br>
+  <strong>Where:</strong> An <code>InMemoryStore</code> (or persistent backend), keyed by <code>user_id</code>, searched semantically.<br>
+  <strong>Why:</strong> "Alexa, set my usual alarm" only works if Alexa remembers what "usual" means from a conversation 6 months ago.</p>
+
+  <div class="two-col rise d3">
+    <div>
+      <div class="code-block" data-label="long_term.py"><span class="cm"># 1. Create a vector-indexed Store</span>
+store = <span class="fn">InMemoryStore</span>(index={
+  <span class="st">"embed"</span>: <span class="fn">init_embeddings</span>(<span class="st">"openai:text-embedding-3-small"</span>),
+  <span class="st">"dims"</span>: 1536
+})
+
+<span class="cm"># 2. Inject memories via @dynamic_prompt middleware</span>
+<span class="cm">@dynamic_prompt</span>
+<span class="kw">def</span> <span class="fn">personalized_prompt</span>(request) -> str:
+  user_id = request.runtime.context.user_id
+  memories = request.runtime.store.<span class="fn">search</span>(
+    (<span class="st">"memories"</span>, user_id),
+    query=<span class="st">"user preferences"</span>, limit=3
+  )
+  facts = <span class="st">"\n"</span>.join(m.value[<span class="st">"text"</span>] <span class="kw">for</span> m <span class="kw">in</span> memories)
+  <span class="kw">return</span> <span class="st">"You are helpful."</span> + (<span class="st">f"\nFacts:\n{facts}"</span> <span class="kw">if</span> facts <span class="kw">else</span> <span class="st">""</span>)
+
+<span class="cm"># 3. Seed a fact from "yesterday's session"</span>
+store.<span class="fn">put</span>((<span class="st">"memories"</span>, <span class="st">"user-42"</span>), <span class="st">"fact-1"</span>, {
+  <span class="st">"text"</span>: <span class="st">"The user's favorite language is Rust."</span>
+})
+
+<span class="cm"># 4. Brand-new thread — never seen this conversation before</span>
+r = memory_agent.<span class="fn">invoke</span>(
+  {<span class="st">"messages"</span>: <span class="st">"What's my favorite language?"</span>},
+  {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"new-chat"</span>}},
+  context=<span class="fn">Context</span>(user_id=<span class="st">"user-42"</span>),
+)
+<span class="cm"># → "Your favorite language is Rust."  ✓
+# Came from the Store, not the checkpointer!</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="padding:16px 18px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--amz-purple);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">TWO MEMORY SYSTEMS</div>
+        <table class="cmp-table" style="margin-top:0;">
+          <thead><tr><th></th><th>Checkpointer</th><th>Store</th></tr></thead>
+          <tbody>
+            <tr><td>Keyed by</td><td>thread_id</td><td>user_id (or anything)</td></tr>
+            <tr><td>Scope</td><td>One conversation</td><td>Cross-session</td></tr>
+            <tr><td>Survives new chat?</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Use case</td><td>"What did we just say?"</td><td>"Who is this user?"</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout" style="--ac:var(--amz-purple)"><b>Search is semantic:</b> When you call <code>store.search(query="user preferences")</code>, it does vector similarity search — the same embeddings from notebook 04. A stored fact "loves Rust" matches a query "programming language preference" even though the words differ.</div>
+    </div>
+  </div>
+
+  <div class="widget rise d4" style="--ac:var(--amz-purple)">
+    <div class="widget-hd"><span class="live"></span>Interactive · Semantic store search</div>
+    <p class="widget-note">The store holds facts about <code>user-42</code>. Fire a query — it does vector similarity, so it matches on <em>meaning</em>, not exact words. Watch which facts light up.</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" onclick="storeSearch('lang')">Query: "programming language preference"</button>
+      <button class="wbtn accent" onclick="storeSearch('food')">Query: "what do they like to eat?"</button>
+      <button class="wbtn accent" onclick="storeSearch('work')">Query: "their job"</button>
+      <button class="wbtn" onclick="storeSearch('reset')">Clear</button>
+    </div>
+    <div class="store-viz">
+      <div>
+        <div class="query-box" id="storeQuery">query: (none yet)</div>
+        <p style="font-size:11px;color:var(--muted-dim);margin-top:8px;line-height:1.5;">→ embedded to a vector, compared against every stored fact by cosine similarity.</p>
+      </div>
+      <div class="store-facts" id="storeFacts">
+        <div class="fact-pill" data-tags="lang">🦀 Favorite language is Rust<span class="score">—</span></div>
+        <div class="fact-pill" data-tags="food">🍕 Loves margherita pizza<span class="score">—</span></div>
+        <div class="fact-pill" data-tags="work">💼 Works as a data engineer<span class="score">—</span></div>
+        <div class="fact-pill" data-tags="lang">⚙️ Prefers static typing<span class="score">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz rise d5">
+    <div class="quiz-eyebrow">🎯 Check your understanding</div>
+    <div class="quiz-q" id="q5-q">A user chats with your bot on Monday (thread "mon-chat"), seeds a fact about their job title. On Friday they open a brand-new chat (thread "fri-chat"). Where does the job title fact come from?</div>
+    <div class="quiz-opts" id="q5-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q5',0,false,'The checkpointer is keyed by thread_id. A new thread_id has zero history.')"><span class="k">A</span> The checkpointer — it stores all past conversations</button>
+      <button class="quiz-opt" onclick="answerQuiz('q5',1,true,'Correct! The Store is keyed by user_id, not thread_id. It crosses session boundaries.')"><span class="k">B</span> The Store — it is keyed by user_id, not thread_id</button>
+      <button class="quiz-opt" onclick="answerQuiz('q5',2,false,'The LLM has no memory of user-specific facts from training.')"><span class="k">C</span> The LLM itself — it was fine-tuned on user data</button>
+    </div>
+    <div class="quiz-fb" id="q5-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+
+<!-- S6 STREAMING -->
+<section class="stage" id="s6" style="--ac:var(--warn)">
+<div class="wrap">
+  <div class="eyebrow rise">UX</div>
+  <h2 class="rise d1">Streaming<br><span style="color:var(--warn)">Don't make users stare at a blank screen</span></h2>
+  <p class="sub rise d2"><strong>What:</strong> Yield tokens as they are generated, one by one, instead of waiting for the full response.<br>
+  <strong>Where:</strong> <code>.stream(..., stream_mode="messages")</code> — same agent, same middleware, different call.<br>
+  <strong>Why:</strong> Perceived latency drops dramatically. GPT-4o takes ~2–4 seconds for a long answer. Without streaming, users see nothing for that whole time.</p>
+
+  <div class="two-col rise d3">
+    <div>
+      <div class="code-block" data-label="streaming.py"><span class="kw">import</span> time
+
+<span class="kw">for</span> chunk, metadata <span class="kw">in</span> memory_agent.<span class="fn">stream</span>(
+  {<span class="st">"messages"</span>: <span class="st">"Why does streaming matter?"</span>},
+  {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"stream-demo"</span>}},
+  context=<span class="fn">Context</span>(user_id=<span class="st">"user-42"</span>),
+  <span class="hl">stream_mode=<span class="st">"messages"</span></span>,   <span class="cm"># ← one tuple per token</span>
+):
+  <span class="kw">if</span> chunk.content:
+    <span class="fn">print</span>(chunk.content, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+    time.<span class="fn">sleep</span>(0.05)  <span class="cm"># 50ms per token (demo only)</span>
+<span class="fn">print</span>()              <span class="cm"># remove sleep in production</span></div>
+      <div class="callout" style="--ac:var(--warn);margin-top:12px;">Each <code>(chunk, metadata)</code> tuple carries one token fragment. <code>chunk.content</code> is the text; <code>metadata</code> has node name, run IDs, etc. The <code>sleep</code> makes it visually obvious in a notebook — remove it in production.</div>
+    </div>
+    <div>
+      <div class="card" style="padding:16px 18px;margin-bottom:12px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--warn);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">BEFORE STREAMING (blocking)</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">User types → blank screen → blank screen → blank screen → <span style="color:#fff;">full answer appears</span>. 3-4 seconds of nothing.</div>
+      </div>
+      <div class="widget" style="--ac:var(--warn);margin-top:0;">
+        <div class="widget-hd"><span class="live"></span>Live · token-by-token</div>
+        <p class="widget-note">This is what <code>stream_mode="messages"</code> looks like — one token fragment at a time.</p>
+        <div class="stream-screen" id="streamScreen"><span class="stream-mode-tag">stream_mode="messages"</span><span id="streamText"></span><span class="stream-cursor" id="streamCursor"></span></div>
+        <div class="wbtn-row">
+          <button class="wbtn accent" id="streamBtn" onclick="streamStart()">▶ Stream a response</button>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted-dim);align-self:center;" id="streamStat">idle</span>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 16px;margin-top:12px;border-left:3px solid var(--muted-dim);">
+        <div style="font-size:12px;color:var(--muted-dim);line-height:1.6;"><strong style="color:var(--muted);">Note on astream_events:</strong> There's also <code>astream_events(version="v3")</code> for event-level streaming (tool calls, node transitions). It's marked <strong>experimental</strong> and may throw <code>NotImplementedError</code>. Use <code>stream_mode="messages"</code> by default.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S7 GUARDRAILS -->
+<section class="stage" id="s7" style="--ac:var(--bad)">
+<div class="wrap">
+  <div class="eyebrow rise">Safety</div>
+  <h2 class="rise d1">Guardrails<br><span style="color:var(--bad)">Stop sensitive data and unsafe content</span></h2>
+  <p class="sub rise d2">Two separate concerns — both implemented as middleware in the same list, running before the model ever receives the message.</p>
+
+  <div class="two-col rise d3">
+    <div>
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--bad);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">PII FILTERING</div>
+      <div class="code-block" data-label="pii.py"><span class="fn">PIIMiddleware</span>(<span class="st">"email"</span>,
+  strategy=<span class="st">"redact"</span>,
+  apply_to_input=<span class="kw">True</span>),
+<span class="fn">PIIMiddleware</span>(<span class="st">"credit_card"</span>,
+  strategy=<span class="st">"mask"</span>,
+  apply_to_input=<span class="kw">True</span>),
+
+<span class="cm"># Input:  "My email is john@ex.com and card 4111..."
+# Model sees: "My email is [REDACTED_EMAIL]
+#              and card **** **** **** 1111"
+# Real email/card never left this process ✓</span></div>
+      <div class="callout" style="--ac:var(--bad);margin-top:12px;"><b>Deterministic, no LLM involved.</b> PIIMiddleware runs pure regex patterns — fast, cheap, 100% predictable. No model call to redact data.</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--amz-orange);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">CONTENT MODERATION</div>
+      <div class="code-block" data-label="moderation.py"><span class="cm">@wrap_model_call</span>
+<span class="kw">def</span> <span class="fn">moderate_input</span>(request, handler):
+  last = request.messages[-1].content
+  result = client.moderations.<span class="fn">create</span>(
+    model=<span class="st">"omni-moderation-latest"</span>,
+    input=last
+  )
+  <span class="kw">if</span> result.results[0].flagged:
+    <span class="kw">return</span> <span class="fn">AIMessage</span>(content=<span class="st">"I can't help with that."</span>)
+  <span class="kw">return</span> <span class="fn">handler</span>(request)  <span class="cm"># pass through if safe</span>
+
+<span class="cm"># "recipe for banana bread" → passes through ✓
+# "how to build a bomb"    → blocked ✗</span></div>
+      <div class="callout" style="--ac:var(--amz-orange);margin-top:12px;"><b>@wrap_model_call</b> intercepts the call before it reaches the chat model. If flagged, it returns a safe response directly — the expensive model call never happens.</div>
+    </div>
+  </div>
+
+  <div class="widget rise d4" style="--ac:var(--bad)">
+    <div class="widget-hd"><span class="live"></span>Interactive · Watch PII get scrubbed</div>
+    <p class="widget-note">Click to run PIIMiddleware. Watch the email and card number get replaced <em>before</em> the model ever sees the message — deterministically, no LLM call.</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" onclick="piiRedact()">▶ Run PIIMiddleware</button>
+      <button class="wbtn" onclick="piiReset()">Reset</button>
+    </div>
+    <div class="pii-demo">
+      <div class="pii-line raw">
+        <span class="pl-tag">① What the user typed</span>
+        My email is <span class="pii-tok" id="pt-email">john.doe@example.com</span> and my card is <span class="pii-tok" id="pt-card">4111 1111 1111 1111</span>.
+      </div>
+      <div class="pii-arrow">↓ &nbsp;PIIMiddleware (regex, no LLM)&nbsp; ↓</div>
+      <div class="pii-line clean">
+        <span class="pl-tag">② What the model actually receives</span>
+        My email is <span class="pii-tok" id="pt-email2">john.doe@example.com</span> and my card is <span class="pii-tok" id="pt-card2">4111 1111 1111 1111</span>.
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz rise d5">
+    <div class="quiz-eyebrow">🎯 Check your understanding</div>
+    <div class="quiz-q" id="q7-q">A user types "My SSN is 123-45-6789, help me fill a form." PIIMiddleware has strategy="redact" for SSN. What does the model actually receive?</div>
+    <div class="quiz-opts" id="q7-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q7',0,false,'The whole message is preserved — only the SSN pattern is replaced.')"><span class="k">A</span> The message is blocked entirely and the user gets an error</button>
+      <button class="quiz-opt" onclick="answerQuiz('q7',1,true,'Correct! Redact replaces only the matched pattern. The rest of the message passes through intact.')"><span class="k">B</span> "My SSN is [REDACTED_SSN], help me fill a form."</button>
+      <button class="quiz-opt" onclick="answerQuiz('q7',2,false,'That would be "mask" strategy — replacing with asterisks. "redact" replaces with a label.')"><span class="k">C</span> "My SSN is ***-**-****, help me fill a form."</button>
+    </div>
+    <div class="quiz-fb" id="q7-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+
+<!-- S8 HUMAN IN THE LOOP -->
+<section class="stage" id="s8" style="--ac:#F72585">
+<div class="wrap">
+  <div class="eyebrow rise">Safety</div>
+  <h2 class="rise d1">Human-in-the-Loop<br><span style="color:#F72585">Pause before anything risky</span></h2>
+  <p class="sub rise d2"><strong>What:</strong> LangGraph's <code>interrupt()</code> pauses graph execution inside a tool, before the risky operation, and waits for an explicit human decision.<br>
+  <strong>Where:</strong> Inside the tool function itself — not a middleware, but the checkpointer makes it durable.<br>
+  <strong>Why:</strong> Sending an email, issuing a refund, deleting an account — these cannot be undone. No LLM should do them unilaterally.</p>
+
+  <div class="int-flow rise d3">
+    <div class="int-phase p1">
+      <div class="ph-label">Phase 1 — Pause</div>
+      <div class="ph-title">Agent decides → tool pauses</div>
+      <div class="ph-desc">Model calls <code>send_email</code>. Tool hits <code>interrupt()</code>. Graph snapshots state and returns. Result has <code>__interrupt__</code> key with approval payload.</div>
+    </div>
+    <div class="int-phase p2">
+      <div class="ph-label">Phase 2 — Resume</div>
+      <div class="ph-title">Human decides → execution continues</div>
+      <div class="ph-desc"><code>Command(resume="approve")</code> or <code>"reject"</code>. Same <code>thread_id</code>. Execution resumes at the exact <code>interrupt()</code> call site inside the tool.</div>
+    </div>
+  </div>
+
+  <div class="code-block rise d4" data-label="hitl.py"><span class="kw">from</span> langgraph.types <span class="kw">import</span> Command, <span class="fn">interrupt</span>
+
+<span class="kw">def</span> <span class="fn">send_email</span>(recipient: str, subject: str, body: str) -> str:
+  <span class="cm"># interrupt() is placed BEFORE the risky operation</span>
+  decision = <span class="hl"><span class="fn">interrupt</span>({
+    <span class="st">"question"</span>: <span class="st">"Approve sending this email?"</span>,
+    <span class="st">"to"</span>: recipient, <span class="st">"subject"</span>: subject, <span class="st">"body"</span>: body,
+  })</span>
+  <span class="cm"># Execution RESUMES HERE after Command(resume=...) is called</span>
+  <span class="kw">if</span> decision == <span class="st">"approve"</span>:
+    <span class="kw">return</span> <span class="fn">f</span><span class="st">"Email sent to {recipient}"</span>
+  <span class="kw">return</span> <span class="fn">f</span><span class="st">"Rejected — not sent."</span>
+
+<span class="cm"># Phase 1 — triggers interrupt()</span>
+config = {<span class="st">"configurable"</span>: {<span class="st">"thread_id"</span>: <span class="st">"approval-demo"</span>}}
+result = hitl_agent.<span class="fn">invoke</span>(
+  {<span class="st">"messages"</span>: <span class="st">"Send email to bob@example.com..."</span>}, config)
+<span class="cm"># result["__interrupt__"] has the approval payload</span>
+
+<span class="cm"># Phase 2 — human approves (same config!)</span>
+approved = hitl_agent.<span class="fn">invoke</span>(<span class="fn">Command</span>(resume=<span class="st">"approve"</span>), config)
+<span class="cm"># → "Email sent to bob@example.com"</span></div>
+
+  <div class="three-col rise d5">
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;color:#F72585;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">WHY INSIDE THE TOOL?</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.55;">interrupt() placement is intentional: before the dangerous operation. The gate is part of the tool contract, not bolted on as an afterthought.</div>
+    </div>
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amz-orange);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">SAME thread_id = SAME PAUSE</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.55;">The checkpointer holds the paused state. As long as you pass the same thread_id, the graph resumes from exactly where interrupt() stopped — even hours later.</div>
+    </div>
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--good);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">REJECT PATH</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.55;"><code>Command(resume="reject")</code> → tool returns the rejection message → model receives it and apologises. The risky operation never ran.</div>
+    </div>
+  </div>
+
+  <div class="widget rise d5" style="--ac:#F72585">
+    <div class="widget-hd"><span class="live"></span>Interactive · Approve or reject</div>
+    <p class="widget-note">The agent wants to send an email. It's paused at <code>interrupt()</code>, waiting for you. You are the human in the loop.</p>
+    <div class="hitl-sim">
+      <div class="hitl-stage paused" id="hitlStage">
+        <span class="hitl-badge pause" id="hitlBadge">⏸ PAUSED — awaiting decision</span>
+        <div id="hitlMsg">The model called <b>send_email</b> and execution stopped inside the tool at <code>interrupt()</code>.</div>
+        <div class="hitl-email">To: bob@example.com &nbsp;·&nbsp; Subject: "Hi" &nbsp;·&nbsp; Body: "Just checking in."</div>
+      </div>
+      <div class="wbtn-row">
+        <button class="wbtn ok" id="hitlApprove" onclick="hitlDecide('approve')">✓ Command(resume="approve")</button>
+        <button class="wbtn danger" id="hitlReject" onclick="hitlDecide('reject')">✗ Command(resume="reject")</button>
+        <button class="wbtn" onclick="hitlReset()">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S9 RESILIENCE -->
+<section class="stage" id="s9" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Reliability</div>
+  <h2 class="rise d1">Resilience<br><span style="color:var(--amz-blue)">Model providers fail — handle it gracefully</span></h2>
+  <p class="sub rise d2">Three composable middlewares for three distinct failure modes. Stack them in the same list.</p>
+
+  <div class="mw-stack rise d3">
+    <div class="mw-layer">
+      <div class="mw-n" style="color:var(--amz-orange);">1</div>
+      <div class="mw-name">ModelRetryMiddleware</div>
+      <div class="mw-tag">transient errors: rate limits, 5xx, timeouts → exponential backoff</div>
+    </div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer">
+      <div class="mw-n" style="color:var(--amz-blue);">2</div>
+      <div class="mw-name">ModelFallbackMiddleware("gpt-4o-mini")</div>
+      <div class="mw-tag">primary model fully down → cascade to backup silently</div>
+    </div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer">
+      <div class="mw-n" style="color:var(--amz-teal);">3</div>
+      <div class="mw-name">ToolRetryMiddleware(tools=["search","fetch_url"])</div>
+      <div class="mw-tag">flaky tools only — never retries send_email or delete</div>
+    </div>
+  </div>
+
+  <div class="code-block rise d4" style="margin-top:18px;" data-label="resilience.py"><span class="cm"># Primary model is deliberately broken — fallback fires</span>
+resilient_agent = <span class="fn">create_agent</span>(
+  model=<span class="st">"openai:gpt-does-not-exist-9999"</span>,  <span class="cm"># ← nonexistent</span>
+  tools=[],
+  middleware=[
+    <span class="fn">ModelRetryMiddleware</span>(max_retries=2, backoff_factor=2.0),
+    <span class="hl"><span class="fn">ModelFallbackMiddleware</span>(<span class="st">"openai:gpt-4o-mini"</span>),</span>
+  ],
+)
+r = resilient_agent.<span class="fn">invoke</span>({<span class="st">"messages"</span>: <span class="st">"Say: fallback-worked"</span>})
+<span class="cm"># → "fallback-worked"  ✓
+# User saw zero errors. The fallback fired silently.</span>
+
+<span class="cm"># ToolRetryMiddleware — only named tools, not everything</span>
+<span class="fn">ToolRetryMiddleware</span>(
+  max_retries=2,
+  tools=[<span class="st">"search"</span>, <span class="st">"fetch_url"</span>],  <span class="cm"># NEVER include send_email!</span>
+  retry_on=(<span class="fn">TimeoutError</span>,),
+)</div>
+
+  <div class="widget rise d5" style="--ac:var(--amz-blue)">
+    <div class="widget-hd"><span class="live"></span>Interactive · Watch the failure cascade</div>
+    <p class="widget-note">The primary model is down. Trigger a request and watch retry → fallback fire in sequence. The user sees zero errors.</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" id="cascadeBtn" onclick="cascadeRun()">▶ Send a request (primary is broken)</button>
+      <button class="wbtn" onclick="cascadeReset()">Reset</button>
+    </div>
+    <div class="cascade" id="cascade">
+      <div class="cascade-node pending" data-step="0"><div class="cn-icon">①</div><div class="cn-name">gpt-does-not-exist-9999 (primary)</div><div class="cn-status" data-status>idle</div></div>
+      <div class="cascade-arrow">↓</div>
+      <div class="cascade-node pending" data-step="1"><div class="cn-icon">↻</div><div class="cn-name">ModelRetryMiddleware — retry ×2</div><div class="cn-status" data-status>idle</div></div>
+      <div class="cascade-arrow">↓</div>
+      <div class="cascade-node pending" data-step="2"><div class="cn-icon">⇄</div><div class="cn-name">ModelFallbackMiddleware → gpt-4o-mini</div><div class="cn-status" data-status>idle</div></div>
+      <div class="cascade-arrow">↓</div>
+      <div class="cascade-node pending" data-step="3"><div class="cn-icon">✓</div><div class="cn-name">Response delivered to user</div><div class="cn-status" data-status>idle</div></div>
+    </div>
+  </div>
+
+  <div class="callout rise d5" style="--ac:var(--amz-blue);"><b>Why three separate middlewares?</b> Retry, fallback, and tool retry are different failure modes with different policies. Retrying a failed HTTP call 3 times is fine. Retrying <code>send_email</code> 3 times because of a timeout would send 3 emails. Keep them separate so you can tune them independently.</div>
+</div>
+</section>
+
+
+<!-- S10 EVERYTHING TOGETHER -->
+<section class="stage" id="s10" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Composition</div>
+  <h2 class="rise d1">One Production Agent<br><span style="color:var(--amz-teal)">All 7 capabilities, one create_agent call</span></h2>
+  <p class="sub rise d2">Every middleware goes in the same list. Order matters — run the cheap, deterministic checks first, then personalization, then cost control, then resilience.</p>
+
+  <div class="code-block rise d3" data-label="production_agent.py">production_agent = <span class="fn">create_agent</span>(
+  model=<span class="st">"openai:gpt-does-not-exist-9999"</span>,  <span class="cm"># broken — fallback saves it</span>
+  tools=[send_email],
+  context_schema=<span class="fn">Context</span>,
+  <span class="hl">checkpointer=<span class="fn">SqliteSaver</span>(conn),</span>          <span class="cm"># short-term + durable</span>
+  <span class="hl">store=store,</span>                               <span class="cm"># long-term, cross-session</span>
+  middleware=[
+    <span class="cm"># ① Deterministic, cheap — run first</span>
+    <span class="fn">PIIMiddleware</span>(<span class="st">"email"</span>, strategy=<span class="st">"redact"</span>, apply_to_input=<span class="kw">True</span>),
+    moderate_input,         <span class="cm"># @wrap_model_call</span>
+
+    <span class="cm"># ② Personalization from long-term Store</span>
+    personalized_prompt,    <span class="cm"># @dynamic_prompt</span>
+
+    <span class="cm"># ③ Cost control</span>
+    <span class="fn">SummarizationMiddleware</span>(
+      model=MODEL, trigger=(<span class="st">"tokens"</span>, 2000), keep=(<span class="st">"messages"</span>, 10)),
+
+    <span class="cm"># ④ Resilience — last, wraps the actual model call</span>
+    <span class="fn">ModelRetryMiddleware</span>(max_retries=2),
+    <span class="fn">ModelFallbackMiddleware</span>(<span class="st">"openai:gpt-4o-mini"</span>),
+
+    <span class="cm"># HITL: interrupt() lives inside send_email already — no middleware needed</span>
+  ],
+)
+
+
+  <div class="mw-stack rise d4" style="margin-top:28px;max-width:680px;">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);padding:6px 16px;">MIDDLEWARE EXECUTION ORDER (per turn)</div>
+    <div class="mw-layer" style="border-top:3px solid var(--bad);"><div class="mw-n" style="color:var(--bad);">①</div><div class="mw-name">PIIMiddleware + moderate_input</div><div class="mw-tag">deterministic, no LLM cost</div></div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer" style="border-top:3px solid var(--amz-purple);"><div class="mw-n" style="color:var(--amz-purple);">②</div><div class="mw-name">personalized_prompt</div><div class="mw-tag">Store lookup → inject user facts into system prompt</div></div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer" style="border-top:3px solid var(--amz-green);"><div class="mw-n" style="color:var(--amz-green);">③</div><div class="mw-name">SummarizationMiddleware</div><div class="mw-tag">token check → summarize if needed</div></div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer" style="border-top:3px solid var(--amz-blue);"><div class="mw-n" style="color:var(--amz-blue);">④</div><div class="mw-name">ModelRetryMiddleware + ModelFallbackMiddleware</div><div class="mw-tag">wraps the actual model call</div></div>
+    <div class="mw-arrow">↓</div>
+    <div class="mw-layer" style="border-top:3px solid var(--amz-teal);"><div class="mw-n" style="color:var(--amz-teal);">⑤</div><div class="mw-name">LLM responds</div><div class="mw-tag">checkpointer snapshots state</div></div>
+  </div>
+  <div class="callout rise d5" style="--ac:var(--amz-teal);margin-top:18px;"><b>Adding a new capability:</b> Write a new middleware function or tool, add it to the list — zero changes to everything else. This is the entire design point.</div>
+</div>
+</section>
+
+<!-- S11 SUMMARY -->
+<section class="stage" id="s11" style="--ac:#fff">
+<div class="wrap">
+  <div class="eyebrow rise">Summary</div>
+  <h2 class="rise d1">What you can now build</h2>
+  <p class="sub rise d2">Seven production requirements, seven solutions, all composed through a single <code>create_agent</code> call.</p>
+
+  <table class="cmp-table rise d3">
+    <thead><tr><th>Requirement</th><th>Solution</th><th>Old (deprecated)</th></tr></thead>
+    <tbody>
+      <tr><td>Remember this conversation</td><td><code>checkpointer=</code> + <code>thread_id</code></td><td><span class="dep">ConversationBufferMemory</span></td></tr>
+      <tr><td>Survive restarts</td><td><code>SqliteSaver</code> → <code>PostgresSaver</code></td><td><span class="dep">custom persistence</span></td></tr>
+      <tr><td>Cost won't grow forever</td><td><code>SummarizationMiddleware</code> or trimming</td><td><span class="dep">ConversationSummaryMemory</span></td></tr>
+      <tr><td>Remember user across sessions</td><td><code>store=</code> + <code>@dynamic_prompt</code></td><td><span class="dep">global dict / fine-tune</span></td></tr>
+      <tr><td>Stream tokens to UI</td><td><code>.stream(..., stream_mode="messages")</code></td><td>—</td></tr>
+      <tr><td>No PII/unsafe content leaks</td><td><code>PIIMiddleware</code> + <code>@wrap_model_call</code></td><td>—</td></tr>
+      <tr><td>Human approval on risky tools</td><td><code>interrupt()</code> + <code>Command(resume=...)</code></td><td>—</td></tr>
+      <tr><td>Provider outages handled</td><td><code>ModelRetryMiddleware</code> + <code>ModelFallbackMiddleware</code></td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card rise d4" style="padding:20px 22px;margin-top:24px;border-top:3px solid var(--amz-orange);">
+    <div style="font-family:var(--mono);font-size:10.5px;color:var(--amz-orange);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">WHAT'S NEXT</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.65;">This chatbot can hold a conversation, remember its user, protect itself, and recover from failure — but it still answers from what the model already knows.<br><br>
+    <strong style="color:#fff;">Wire the retrieval pipeline from notebooks 05–08 into a tool this agent can call</strong>, and you have Conversational RAG: a chatbot that remembers <em>and</em> knows your documents.<br><br>
+    That's the capstone.</div>
+  </div>
+
+  <div class="quiz rise d5">
+    <div class="quiz-eyebrow">🎯 Final question</div>
+    <div class="quiz-q" id="q11-q">You're building a customer support bot. A user's conversation gets long — 300 turns. Which memory strategy keeps the user's account number (mentioned in turn 1) available at turn 300?</div>
+    <div class="quiz-opts" id="q11-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q11',0,false,'Trimming drops messages. Turn 1 message is gone by turn 300.')"><span class="k">A</span> Trimming — drop old messages, zero extra cost</button>
+      <button class="quiz-opt" onclick="answerQuiz('q11',1,true,'Correct! Summarization compresses old messages into a summary that carries the account number forward.')"><span class="k">B</span> Summarization — compresses old messages but retains the facts inside the summary</button>
+      <button class="quiz-opt" onclick="answerQuiz('q11',2,false,'Long-term Store is for cross-session user facts, not for facts mentioned mid-conversation.')"><span class="k">C</span> Long-term Store — write the account number there at turn 1</button>
+    </div>
+    <div class="quiz-fb" id="q11-fb" style="display:none;"></div>
+  </div>
+
+  <div class="footer-line rise" style="margin-top:48px;font-family:var(--mono);font-size:11.5px;color:var(--muted-dim);">
+    GenAI 2026 · Notebook 11 · Production-Ready Conversational Chatbots · LangChain + LangGraph
+  </div>
+</div>
+</section>
+
+
+<script>
+// ── S2 · DUAL-THREAD CHAT SIM ──────────────────────────────────────────────
+var chatState = { aKnowsName: false };
+function bubble(colId, text, cls) {
+  var col = document.getElementById(colId);
+  var b = document.createElement('div');
+  b.className = 'bubble ' + cls;
+  b.textContent = text;
+  col.appendChild(b);
+  col.scrollTop = col.scrollHeight;
+}
+function chatSend(thread, text) {
+  if (thread === 'a') {
+    bubble('chatA', text, 'user');
+    setTimeout(function() {
+      if (text.indexOf('name is') > -1) {
+        bubble('chatA', "Nice to meet you, Noordeen!", 'bot remember');
+        chatState.aKnowsName = true;
+        document.getElementById('askA').disabled = false;
+      } else if (chatState.aKnowsName) {
+        bubble('chatA', "Your name is Noordeen. ✓", 'bot remember');
+      } else {
+        bubble('chatA', "I don't know your name yet.", 'bot forget');
+      }
+    }, 350);
+  } else {
+    bubble('chatB', text, 'user');
+    setTimeout(function() {
+      bubble('chatB', "I'm sorry, I don't have your name. ✗", 'bot forget');
+    }, 350);
+  }
+}
+function chatReset() {
+  document.getElementById('chatA').innerHTML = '';
+  document.getElementById('chatB').innerHTML = '';
+  chatState.aKnowsName = false;
+  document.getElementById('askA').disabled = true;
+}
+
+// ── S4 · TOKEN BUDGET MESSAGE STACK ────────────────────────────────────────
+var msgTopics = ['cats','dogs','weather','football','cooking','travel','music','movies','space','oceans','coffee','history'];
+var msgState = { count: 1, msgs: [{txt:'"My name is Noordeen" (turn 1)', kind:'first'}] };
+function msgRender() {
+  var stack = document.getElementById('msgStack');
+  stack.innerHTML = '';
+  msgState.msgs.forEach(function(m) {
+    var p = document.createElement('div');
+    p.className = 'msg-pill' + (m.kind === 'summary' ? ' summary' : '') + (m.kind === 'kept' ? ' kept' : '');
+    var icon = m.kind === 'summary' ? '🗜' : (m.kind === 'first' ? '⭐' : '💬');
+    p.innerHTML = '<span class="mp-i">' + icon + '</span>' + m.txt;
+    stack.appendChild(p);
+  });
+  document.getElementById('msgCount').textContent = msgState.msgs.length;
+  var toks = msgState.msgs.reduce(function(s,m){ return s + (m.kind==='summary'?120:50); }, 0);
+  document.getElementById('msgTokens').textContent = toks;
+  var tv = document.getElementById('msgTokens');
+  tv.style.color = toks > 500 ? 'var(--bad)' : 'var(--amz-green)';
+}
+function msgAdd() {
+  var t = msgTopics[(msgState.count - 1) % msgTopics.length];
+  msgState.msgs.push({ txt: 'Fun fact about ' + t, kind: 'normal' });
+  msgState.count++;
+  msgRender();
+}
+function msgSummarize() {
+  if (msgState.msgs.length < 2) return;
+  var keep = msgState.msgs.slice(-2);
+  msgState.msgs = [{ txt: 'SUMMARY: user is Noordeen; discussed several topics', kind: 'summary' }].concat(keep.map(function(m){ m.kind='kept'; return m; }));
+  document.getElementById('msgFact').textContent = 'alive ✓';
+  document.getElementById('msgFact').style.color = 'var(--good)';
+  msgRender();
+}
+function msgTrim() {
+  if (msgState.msgs.length <= 6) { msgRender(); return; }
+  msgState.msgs = msgState.msgs.slice(-6).map(function(m){ m.kind = m.kind==='first'?'normal':m.kind; return m; });
+  document.getElementById('msgFact').textContent = 'GONE ✗';
+  document.getElementById('msgFact').style.color = 'var(--bad)';
+  msgRender();
+}
+function msgReset() {
+  msgState = { count: 1, msgs: [{txt:'"My name is Noordeen" (turn 1)', kind:'first'}] };
+  document.getElementById('msgFact').textContent = 'alive ✓';
+  document.getElementById('msgFact').style.color = 'var(--good)';
+  msgRender();
+}
+
+// ── S5 · SEMANTIC STORE SEARCH ─────────────────────────────────────────────
+var storeQueries = {
+  lang: { q: 'programming language preference', hits: { lang: [0.91, 0.78] } },
+  food: { q: 'what do they like to eat?', hits: { food: [0.88] } },
+  work: { q: 'their job', hits: { work: [0.93] } }
+};
+function storeSearch(key) {
+  var facts = document.querySelectorAll('#storeFacts .fact-pill');
+  facts.forEach(function(f){ f.classList.remove('match'); f.querySelector('.score').textContent = '—'; });
+  if (key === 'reset') { document.getElementById('storeQuery').textContent = 'query: (none yet)'; return; }
+  var cfg = storeQueries[key];
+  document.getElementById('storeQuery').textContent = 'query: "' + cfg.q + '"';
+  var counters = {};
+  facts.forEach(function(f) {
+    var tag = f.getAttribute('data-tags');
+    if (cfg.hits[tag]) {
+      counters[tag] = (counters[tag] || 0);
+      var score = cfg.hits[tag][counters[tag]];
+      if (score !== undefined) {
+        setTimeout(function(){ f.classList.add('match'); f.querySelector('.score').textContent = score.toFixed(2); }, 150);
+        counters[tag]++;
+      }
+    }
+  });
+}
+
+// ── S6 · LIVE STREAMING ────────────────────────────────────────────────────
+var streamTokens = ['Streaming ','matters ','because ','users ','see ','the ','answer ','forming ','in ','real ','time ','instead ','of ','staring ','at ','a ','blank ','screen.'];
+var streamTimer = null;
+function streamStart() {
+  if (streamTimer) return;
+  var txt = document.getElementById('streamText');
+  var btn = document.getElementById('streamBtn');
+  var stat = document.getElementById('streamStat');
+  txt.textContent = '';
+  btn.disabled = true;
+  var i = 0;
+  stat.textContent = 'streaming…';
+  streamTimer = setInterval(function() {
+    if (i >= streamTokens.length) {
+      clearInterval(streamTimer); streamTimer = null;
+      btn.disabled = false; stat.textContent = '✓ done (' + streamTokens.length + ' tokens)';
+      return;
+    }
+    txt.textContent += streamTokens[i]; i++;
+  }, 130);
+}
+
+// ── S7 · PII REDACTION ─────────────────────────────────────────────────────
+function piiRedact() {
+  var e = document.getElementById('pt-email2'), c = document.getElementById('pt-card2');
+  setTimeout(function(){ e.textContent = '[REDACTED_EMAIL]'; e.classList.add('redacted'); }, 200);
+  setTimeout(function(){ c.textContent = '**** **** **** 1111'; c.classList.add('redacted'); }, 500);
+}
+function piiReset() {
+  var e = document.getElementById('pt-email2'), c = document.getElementById('pt-card2');
+  e.textContent = 'john.doe@example.com'; e.classList.remove('redacted');
+  c.textContent = '4111 1111 1111 1111'; c.classList.remove('redacted');
+}
+
+// ── S8 · HITL APPROVE / REJECT ─────────────────────────────────────────────
+function hitlDecide(decision) {
+  var stage = document.getElementById('hitlStage');
+  var badge = document.getElementById('hitlBadge');
+  var msg = document.getElementById('hitlMsg');
+  stage.classList.remove('paused');
+  if (decision === 'approve') {
+    stage.classList.add('approved');
+    badge.className = 'hitl-badge go'; badge.textContent = '✓ RESUMED — approved';
+    msg.innerHTML = 'interrupt() returned <code>"approve"</code> → the tool ran → <b style="color:var(--good)">Email sent to bob@example.com.</b>';
+  } else {
+    stage.classList.add('rejected');
+    badge.className = 'hitl-badge stop'; badge.textContent = '✗ RESUMED — rejected';
+    msg.innerHTML = 'interrupt() returned <code>"reject"</code> → the send was skipped → <b style="color:var(--bad)">No email was ever sent.</b> The risky line never executed.';
+  }
+  document.getElementById('hitlApprove').disabled = true;
+  document.getElementById('hitlReject').disabled = true;
+}
+function hitlReset() {
+  var stage = document.getElementById('hitlStage');
+  stage.className = 'hitl-stage paused';
+  document.getElementById('hitlBadge').className = 'hitl-badge pause';
+  document.getElementById('hitlBadge').textContent = '⏸ PAUSED — awaiting decision';
+  document.getElementById('hitlMsg').innerHTML = 'The model called <b>send_email</b> and execution stopped inside the tool at <code>interrupt()</code>.';
+  document.getElementById('hitlApprove').disabled = false;
+  document.getElementById('hitlReject').disabled = false;
+}
+
+// ── S9 · RESILIENCE CASCADE ────────────────────────────────────────────────
+var cascadeSteps = [
+  { status: 'failed',  txt: '✗ model not found' },
+  { status: 'failed',  txt: '✗ retried 2×, still failing' },
+  { status: 'success', txt: '✓ switched to backup' },
+  { status: 'success', txt: '✓ user got an answer' }
+];
+function cascadeRun() {
+  var nodes = document.querySelectorAll('#cascade .cascade-node');
+  document.getElementById('cascadeBtn').disabled = true;
+  nodes.forEach(function(n){ n.className = 'cascade-node pending'; n.querySelector('[data-status]').textContent = 'idle'; });
+  cascadeSteps.forEach(function(step, i) {
+    setTimeout(function() {
+      var n = nodes[i];
+      n.classList.remove('pending');
+      n.classList.add(step.status);
+      n.querySelector('[data-status]').textContent = step.txt;
+      if (i === cascadeSteps.length - 1) document.getElementById('cascadeBtn').disabled = false;
+    }, 700 * (i + 1));
+  });
+}
+function cascadeReset() {
+  var nodes = document.querySelectorAll('#cascade .cascade-node');
+  nodes.forEach(function(n){ n.className = 'cascade-node pending'; n.querySelector('[data-status]').textContent = 'idle'; });
+  document.getElementById('cascadeBtn').disabled = false;
+}
+
+// init interactive defaults (script is at end of body, DOM is ready)
+if (document.getElementById('msgStack')) msgRender();
+
+// ── QUIZ ENGINE ────────────────────────────────────────────────────────────
+function answerQuiz(id, idx, correct, explanation) {
+  var opts = document.querySelectorAll('#' + id + '-opts .quiz-opt');
+  opts.forEach(function(o, i) {
+    o.disabled = true;
+    if (i === idx) o.classList.add(correct ? 'correct' : 'incorrect');
+    else if (i !== idx) o.classList.add('dim');
+  });
+  var fb = document.getElementById(id + '-fb');
+  fb.className = 'quiz-fb ' + (correct ? 'ok' : 'no');
+  fb.innerHTML = '<p class="fb-v">' + (correct ? '✓ Correct' : '✗ Not quite') + '</p><p class="fb-e">' + explanation + '</p>';
+  fb.style.display = 'block';
+}
+
+// ── RAIL + PROGRESS ────────────────────────────────────────────────────────
+var stages = document.querySelectorAll('.stage');
+var railNodes = document.querySelectorAll('.rail-node');
+var railFill = document.getElementById('railFill');
+
+function getActiveIdx() {
+  var best = 0, bestRatio = -1;
+  stages.forEach(function(s, i) {
+    var r = s.getBoundingClientRect();
+    var vis = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+    if (vis > bestRatio) { bestRatio = vis; best = i; }
+  });
+  return best;
+}
+
+function updateRail() {
+  var idx = getActiveIdx();
+  railNodes.forEach(function(n, i) { n.classList.toggle('active', i === idx); });
+  var pct = stages.length > 1 ? (idx / (stages.length - 1)) * 100 : 0;
+  if (railFill) railFill.style.height = pct + '%';
+}
+
+// Rail click navigation
+railNodes.forEach(function(n) {
+  n.addEventListener('click', function() {
+    var target = document.getElementById(n.dataset.s);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ── RISE (scroll reveal) ───────────────────────────────────────────────────
+var riseEls = document.querySelectorAll('.rise');
+var io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.1 });
+riseEls.forEach(function(el) { io.observe(el); });
+
+// ── COST BARS (animate when visible) ──────────────────────────────────────
+var barFills = document.querySelectorAll('.cost-fill');
+var barObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var w = e.target.getAttribute('data-w');
+      e.target.style.width = w + '%';
+    }
+  });
+}, { threshold: 0.2 });
+barFills.forEach(function(b) { barObserver.observe(b); });
+
+// ── SCROLL LISTENER ────────────────────────────────────────────────────────
+window.addEventListener('scroll', updateRail, { passive: true });
+updateRail();
+</script>
+</body>
+</html>

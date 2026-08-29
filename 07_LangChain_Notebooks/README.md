@@ -1,11 +1,30 @@
+<div align="center">
+
 # Session 07 — LangChain Fundamentals
-### M03 — Prompt Engineering Part 3
+
+**M03 · Part 3 · Complete**
+
+*One interface for OpenAI, Claude, Gemini, and Ollama — templates, history, streaming, LCEL.*
+
+</div>
 
 > **What was MISSING from S06:** DSPy gave us programmatic prompt optimisation — but each notebook was calling one provider at a time with custom code. LangChain provides a unified interface for calling any LLM, managing conversation history, and composing chains — all with the same API.
 
 ---
 
-## What This Session Covers
+## Start here
+
+**Browser:** [Chatbots forget](https://nursnaaz.github.io/tutorial/chatbots-forget) · [First LLM call](https://nursnaaz.github.io/tutorial/first-llm-call)
+
+Open [`langchain_claude_openai_gemini_ollama_stream.ipynb`](langchain_claude_openai_gemini_ollama_stream.ipynb). You need at least one provider key (Gemini free tier is enough) **or** a running Ollama model.
+
+```text
+07_LangChain_Notebooks/
+├── README.md
+└── langchain_claude_openai_gemini_ollama_stream.ipynb
+```
+
+## What this session covers
 
 | Concept | What You Learn |
 |---------|---------------|
@@ -60,3 +79,5 @@ ollama pull llama3.2
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S06 Prompt Optimisation](../06_Prompt_Engineering_DSPY_GEPA_COT/) · [All sessions](../README.md) · [S08 Recap →](../08_Recap/)

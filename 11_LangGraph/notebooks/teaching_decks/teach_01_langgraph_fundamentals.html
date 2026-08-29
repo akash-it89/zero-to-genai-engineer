@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph Fundamentals · Visual Deck · Notebook 01</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FAFAF8;
+  --panel:#FFFFFF;
+  --panel-hi:#F1F2F5;
+  --ink:#161A20;
+  --muted:#565F6E;
+  --muted-dim:#8A93A2;
+  --line:rgba(22,26,32,0.09);
+  --line-hi:rgba(22,26,32,0.16);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --good:#0E9F6E;
+  --warn:#D97706;
+  --bad:#DC2626;
+  --amz-orange:#E67E00;
+  --amz-blue:#146EB4;
+  --amz-teal:#00807A;
+  --amz-green:#067D62;
+  --amz-purple:#7C3AED;
+  --ac:#E67E00;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:
+    radial-gradient(900px 520px at 8% -8%,rgba(230,126,0,.10),transparent 58%),
+    radial-gradient(820px 500px at 92% 4%,rgba(20,110,180,.09),transparent 58%),
+    var(--bg);
+  color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+::selection{background:rgba(230,126,0,.22);}
+code{background:rgba(22,26,32,.06);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:.9em;}
+
+/* ===== RAIL ===== */
+.rail{position:fixed;left:18px;top:0;bottom:0;width:32px;display:flex;align-items:center;justify-content:center;z-index:60;}
+.rail-track{position:absolute;left:50%;top:6%;bottom:6%;width:2px;transform:translateX(-50%);background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-purple),var(--amz-teal),var(--amz-green),#161A20);opacity:.15;}
+.rail-fill{position:absolute;left:0;top:0;width:100%;height:0%;background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-purple),var(--amz-teal),var(--amz-green),#161A20);transition:height .25s linear;}
+.rail-nodes{position:relative;display:flex;flex-direction:column;justify-content:space-between;height:86%;z-index:2;}
+.rail-node{appearance:none;border:none;background:none;cursor:pointer;width:32px;height:20px;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
+.rail-dot{width:8px;height:8px;border-radius:50%;background:#E4E6EA;border:1.5px solid var(--line-hi);transition:all .22s ease;}
+.rail-node.active .rail-dot{background:var(--ac);border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 20%,transparent);transform:scale(1.35);}
+.rail-tip{position:absolute;left:20px;top:50%;transform:translateY(-50%) translateX(-6px);font-family:var(--mono);font-size:10px;white-space:nowrap;color:var(--muted);background:var(--panel);border:1px solid var(--line-hi);padding:3px 8px;border-radius:3px;opacity:0;pointer-events:none;transition:all .15s ease;box-shadow:0 4px 12px rgba(22,26,32,.08);}
+.rail-node:hover .rail-tip{opacity:1;transform:translateY(-50%) translateX(0);}
+@media(max-width:900px){.rail{display:none;}}
+
+.top-badge{position:fixed;top:16px;right:16px;z-index:60;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border:1px solid var(--line-hi);border-radius:8px;padding:7px 13px;font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(22,26,32,.06);}
+.top-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--ac);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@media(max-width:640px){.top-badge{display:none;}}
+
+/* ===== STAGE ===== */
+.stage{min-height:100vh;width:100%;padding:9vh 7vw 9vh calc(7vw + 16px);display:flex;flex-direction:column;justify-content:center;border-top:1px solid var(--line);}
+@media(max-width:900px){.stage{padding:7vh 5vw;}}
+.wrap{max-width:1060px;margin:0 auto;width:100%;}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--ac);}
+.eyebrow::before{content:"";width:16px;height:2px;background:var(--ac);}
+h1,h2{margin:0;text-wrap:balance;letter-spacing:-.015em;color:var(--ink);}
+h1{font-size:clamp(32px,5.4vw,60px);font-weight:800;line-height:1.05;}
+h2{font-size:clamp(25px,3.6vw,42px);font-weight:800;line-height:1.1;}
+.cap{font-size:clamp(14px,1.55vw,17.5px);color:var(--muted);margin:12px 0 0;max-width:600px;line-height:1.6;}
+.rise{opacity:0;transform:translateY(18px);transition:opacity .5s cubic-bezier(.2,.8,.2,1),transform .5s cubic-bezier(.2,.8,.2,1);}
+.rise.in{opacity:1;transform:translateY(0);}
+.rise.d1{transition-delay:.06s}.rise.d2{transition-delay:.13s}.rise.d3{transition-delay:.2s}.rise.d4{transition-delay:.27s}
+
+/* ===== GRAPH CANVAS ===== */
+.canvas{margin-top:30px;width:100%;}
+.canvas svg{width:100%;height:auto;display:block;overflow:visible;}
+.gedge{fill:none;stroke:#C9CDD6;stroke-width:2;transition:stroke .3s ease,stroke-width .3s ease;}
+.gedge.on{stroke:var(--ac);stroke-width:3;}
+.gedge.back{stroke-dasharray:6 5;}
+.gnode rect,.gnode circle{fill:var(--panel);stroke:var(--line-hi);stroke-width:1.6;transition:all .3s ease;}
+.gnode text{font-family:var(--mono);font-size:13px;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;transition:fill .3s ease;}
+.gnode .sub{font-size:10.5px;fill:var(--muted-dim);}
+.gnode.on rect,.gnode.on circle{stroke:var(--ac);stroke-width:2.6;fill:color-mix(in srgb,var(--ac) 8%,var(--panel));}
+.gnode.on text{fill:var(--ac);font-weight:700;}
+.gnode.on .sub{fill:var(--ac);opacity:.75;}
+.gnode.bad rect,.gnode.bad circle{stroke:var(--bad);stroke-width:2.6;fill:rgba(220,38,38,.06);}
+.gnode.bad text{fill:var(--bad);font-weight:700;}
+.gnode.ok rect,.gnode.ok circle{stroke:var(--good);stroke-width:2.6;fill:rgba(14,159,110,.07);}
+.gnode.ok text{fill:var(--good);font-weight:700;}
+.gnode.ghost rect,.gnode.ghost circle{stroke-dasharray:5 4;opacity:.5;}
+.elabel{font-family:var(--mono);font-size:10px;fill:var(--muted-dim);text-anchor:middle;}
+.elabel.hot{fill:var(--ac);font-weight:700;}
+.pulse{fill:var(--ac);filter:drop-shadow(0 0 7px color-mix(in srgb,var(--ac) 75%,transparent));}
+.arrowhead{fill:#C9CDD6;transition:fill .3s;}
+.arrowhead.on{fill:var(--ac);}
+
+/* ===== CONTROLS ===== */
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:22px;}
+.pbtn{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 16px;border-radius:22px;border:1px solid var(--line-hi);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s;}
+.pbtn:hover:not(:disabled){border-color:var(--ac);color:var(--ac);transform:translateY(-1px);}
+.pbtn.on{background:var(--ac);border-color:var(--ac);color:#fff;}
+.pbtn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.readout{font-family:var(--mono);font-size:12.5px;color:var(--ink);padding:9px 15px;border-radius:22px;background:var(--panel-hi);border:1px solid var(--line-hi);min-height:38px;display:inline-flex;align-items:center;gap:8px;transition:all .25s;}
+.readout .rdot{width:7px;height:7px;border-radius:50%;background:var(--ac);flex-shrink:0;}
+.readout.ok{border-color:var(--good);background:rgba(14,159,110,.07);color:#0A7A54;}
+.readout.ok .rdot{background:var(--good);}
+.readout.bad{border-color:var(--bad);background:rgba(220,38,38,.06);color:#B91C1C;}
+.readout.bad .rdot{background:var(--bad);}
+
+/* ===== STAT TILES ===== */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:38px;}
+@media(max-width:820px){.tiles{grid-template-columns:1fr 1fr;}}
+.tile{padding:17px 18px;border-radius:12px;border:1px solid var(--line);background:var(--panel);box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.tile .tn{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1;color:var(--ac);}
+.tile .tl{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:8px;}
+
+/* ===== WHITEBOARD (state visual) ===== */
+.board-viz{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+@media(max-width:820px){.board-viz{grid-template-columns:1fr;}}
+.wb{border:2px solid var(--line-hi);border-radius:12px;background:#fff;padding:16px;position:relative;box-shadow:0 3px 14px rgba(22,26,32,.06);}
+.wb-top{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-dim);font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;}
+.notes{display:flex;flex-direction:column;gap:8px;min-height:120px;}
+.note{padding:10px 13px;border-radius:7px;font-family:var(--mono);font-size:12px;background:#FFF8E7;border:1px solid rgba(217,119,6,.28);color:#5C3D06;box-shadow:0 1px 3px rgba(22,26,32,.07);transform-origin:left center;transition:all .45s cubic-bezier(.2,.8,.2,1);}
+.note.fresh{background:#EAF7F1;border-color:rgba(14,159,110,.34);color:#0A5C41;}
+.note.gone{opacity:0;transform:translateX(-32px) rotate(-7deg) scale(.9);height:0;padding:0 13px;margin-top:-8px;}
+.note-empty{font-family:var(--mono);font-size:11.5px;color:var(--muted-dim);padding:10px 0;font-style:italic;}
+
+/* ===== SPLIT COMPARE ===== */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px;}
+@media(max-width:820px){.split{grid-template-columns:1fr;}}
+.sp{border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.sp::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c);}
+.sp .sp-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--c);margin-bottom:12px;}
+.sp .sp-big{font-size:24px;font-weight:800;color:var(--ink);line-height:1.2;}
+.sp .sp-mono{font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:1.9;margin-top:12px;}
+.sp .sp-mono b{color:var(--c);}
+
+/* ===== ICON ROW (summary) ===== */
+.iconrow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px;}
+@media(max-width:900px){.iconrow{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.iconrow{grid-template-columns:1fr;}}
+.ic{padding:18px;border-radius:12px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.ic svg{display:block;margin-bottom:12px;}
+.ic .ic-t{font-size:14.5px;font-weight:800;color:var(--ink);}
+.ic .ic-s{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+
+/* ===== MESSAGE STACK ===== */
+.mstack{display:flex;flex-direction:column;gap:7px;margin-top:4px;}
+.mrow{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:8px;background:var(--panel-hi);border:1px solid var(--line-hi);opacity:.28;transform:translateX(-10px);transition:all .4s cubic-bezier(.2,.8,.2,1);}
+.mrow.in{opacity:1;transform:translateX(0);}
+.mrow .mtag{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;padding:3px 7px;border-radius:4px;flex-shrink:0;width:84px;text-align:center;}
+.mrow .mtxt{font-family:var(--mono);font-size:12px;color:var(--ink);line-height:1.45;}
+.mrow.human .mtag{background:rgba(20,110,180,.13);color:#0E5486;}
+.mrow.ai .mtag{background:rgba(124,58,237,.13);color:#5B21B6;}
+.mrow.tool .mtag{background:rgba(14,159,110,.13);color:#0A7A54;}
+.mrow.done{border-color:var(--good);background:rgba(14,159,110,.06);}
+
+/* ===== DRAWERS (memory) ===== */
+.drawers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px;}
+@media(max-width:820px){.drawers{grid-template-columns:1fr;}}
+.drw{border:1px solid var(--line-hi);border-radius:12px;background:var(--panel);overflow:hidden;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.drw-hd{padding:11px 16px;background:var(--panel-hi);border-bottom:1px solid var(--line-hi);font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;}
+.drw-hd b{color:var(--ink);}
+.drw-body{padding:15px 16px;min-height:132px;display:flex;flex-direction:column;gap:7px;justify-content:center;}
+.drw.hit{border-color:var(--good);}
+.drw.hit .drw-hd{background:rgba(14,159,110,.09);border-bottom-color:rgba(14,159,110,.3);}
+.drw.miss{border-color:var(--muted-dim);}
+.drw-ans{font-size:15px;font-weight:800;padding:12px 14px;border-radius:8px;text-align:center;}
+.drw-ans.y{background:rgba(14,159,110,.1);color:#0A7A54;}
+.drw-ans.n{background:rgba(22,26,32,.05);color:var(--muted);}
+
+/* ===== STREAM CARDS ===== */
+.streams{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;}
+@media(max-width:900px){.streams{grid-template-columns:1fr;}}
+.st{border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:18px 19px;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.st .st-mode{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--c);}
+.st .st-for{font-size:12px;color:var(--muted);margin-top:4px;}
+.st .st-demo{margin-top:14px;padding:12px 13px;border-radius:8px;background:#F4F5F8;border:1px solid var(--line-hi);font-family:var(--mono);font-size:11px;color:#293040;line-height:1.75;min-height:92px;}
+.caret{display:inline-block;width:7px;background:var(--c);animation:blink 1s step-end infinite;}
+
+/* ===== QUIZ (compact) ===== */
+.quiz{margin-top:32px;max-width:660px;border-radius:12px;background:var(--panel);border:1px solid var(--line-hi);padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(22,26,32,.05);}
+.quiz::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--ac);}
+.quiz-q{font-size:15px;color:var(--ink);font-weight:800;line-height:1.45;margin-bottom:14px;}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;}
+.quiz-opt{text-align:left;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:8px;padding:10px 13px;cursor:pointer;transition:all .14s;line-height:1.45;}
+.quiz-opt:hover:not(:disabled){border-color:var(--ac);transform:translateX(3px);}
+.quiz-opt:disabled{cursor:default;}
+.quiz-opt .k{font-family:var(--mono);font-weight:700;color:var(--ac);margin-right:6px;}
+.quiz-opt.correct{border-color:var(--good);background:rgba(14,159,110,.09);}
+.quiz-opt.incorrect{border-color:var(--bad);background:rgba(220,38,38,.08);}
+.quiz-opt.dim{opacity:.4;}
+.quiz-fb{margin-top:13px;padding:11px 14px;border-radius:8px;font-size:12.5px;line-height:1.55;}
+.quiz-fb.ok{background:rgba(14,159,110,.08);border:1px solid rgba(14,159,110,.28);color:#0A7A54;}
+.quiz-fb.no{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.25);color:#B91C1C;}
+
+/* hero */
+.hero{border-top:none;}
+.hero h1{background:linear-gradient(92deg,var(--ink) 38%,var(--amz-orange) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.oneline{margin-top:26px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;padding:11px 18px;border-radius:10px;background:color-mix(in srgb,var(--ac) 7%,var(--panel));border:1px solid color-mix(in srgb,var(--ac) 28%,transparent);color:var(--ink);}
+.oneline b{color:var(--ac);}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Slides">
+  <div class="rail-nodes">
+    <div class="rail-track"><div class="rail-fill" id="railFill"></div></div>
+    <button class="rail-node" data-s="s0" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">Line vs Graph</span></button>
+    <button class="rail-node" data-s="s1" style="--ac:var(--bad)"><span class="rail-dot"></span><span class="rail-tip">Dead End</span></button>
+    <button class="rail-node" data-s="s2" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Three Words</span></button>
+    <button class="rail-node" data-s="s3" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Two Boxes</span></button>
+    <button class="rail-node" data-s="s4" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">The Arrow Back</span></button>
+    <button class="rail-node" data-s="s5" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Reducer</span></button>
+    <button class="rail-node" data-s="s6" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Add A Model</span></button>
+    <button class="rail-node" data-s="s7" style="--ac:var(--amz-green)"><span class="rail-dot"></span><span class="rail-tip">Branch</span></button>
+    <button class="rail-node" data-s="s8" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Cycle</span></button>
+    <button class="rail-node" data-s="s9" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Agent</span></button>
+    <button class="rail-node" data-s="s10" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Memory</span></button>
+    <button class="rail-node" data-s="s11" style="--ac:var(--amz-green)"><span class="rail-dot"></span><span class="rail-tip">Streaming</span></button>
+    <button class="rail-node" data-s="s12" style="--ac:#161A20"><span class="rail-dot"></span><span class="rail-tip">Recap</span></button>
+  </div>
+</nav>
+
+<div class="top-badge"><span class="dot"></span>Module 11 · Notebook 01</div>
+
+
+<!-- ══ S0 HERO ══ -->
+<section class="stage hero" id="s0" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">GenAI 2026 · LangGraph</div>
+  <h1 class="rise d1">One arrow changes<br>everything</h1>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 900 250" role="img" aria-label="A straight chain dead-ends; a graph loops back and succeeds">
+      <defs>
+        <marker id="ahG" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,4 L0,8 z" fill="#C9CDD6"/>
+        </marker>
+        <marker id="ahO" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,4 L0,8 z" fill="#E67E00"/>
+        </marker>
+        <marker id="ahR" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,4 L0,8 z" fill="#DC2626"/>
+        </marker>
+      </defs>
+
+      <!-- CHAIN -->
+      <text x="18" y="26" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;fill:#DC2626;font-weight:700;">CHAIN</text>
+      <path class="gedge" d="M108,64 L172,64" marker-end="url(#ahG)"/>
+      <path class="gedge" d="M312,64 L376,64" marker-end="url(#ahG)"/>
+      <path class="gedge" d="M516,64 L580,64" marker-end="url(#ahR)" style="stroke:#DC2626"/>
+      <g class="gnode"><rect x="18" y="42" width="90" height="44" rx="9"/><text x="63" y="64">ask</text></g>
+      <g class="gnode"><rect x="172" y="42" width="140" height="44" rx="9"/><text x="242" y="64">search</text></g>
+      <g class="gnode bad"><rect x="376" y="42" width="140" height="44" rx="9"/><text x="446" y="64">miss</text></g>
+      <g class="gnode bad"><rect x="580" y="42" width="200" height="44" rx="9"/><text x="680" y="64">"I don't know."</text></g>
+      <text class="elabel" x="810" y="69" style="fill:#DC2626;font-weight:700;">✗ stuck</text>
+
+      <!-- GRAPH -->
+      <text x="18" y="152" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;fill:#E67E00;font-weight:700;">GRAPH</text>
+      <path class="gedge on" d="M108,190 L172,190" marker-end="url(#ahO)"/>
+      <path class="gedge on" d="M312,190 L376,190" marker-end="url(#ahO)"/>
+      <path class="gedge on" d="M516,190 L580,190" marker-end="url(#ahO)"/>
+      <path class="gedge on back" d="M446,168 C446,120 242,120 242,164" marker-end="url(#ahO)"/>
+      <text class="elabel hot" x="344" y="112">the arrow a chain cannot have</text>
+      <g class="gnode"><rect x="18" y="168" width="90" height="44" rx="9"/><text x="63" y="190">ask</text></g>
+      <g class="gnode on"><rect x="172" y="168" width="140" height="44" rx="9"/><text x="242" y="190">search</text></g>
+      <g class="gnode on"><rect x="376" y="168" width="140" height="44" rx="9"/><text x="446" y="190">rewrite</text></g>
+      <g class="gnode ok"><rect x="580" y="168" width="200" height="44" rx="9"/><text x="680" y="190">real answer</text></g>
+      <text class="elabel" x="812" y="195" style="fill:#0E9F6E;font-weight:700;">✓ solved</text>
+    </svg>
+  </div>
+
+  <div class="tiles rise d3">
+    <div class="tile" style="--ac:var(--amz-orange)"><div class="tn">3</div><div class="tl">words carry the whole framework</div></div>
+    <div class="tile" style="--ac:var(--amz-blue)"><div class="tn">10</div><div class="tl">steps, one new idea each</div></div>
+    <div class="tile" style="--ac:var(--amz-purple)"><div class="tn">4</div><div class="tl">pieces inside every agent</div></div>
+    <div class="tile" style="--ac:var(--good)"><div class="tn">0</div><div class="tl">magic objects anywhere</div></div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S1 DEAD END ══ -->
+<section class="stage" id="s1" style="--ac:var(--bad)">
+<div class="wrap">
+  <div class="eyebrow rise">The problem</div>
+  <h2 class="rise d1">Same search. Different wording. Dead end.</h2>
+  <p class="cap rise d1">Pick a customer question and watch where it lands.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="deadEnd(this,0)">"refund policy"</button>
+    <button class="pbtn" onclick="deadEnd(this,1)">"get my money back"</button>
+    <button class="pbtn" onclick="deadEnd(this,2)">"how fast do you ship"</button>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 860 220" id="svg1">
+      <path id="s1e1" class="gedge" d="M150,110 L228,110" marker-end="url(#ahG)"/>
+      <path id="s1e2" class="gedge" d="M388,88 C450,88 470,58 528,58" marker-end="url(#ahG)"/>
+      <path id="s1e3" class="gedge" d="M388,132 C450,132 470,162 528,162" marker-end="url(#ahG)"/>
+
+      <g class="gnode" id="s1n0"><rect x="10" y="86" width="140" height="48" rx="10"/><text x="80" y="110">question</text></g>
+      <g class="gnode" id="s1n1"><rect x="228" y="86" width="160" height="48" rx="10"/><text x="308" y="104">retrieve</text><text class="sub" x="308" y="122">keyword match</text></g>
+      <g class="gnode" id="s1n2"><rect x="528" y="34" width="180" height="48" rx="10"/><text x="618" y="58">answer</text></g>
+      <g class="gnode" id="s1n3"><rect x="528" y="138" width="180" height="48" rx="10"/><text x="618" y="162">"I don't know."</text></g>
+
+      <text class="elabel" x="455" y="46">hit</text>
+      <text class="elabel" x="455" y="182">miss</text>
+      <text class="elabel" x="790" y="164" id="s1wall" style="fill:#DC2626;font-weight:700;opacity:0">no way back</text>
+    </svg>
+  </div>
+
+  <div class="ctrl rise d3"><div class="readout" id="s1out"><span class="rdot"></span>Click a question above.</div></div>
+
+  <div class="oneline rise d4">A person would think <b>"money back means refund — search again."</b> A chain has no arrow for that thought.</div>
+</div>
+</section>
+
+
+<!-- ══ S2 THREE WORDS ══ -->
+<section class="stage" id="s2" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">The vocabulary</div>
+  <h2 class="rise d1">Three words. That's the framework.</h2>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 900 300">
+      <!-- whiteboard = STATE -->
+      <rect x="250" y="30" width="400" height="130" rx="12" fill="#fff" stroke="#146EB4" stroke-width="2.4"/>
+      <rect x="250" y="30" width="400" height="26" rx="12" fill="rgba(20,110,180,.08)"/>
+      <text x="450" y="44" style="font-family:var(--mono);font-size:11px;fill:#146EB4;text-anchor:middle;font-weight:700;letter-spacing:.1em;">STATE · the shared whiteboard</text>
+      <text x="278" y="80" style="font-family:var(--mono);font-size:13px;fill:#161A20;">query   : "refund policy"</text>
+      <text x="278" y="106" style="font-family:var(--mono);font-size:13px;fill:#161A20;">context : "Refunds take 5–7 days"</text>
+      <text x="278" y="132" style="font-family:var(--mono);font-size:13px;fill:#161A20;">attempts: 2</text>
+
+      <!-- nodes reading/writing -->
+      <g class="gnode on"><rect x="60" y="212" width="150" height="52" rx="10"/><text x="135" y="230">NODE</text><text class="sub" x="135" y="250">one step of work</text></g>
+      <g class="gnode on"><rect x="690" y="212" width="150" height="52" rx="10"/><text x="765" y="230">NODE</text><text class="sub" x="765" y="250">one step of work</text></g>
+
+      <path class="gedge on" d="M135,212 C135,180 250,175 250,150" marker-end="url(#ahO)" style="stroke:#146EB4"/>
+      <path class="gedge on" d="M650,150 C650,175 765,180 765,212" marker-end="url(#ahO)" style="stroke:#146EB4"/>
+      <text class="elabel hot" x="150" y="192" style="fill:#146EB4">writes a small update</text>
+      <text class="elabel hot" x="748" y="192" style="fill:#146EB4">reads the whole board</text>
+
+      <!-- edge between nodes = EDGE -->
+      <path class="gedge on" d="M210,238 L690,238" marker-end="url(#ahO)" style="stroke:#7C3AED;stroke-dasharray:none"/>
+      <rect x="378" y="222" width="144" height="32" rx="8" fill="#fff" stroke="#7C3AED" stroke-width="1.8"/>
+      <text x="450" y="238" style="font-family:var(--mono);font-size:12px;fill:#7C3AED;text-anchor:middle;dominant-baseline:middle;font-weight:700;">EDGE · the arrow</text>
+    </svg>
+  </div>
+
+  <div class="iconrow rise d3">
+    <div class="ic" style="--c:var(--amz-blue)">
+      <svg width="34" height="34" viewBox="0 0 34 34"><rect x="3" y="6" width="28" height="20" rx="3" fill="none" stroke="#146EB4" stroke-width="2.2"/><path d="M8 13h13M8 19h9" stroke="#146EB4" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="ic-t">State</div><div class="ic-s">A dict everyone can read. Nodes write only what they changed.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-teal)">
+      <svg width="34" height="34" viewBox="0 0 34 34"><rect x="5" y="9" width="24" height="16" rx="4" fill="none" stroke="#00807A" stroke-width="2.2"/><circle cx="17" cy="17" r="3.2" fill="#00807A"/></svg>
+      <div class="ic-t">Node</div><div class="ic-s">A plain Python function. Board in, small update out.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-purple)">
+      <svg width="34" height="34" viewBox="0 0 34 34"><path d="M4 17h20" stroke="#7C3AED" stroke-width="2.4" stroke-linecap="round"/><path d="M20 11l7 6-7 6" fill="none" stroke="#7C3AED" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="ic-t">Edge</div><div class="ic-s">Always go there — or look at the board and decide. Including backwards.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S3 TWO BOXES ══ -->
+<section class="stage" id="s3" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 2 · no model yet</div>
+  <h2 class="rise d1">Watch the board get merged</h2>
+  <p class="cap rise d1"><code>add_world</code> never wrote "hello" — yet it can read it.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" id="s3play" onclick="runTiny()">▶ Run the graph</button>
+    <div class="readout" id="s3out"><span class="rdot"></span>board: <code>{text: ""}</code></div>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 760 170" id="svg3">
+      <path id="s3e1" class="gedge" d="M76,86 L150,86" marker-end="url(#ahG)"/>
+      <path id="s3e2" class="gedge" d="M320,86 L394,86" marker-end="url(#ahG)"/>
+      <path id="s3e3" class="gedge" d="M564,86 L638,86" marker-end="url(#ahG)"/>
+      <g class="gnode" id="s3n0"><circle cx="50" cy="86" r="26"/><text x="50" y="86" style="font-size:11px">START</text></g>
+      <g class="gnode" id="s3n1"><rect x="150" y="60" width="170" height="52" rx="10"/><text x="235" y="78">say_hello</text><text class="sub" x="235" y="98">writes "hello"</text></g>
+      <g class="gnode" id="s3n2"><rect x="394" y="60" width="170" height="52" rx="10"/><text x="479" y="78">add_world</text><text class="sub" x="479" y="98">reads, appends</text></g>
+      <g class="gnode" id="s3n3"><circle cx="664" cy="86" r="26"/><text x="664" y="86" style="font-size:11px">END</text></g>
+    </svg>
+  </div>
+
+  <div class="board-viz rise d3">
+    <div class="wb">
+      <div class="wb-top"><span>whiteboard · after each node</span><span id="s3step">step 0</span></div>
+      <div class="notes" id="s3notes"><div class="note-empty">nothing written yet</div></div>
+    </div>
+    <div style="align-self:center;">
+      <div class="oneline" style="--ac:var(--amz-blue)">A node returns a <b>delta</b>. LangGraph merges it and carries every untouched key forward.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S4 ARROW BACK ══ -->
+<section class="stage" id="s4" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 3 · still no model</div>
+  <h2 class="rise d1">Now it can go back</h2>
+  <p class="cap rise d1">Same questions from slide 2. Watch the counter — it's what stops the loop.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="runLoop(this,'money')">"get my money back"</button>
+    <button class="pbtn" onclick="runLoop(this,'ship')">"how fast do you ship"</button>
+    <button class="pbtn" onclick="runLoop(this,'refund')">"refund policy"</button>
+    <button class="pbtn" onclick="runLoop(this,'hours')">"opening hours"</button>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 800 340" id="svg4">
+      <path id="s4e0" class="gedge" d="M60,140 L100,140" marker-end="url(#ahG)"/>
+      <path id="s4e1" class="gedge" d="M250,128 C310,128 320,70 372,70" marker-end="url(#ahG)"/>
+      <path id="s4e2" class="gedge" d="M250,152 C310,152 320,208 372,208" marker-end="url(#ahG)"/>
+      <path id="s4e3" class="gedge" d="M175,166 L175,262" marker-end="url(#ahG)"/>
+      <path id="s4e4" class="gedge back" d="M100,288 C42,288 42,152 100,152" marker-end="url(#ahG)"/>
+      <path id="s4e5" class="gedge" d="M532,70 C592,70 610,140 656,140" marker-end="url(#ahG)"/>
+      <path id="s4e6" class="gedge" d="M532,208 C592,208 610,140 656,140" marker-end="url(#ahG)"/>
+
+      <g class="gnode" id="s4n0"><circle cx="34" cy="140" r="24"/><text x="34" y="140" style="font-size:10px">START</text></g>
+      <g class="gnode" id="s4n1"><rect x="100" y="114" width="150" height="52" rx="10"/><text x="175" y="132">retrieve</text><text class="sub" x="175" y="152" id="s4try">try 0</text></g>
+      <g class="gnode" id="s4n2"><rect x="372" y="44" width="160" height="52" rx="10"/><text x="452" y="70">generate</text></g>
+      <g class="gnode" id="s4n3"><rect x="372" y="182" width="160" height="52" rx="10"/><text x="452" y="208">give_up</text></g>
+      <g class="gnode" id="s4n4"><rect x="100" y="262" width="150" height="52" rx="10"/><text x="175" y="280">rewrite</text><text class="sub" x="175" y="300">synonym → keyword</text></g>
+      <g class="gnode" id="s4n5"><circle cx="680" cy="140" r="24"/><text x="680" y="140" style="font-size:10px">END</text></g>
+
+      <text class="elabel" x="318" y="58">hit</text>
+      <text class="elabel" x="318" y="228">cap reached</text>
+      <text class="elabel" x="228" y="212">miss</text>
+      <text class="elabel back" x="52" y="222" transform="rotate(-90 52 222)" style="fill:#E67E00;font-weight:700;">retry</text>
+    </svg>
+  </div>
+
+  <div class="ctrl rise d3"><div class="readout" id="s4out"><span class="rdot"></span>Pick a question.</div></div>
+
+  <div class="quiz rise d4" style="--ac:var(--amz-orange)">
+    <div class="quiz-q" id="q1-q">"Opening hours" has no matching document at all. What stops it looping forever?</div>
+    <div class="quiz-opts" id="q1-opts">
+      <button class="quiz-opt" onclick="qz('q1',0,false,'There is no timeout here. The graph would happily keep going.')"><span class="k">A</span> A built-in timeout</button>
+      <button class="quiz-opt" onclick="qz('q1',1,true,'Yes. attempts is an ordinary integer on the whiteboard, and the routing function reads it. Every cycle you build needs a counter like this.')"><span class="k">B</span> <code>attempts</code> on the state, read by the routing function</button>
+      <button class="quiz-opt" onclick="qz('q1',2,false,'rewrite always produces something. It cannot tell that no document exists.')"><span class="k">C</span> <code>rewrite</code> gives up on its own</button>
+    </div>
+    <div class="quiz-fb" id="q1-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S5 REDUCER ══ -->
+<section class="stage" id="s5" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 4 · reducers</div>
+  <h2 class="rise d1">Two nodes, one key. Who wins?</h2>
+  <p class="cap rise d1">Press play. The third node has to answer <b>"what is the user's name?"</b> from the board alone.</p>
+
+  <div class="ctrl rise d2"><button class="pbtn on" id="s5play" onclick="runRed()">▶ Run both side by side</button></div>
+
+  <div class="board-viz rise d2">
+    <div class="wb" style="border-color:rgba(220,38,38,.4)">
+      <div class="wb-top"><span style="color:#B91C1C">plain list · no reducer</span><span>replace</span></div>
+      <div class="notes" id="redA"><div class="note-empty">empty board</div></div>
+      <div class="readout" id="redAout" style="margin-top:14px;font-size:12px;"><span class="rdot"></span>waiting</div>
+    </div>
+    <div class="wb" style="border-color:rgba(14,159,110,.4)">
+      <div class="wb-top"><span style="color:#0A7A54">MessagesState · add_messages</span><span>append</span></div>
+      <div class="notes" id="redB"><div class="note-empty">empty board</div></div>
+      <div class="readout" id="redBout" style="margin-top:14px;font-size:12px;"><span class="rdot"></span>waiting</div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-purple)">Every model node returns <b>one</b> new message. That only works if the board appends.</div>
+</div>
+</section>
+
+
+<!-- ══ S6 ADD A MODEL ══ -->
+<section class="stage" id="s6" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 5</div>
+  <h2 class="rise d1">An LLM is not a special node</h2>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 880 200">
+      <text x="30" y="30" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:#8A93A2;font-weight:700;">STEP 2 · PLAIN PYTHON</text>
+      <path class="gedge" d="M186,72 L250,72" marker-end="url(#ahG)"/>
+      <path class="gedge" d="M416,72 L480,72" marker-end="url(#ahG)"/>
+      <g class="gnode"><rect x="30" y="48" width="156" height="48" rx="10"/><text x="108" y="72">board in</text></g>
+      <g class="gnode on"><rect x="250" y="48" width="166" height="48" rx="10"/><text x="333" y="72">add_world()</text></g>
+      <g class="gnode"><rect x="480" y="48" width="156" height="48" rx="10"/><text x="558" y="72">update out</text></g>
+      <text x="672" y="78" style="font-family:var(--mono);font-size:12px;fill:#8A93A2;">deterministic</text>
+
+      <text x="30" y="140" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:#00807A;font-weight:700;">STEP 5 · WITH A MODEL</text>
+      <path class="gedge on" d="M186,168 L250,168" marker-end="url(#ahO)" style="stroke:#00807A"/>
+      <path class="gedge on" d="M416,168 L480,168" marker-end="url(#ahO)" style="stroke:#00807A"/>
+      <g class="gnode"><rect x="30" y="144" width="156" height="48" rx="10"/><text x="108" y="168">board in</text></g>
+      <g class="gnode on" style="--ac:var(--amz-teal)"><rect x="250" y="144" width="166" height="48" rx="10"/><text x="333" y="168">write_joke()</text></g>
+      <g class="gnode"><rect x="480" y="144" width="156" height="48" rx="10"/><text x="558" y="168">update out</text></g>
+      <text x="672" y="174" style="font-family:var(--mono);font-size:12px;fill:#00807A;">llm.invoke() inside</text>
+
+      <path d="M646,60 L660,60 L660,180 L646,180" fill="none" stroke="#C9CDD6" stroke-width="1.6"/>
+      <text x="782" y="124" style="font-family:var(--mono);font-size:12.5px;fill:#161A20;font-weight:700;text-anchor:middle;">identical</text>
+      <text x="782" y="142" style="font-family:var(--mono);font-size:12.5px;fill:#161A20;font-weight:700;text-anchor:middle;">shape</text>
+    </svg>
+  </div>
+
+  <div class="split rise d3">
+    <div class="sp" style="--c:var(--amz-teal)">
+      <div class="sp-tag">what changes</div>
+      <div class="sp-big">The values on the board</div>
+      <div class="sp-mono">The model decides <b>what</b> gets written. Non-determinism enters the state.</div>
+    </div>
+    <div class="sp" style="--c:var(--muted-dim)">
+      <div class="sp-tag">what does not change</div>
+      <div class="sp-big">The graph structure</div>
+      <div class="sp-mono">Same <b>add_node</b>. Same <b>add_edge</b>. Same delta contract.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S7 BRANCH ══ -->
+<section class="stage" id="s7" style="--ac:var(--amz-green)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 6 · branch</div>
+  <h2 class="rise d1">Spend the money only when you must</h2>
+  <p class="cap rise d1">Four questions, one entry point, two very different bills.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="runBranch(this,0)">"what is 2+2?"</button>
+    <button class="pbtn" onclick="runBranch(this,1)">"capital of France?"</button>
+    <button class="pbtn" onclick="runBranch(this,2)">"compare 3 plans for me"</button>
+    <button class="pbtn" onclick="runBranch(this,3)">"self-attention tradeoffs?"</button>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 800 280" id="svg7">
+      <path id="s7e0" class="gedge" d="M60,140 L100,140" marker-end="url(#ahG)"/>
+      <path id="s7e1" class="gedge" d="M250,124 C320,124 340,76 400,76" marker-end="url(#ahG)"/>
+      <path id="s7e2" class="gedge" d="M250,156 C320,156 340,204 400,204" marker-end="url(#ahG)"/>
+      <path id="s7e3" class="gedge" d="M580,76 C640,76 660,140 706,140" marker-end="url(#ahG)"/>
+      <path id="s7e4" class="gedge" d="M580,204 C640,204 660,140 706,140" marker-end="url(#ahG)"/>
+
+      <g class="gnode" id="s7n0"><circle cx="34" cy="140" r="24"/><text x="34" y="140" style="font-size:10px">START</text></g>
+      <g class="gnode" id="s7n1"><rect x="100" y="114" width="150" height="52" rx="10"/><text x="175" y="132">classify</text><text class="sub" x="175" y="152" id="s7lbl">— </text></g>
+      <g class="gnode" id="s7n2"><rect x="400" y="50" width="180" height="52" rx="10"/><text x="490" y="68">short_answer</text><text class="sub" x="490" y="88">small model, no tools</text></g>
+      <g class="gnode" id="s7n3"><rect x="400" y="178" width="180" height="52" rx="10"/><text x="490" y="196">detailed_answer</text><text class="sub" x="490" y="216">big model, full pipeline</text></g>
+      <g class="gnode" id="s7n4"><circle cx="730" cy="140" r="24"/><text x="730" y="140" style="font-size:10px">END</text></g>
+
+      <text class="elabel" x="330" y="64">SIMPLE</text>
+      <text class="elabel" x="330" y="218">COMPLEX</text>
+    </svg>
+  </div>
+
+  <div class="ctrl rise d3"><div class="readout" id="s7out"><span class="rdot"></span>Pick a question.</div></div>
+
+  <div class="iconrow rise d4">
+    <div class="ic" style="--c:var(--good)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="#0E9F6E" stroke-width="2.2"/><path d="M9 15l4 4 8-8" fill="none" stroke="#0E9F6E" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div class="ic-t">Support bot</div><div class="ic-s">Order status → one lookup. Refund dispute → full agent.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-blue)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><rect x="4" y="8" width="22" height="14" rx="3" fill="none" stroke="#146EB4" stroke-width="2.2"/><path d="M4 15h22" stroke="#146EB4" stroke-width="2.2"/></svg>
+      <div class="ic-t">Cost router</div><div class="ic-s">Cheap 8B by default. The 70B only on COMPLEX.</div>
+    </div>
+    <div class="ic" style="--c:var(--warn)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><path d="M15 4l11 20H4z" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linejoin="round"/><path d="M15 12v5" stroke="#D97706" stroke-width="2.4" stroke-linecap="round"/><circle cx="15" cy="20" r="1.2" fill="#D97706"/></svg>
+      <div class="ic-t">Risk gate</div><div class="ic-s">Refund or delete → pause for a human. That's notebook 02.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S8 CYCLE ══ -->
+<section class="stage" id="s8" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 7 · cycle</div>
+  <h2 class="rise d1">Raise the bar, pay the bill</h2>
+  <p class="cap rise d1">Same topic. Three passing scores. Watch the loop count and the calls.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="runCycle(this,5)">pass at 5</button>
+    <button class="pbtn" onclick="runCycle(this,7)">pass at 7</button>
+    <button class="pbtn" onclick="runCycle(this,9)">pass at 9</button>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 800 280" id="svg8">
+      <path id="s8e0" class="gedge" d="M58,80 L92,80" marker-end="url(#ahG)"/>
+      <path id="s8e1" class="gedge" d="M232,80 L300,80" marker-end="url(#ahG)"/>
+      <path id="s8e2" class="gedge" d="M440,80 L600,80" marker-end="url(#ahG)"/>
+      <path id="s8e3" class="gedge" d="M406,106 L406,196" marker-end="url(#ahG)"/>
+      <path id="s8e4" class="gedge back" d="M336,196 L336,106" marker-end="url(#ahG)"/>
+
+      <g class="gnode" id="s8n0"><circle cx="34" cy="80" r="22"/><text x="34" y="80" style="font-size:10px">START</text></g>
+      <g class="gnode" id="s8n1"><rect x="92" y="54" width="140" height="52" rx="10"/><text x="162" y="80">writer</text></g>
+      <g class="gnode" id="s8n2"><rect x="300" y="54" width="140" height="52" rx="10"/><text x="370" y="72">critic</text><text class="sub" x="370" y="92" id="s8score">score —</text></g>
+      <g class="gnode" id="s8n3"><rect x="300" y="196" width="140" height="52" rx="10"/><text x="370" y="222">reviser</text></g>
+      <g class="gnode" id="s8n4"><circle cx="624" cy="80" r="22"/><text x="624" y="80" style="font-size:10px">END</text></g>
+
+      <text class="elabel" x="520" y="66">good enough</text>
+      <text class="elabel" x="452" y="152">too low</text>
+      <text class="elabel back" x="292" y="152" style="fill:#7C3AED;font-weight:700;">re-score</text>
+      <text class="elabel" x="700" y="60" id="s8calls" style="font-size:11px;text-anchor:start;"></text>
+    </svg>
+  </div>
+
+  <div class="ctrl rise d3"><div class="readout" id="s8out"><span class="rdot"></span>Pick a threshold.</div></div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-purple)">At <b>pass 9</b> the loop did not stop because the critic was happy. It stopped because the cap fired.</div>
+</div>
+</section>
+
+
+<!-- ══ S9 AGENT ══ -->
+<section class="stage" id="s9" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 8 · agents</div>
+  <h2 class="rise d1">An agent is two boxes and a loop</h2>
+  <p class="cap rise d1">One question needing two tools. Step through it.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" id="s9next" onclick="agentStep()">▶ Next message</button>
+    <button class="pbtn" onclick="agentReset()">↺ Reset</button>
+    <div class="readout" id="s9out"><span class="rdot"></span>0 of 4 messages on the board</div>
+  </div>
+
+  <div class="board-viz rise d2" style="grid-template-columns:1fr 1.15fr;">
+    <div>
+      <svg viewBox="0 0 480 300" id="svg9">
+        <path id="s9e0" class="gedge" d="M56,80 L96,80" marker-end="url(#ahG)"/>
+        <path id="s9e1" class="gedge" d="M246,80 L400,80" marker-end="url(#ahG)"/>
+        <path id="s9e2" class="gedge" d="M208,106 L208,200" marker-end="url(#ahG)"/>
+        <path id="s9e3" class="gedge back" d="M134,200 L134,106" marker-end="url(#ahG)"/>
+        <g class="gnode" id="s9n0"><circle cx="32" cy="80" r="22"/><text x="32" y="80" style="font-size:10px">START</text></g>
+        <g class="gnode" id="s9n1"><rect x="96" y="54" width="150" height="52" rx="10"/><text x="171" y="72">agent</text><text class="sub" x="171" y="92">the model</text></g>
+        <g class="gnode" id="s9n2"><rect x="96" y="200" width="150" height="52" rx="10"/><text x="171" y="218">tools</text><text class="sub" x="171" y="238">runs the functions</text></g>
+        <g class="gnode" id="s9n3"><circle cx="424" cy="80" r="22"/><text x="424" y="80" style="font-size:10px">END</text></g>
+        <text class="elabel" x="322" y="66">no tool asked</text>
+        <text class="elabel" x="262" y="156">tool asked</text>
+        <text class="elabel back" x="88" y="156" style="fill:#146EB4;font-weight:700;">result</text>
+      </svg>
+    </div>
+    <div class="wb">
+      <div class="wb-top"><span>messages · MessagesState</span><span id="s9count">0</span></div>
+      <div class="mstack" id="s9stack"></div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-blue)">One <code>tools</code> step added <b>two</b> results. Printing only the last message would have hidden one.</div>
+</div>
+</section>
+
+
+<!-- ══ S10 MEMORY ══ -->
+<section class="stage" id="s10" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 9 · memory</div>
+  <h2 class="rise d1">One word on <code>compile()</code></h2>
+  <p class="cap rise d1">Noor introduced herself on thread 1. Ask both threads the same question.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="askThread(this,1)">Ask thread "student-1"</button>
+    <button class="pbtn" onclick="askThread(this,2)">Ask thread "student-2"</button>
+  </div>
+
+  <div class="drawers rise d2">
+    <div class="drw" id="drw1">
+      <div class="drw-hd"><span>thread_id <b>student-1</b></span><span id="drw1n">2 saved</span></div>
+      <div class="drw-body" id="drw1b"></div>
+    </div>
+    <div class="drw" id="drw2">
+      <div class="drw-hd"><span>thread_id <b>student-2</b></span><span id="drw2n">0 saved</span></div>
+      <div class="drw-body" id="drw2b"></div>
+    </div>
+  </div>
+
+  <div class="split rise d3" style="margin-top:22px;">
+    <div class="sp" style="--c:var(--bad)">
+      <div class="sp-tag">before</div>
+      <div class="sp-big"><code>self.history = []</code></div>
+      <div class="sp-mono">A list on one object. <b>Dies with the process.</b> No user isolation.</div>
+    </div>
+    <div class="sp" style="--c:var(--good)">
+      <div class="sp-tag">after</div>
+      <div class="sp-big"><code>compile(checkpointer=…)</code></div>
+      <div class="sp-mono">Swap <b>InMemory → Sqlite → Postgres</b>. Nodes never change.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S11 STREAMING ══ -->
+<section class="stage" id="s11" style="--ac:var(--amz-green)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 10 · streaming</div>
+  <h2 class="rise d1">Three cameras, one graph</h2>
+
+  <div class="ctrl rise d2"><button class="pbtn on" id="s11play" onclick="runStreams()">▶ Play all three</button></div>
+
+  <div class="streams rise d2">
+    <div class="st" style="--c:var(--amz-blue)">
+      <div class="st-mode">"values"</div>
+      <div class="st-for">for debugging</div>
+      <div class="st-demo" id="stA"></div>
+    </div>
+    <div class="st" style="--c:var(--amz-teal)">
+      <div class="st-mode">"updates"</div>
+      <div class="st-for">for a live status trace</div>
+      <div class="st-demo" id="stB"></div>
+    </div>
+    <div class="st" style="--c:var(--amz-green)">
+      <div class="st-mode">"messages"</div>
+      <div class="st-for">for a chat box</div>
+      <div class="st-demo" id="stC"></div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-green)">Only one <code>[agent]</code> line? Then the tool was never called — a <b>prompt</b> bug, not a graph bug.</div>
+</div>
+</section>
+
+
+<!-- ══ S12 RECAP ══ -->
+<section class="stage" id="s12" style="--ac:#161A20">
+<div class="wrap">
+  <div class="eyebrow rise">Recap</div>
+  <h2 class="rise d1">Six things a straight line cannot do</h2>
+
+  <div class="iconrow rise d2">
+    <div class="ic" style="--c:var(--amz-orange)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><path d="M4 20h30" stroke="#E67E00" stroke-width="2.2" stroke-linecap="round"/><path d="M28 8C28 8 14 8 14 16" fill="none" stroke="#E67E00" stroke-width="2.2" stroke-dasharray="4 3"/><path d="M11 12l3 4 3-4" fill="none" stroke="#E67E00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="ic-t">Go back</div><div class="ic-s">Conditional edge plus a counter on the state.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-green)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><path d="M6 15h10M16 15l8-7M16 15l8 7" fill="none" stroke="#067D62" stroke-width="2.2" stroke-linecap="round"/><circle cx="28" cy="8" r="3" fill="#067D62"/><circle cx="28" cy="22" r="3" fill="#067D62"/></svg>
+      <div class="ic-t">Branch on output</div><div class="ic-s">A router returns the next box's name.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-purple)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><rect x="6" y="6" width="12" height="8" rx="2" fill="#7C3AED" opacity=".35"/><rect x="6" y="17" width="12" height="8" rx="2" fill="#7C3AED"/><path d="M24 11h10M24 20h10" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="ic-t">Keep a list</div><div class="ic-s">A reducer says how to merge instead of replace.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-teal)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><rect x="5" y="7" width="14" height="17" rx="2" fill="none" stroke="#00807A" stroke-width="2.2"/><rect x="22" y="7" width="14" height="17" rx="2" fill="none" stroke="#00807A" stroke-width="2.2" stroke-dasharray="3 3"/><circle cx="12" cy="15" r="2.4" fill="#00807A"/></svg>
+      <div class="ic-t">Remember per user</div><div class="ic-s">Checkpointer plus <code>thread_id</code>.</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-blue)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><path d="M5 22V10M13 22V6M21 22v-9M29 22v-5" stroke="#146EB4" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <div class="ic-t">Stream progress</div><div class="ic-s">Per node, or per token.</div>
+    </div>
+    <div class="ic" style="--c:var(--bad)">
+      <svg width="40" height="30" viewBox="0 0 40 30"><rect x="5" y="10" width="13" height="11" rx="2" fill="none" stroke="#DC2626" stroke-width="2.2"/><rect x="24" y="10" width="12" height="11" rx="2" fill="none" stroke="#DC2626" stroke-width="2.2"/><path d="M18 13h6M24 18h-6" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg>
+      <div class="ic-t">Call tools</div><div class="ic-s">Model box, tools box, and a loop. No magic.</div>
+    </div>
+  </div>
+
+  <div class="oneline rise d3" style="--ac:var(--amz-orange);margin-top:34px;">Next → <b>notebook 02:</b> add a pause button, and let a human approve the risky step.</div>
+</div>
+</section>
+
+<script>
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ══ PATH ANIMATION ENGINE ══════════════════════════════════════════════ */
+/* Each canvas keeps its own run counter, so clicking a new option cancels
+   only that canvas's in-flight animation — never another slide's. */
+var GENS = {};
+var TRAVEL = 300, HOLD = 170;
+
+/* A run token: {svg:'svg4', n:3}. Stale when GENS[svg] has moved on. */
+function stale(tok) { return !tok || GENS[tok.svg] !== tok.n; }
+
+function startRun(svgId) {
+  GENS[svgId] = (GENS[svgId] || 0) + 1;
+  var svg = document.getElementById(svgId);
+  if (svg) {
+    svg.querySelectorAll('.gedge').forEach(function(e){ e.classList.remove('on'); });
+    svg.querySelectorAll('.gnode').forEach(function(n){ n.classList.remove('on','bad','ok'); });
+    svg.querySelectorAll('.pulse').forEach(function(d){ d.remove(); });
+  }
+  return { svg: svgId, n: GENS[svgId] };
+}
+function travel(pathId, tok, cb) {
+  var p = document.getElementById(pathId);
+  if (!p || stale(tok)) { if (cb) cb(); return; }
+  p.classList.add('on');
+  if (REDUCED) { if (cb) cb(); return; }
+  var svg = p.ownerSVGElement;
+  var len = p.getTotalLength();
+  var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('r', '6.5');
+  dot.setAttribute('class', 'pulse');
+  svg.appendChild(dot);
+  var t0 = null;
+  function frame(t) {
+    if (stale(tok)) { dot.remove(); return; }
+    if (!t0) t0 = t;
+    var k = Math.min(1, (t - t0) / TRAVEL);
+    var pt = p.getPointAtLength(len * k);
+    dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+    if (k < 1) requestAnimationFrame(frame);
+    else { dot.remove(); if (cb) cb(); }
+  }
+  requestAnimationFrame(frame);
+}
+function lightNode(id, cls) {
+  var n = document.getElementById(id);
+  if (n) { n.classList.remove('on','bad','ok'); n.classList.add(cls || 'on'); }
+}
+/* run a sequence: [{edge, node, cls, hold, tick}] */
+function runSeq(steps, tok, done, i) {
+  i = i || 0;
+  if (stale(tok)) return;
+  if (i >= steps.length) { if (done) done(); return; }
+  var s = steps[i];
+  var go = function() {
+    if (stale(tok)) return;
+    if (s.node) lightNode(s.node, s.cls);
+    if (s.tick) s.tick();
+    setTimeout(function(){ runSeq(steps, tok, done, i + 1); }, REDUCED ? 40 : (s.hold || HOLD));
+  };
+  if (s.edge) travel(s.edge, tok, go); else go();
+}
+function say(id, txt, cls) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'readout' + (cls ? ' ' + cls : '');
+  el.innerHTML = '<span class="rdot"></span>' + txt;
+}
+function pick(btn) {
+  var row = btn.parentNode;
+  row.querySelectorAll('.pbtn').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function qz(id, idx, ok, why) {
+  document.querySelectorAll('#' + id + '-opts .quiz-opt').forEach(function(o, i) {
+    o.disabled = true;
+    o.classList.add(i === idx ? (ok ? 'correct' : 'incorrect') : 'dim');
+  });
+  var fb = document.getElementById(id + '-fb');
+  fb.className = 'quiz-fb ' + (ok ? 'ok' : 'no');
+  fb.innerHTML = '<b>' + (ok ? '\u2713 ' : '\u2717 ') + '</b>' + why;
+  fb.style.display = 'block';
+}
+
+/* ══ S1 DEAD END ══ */
+var s1cases = [
+  { steps:[{edge:'s1e1',node:'s1n1'},{edge:'s1e2',node:'s1n2',cls:'ok'}], out:'hit \u2014 the word "refund" is in the question', cls:'ok', wall:0 },
+  { steps:[{edge:'s1e1',node:'s1n1'},{edge:'s1e3',node:'s1n3',cls:'bad'}], out:'miss \u2014 "money back" is a synonym, not the keyword', cls:'bad', wall:1 },
+  { steps:[{edge:'s1e1',node:'s1n1'},{edge:'s1e3',node:'s1n3',cls:'bad'}], out:'miss \u2014 "ship" is not the key "shipping"', cls:'bad', wall:1 }
+];
+function deadEnd(btn, i) {
+  pick(btn);
+  var g = startRun('svg1');
+  document.getElementById('s1wall').style.opacity = 0;
+  var c = s1cases[i];
+  say('s1out', 'running\u2026');
+  lightNode('s1n0');
+  runSeq(c.steps, g, function() {
+    say('s1out', c.out, c.cls);
+    if (c.wall) document.getElementById('s1wall').style.opacity = 1;
+  });
+}
+deadEnd(document.querySelector('#s1 .pbtn'), 0);
+
+/* ══ S3 TINY GRAPH ══ */
+var s3boards = ['{text: ""}', '{text: "hello"}', '{text: "hello world"}'];
+function s3note(txt, fresh) {
+  var box = document.getElementById('s3notes');
+  if (box.querySelector('.note-empty')) box.innerHTML = '';
+  var d = document.createElement('div');
+  d.className = 'note' + (fresh ? ' fresh' : '');
+  d.textContent = txt;
+  box.appendChild(d);
+}
+function runTiny() {
+  var g = startRun('svg3');
+  document.getElementById('s3notes').innerHTML = '<div class="note-empty">nothing written yet</div>';
+  document.getElementById('s3step').textContent = 'step 0';
+  say('s3out', 'board: <code>' + s3boards[0] + '</code>');
+  var btn = document.getElementById('s3play'); btn.disabled = true;
+  lightNode('s3n0');
+  runSeq([
+    { edge:'s3e1', node:'s3n1', tick:function(){
+        document.getElementById('s3step').textContent = 'after say_hello';
+        say('s3out','board: <code>' + s3boards[1] + '</code>');
+        s3note('text = "hello"   \u2190 say_hello wrote this', true);
+      }, hold:620 },
+    { edge:'s3e2', node:'s3n2', tick:function(){
+        document.getElementById('s3step').textContent = 'after add_world';
+        say('s3out','board: <code>' + s3boards[2] + '</code>', 'ok');
+        s3note('text = "hello world"   \u2190 read "hello" it never wrote', true);
+      }, hold:620 },
+    { edge:'s3e3', node:'s3n3', cls:'ok' }
+  ], g, function(){ btn.disabled = false; });
+}
+
+/* ══ S4 LOOP ══ */
+var s4runs = {
+  money: { seq:[
+      {edge:'s4e0',node:'s4n1',try:1,out:'try 1 \u2014 miss'},
+      {edge:'s4e3',node:'s4n4',out:'rewrite: "money back" \u2192 "refund policy"'},
+      {edge:'s4e4',node:'s4n1',try:2,out:'try 2 \u2014 hit'},
+      {edge:'s4e1',node:'s4n2',cls:'ok',out:'generate \u2014 answered on the second try'},
+      {edge:'s4e5',node:'s4n5',cls:'ok'}], fin:'\u2713 solved · attempts 2', cls:'ok' },
+  ship: { seq:[
+      {edge:'s4e0',node:'s4n1',try:1,out:'try 1 \u2014 miss'},
+      {edge:'s4e3',node:'s4n4',out:'rewrite: "ship" \u2192 "shipping policy"'},
+      {edge:'s4e4',node:'s4n1',try:2,out:'try 2 \u2014 hit'},
+      {edge:'s4e1',node:'s4n2',cls:'ok',out:'generate \u2014 answered on the second try'},
+      {edge:'s4e5',node:'s4n5',cls:'ok'}], fin:'\u2713 solved · attempts 2', cls:'ok' },
+  refund: { seq:[
+      {edge:'s4e0',node:'s4n1',try:1,out:'try 1 \u2014 hit, no loop needed'},
+      {edge:'s4e1',node:'s4n2',cls:'ok',out:'generate'},
+      {edge:'s4e5',node:'s4n5',cls:'ok'}], fin:'\u2713 solved · attempts 1', cls:'ok' },
+  hours: { seq:[
+      {edge:'s4e0',node:'s4n1',try:1,out:'try 1 \u2014 miss'},
+      {edge:'s4e3',node:'s4n4',out:'rewrite \u2014 but no such document exists'},
+      {edge:'s4e4',node:'s4n1',try:2,out:'try 2 \u2014 miss again'},
+      {edge:'s4e2',node:'s4n3',cls:'bad',out:'give_up \u2014 the cap fired at attempts = 2'},
+      {edge:'s4e6',node:'s4n5',cls:'bad'}], fin:'\u2717 bounded, not infinite · attempts 2', cls:'bad' }
+};
+function runLoop(btn, key) {
+  pick(btn);
+  var g = startRun('svg4');
+  document.getElementById('s4try').textContent = 'try 0';
+  var r = s4runs[key];
+  say('s4out', 'running\u2026');
+  lightNode('s4n0');
+  var steps = r.seq.map(function(s) {
+    return { edge:s.edge, node:s.node, cls:s.cls, hold:340, tick:function() {
+      if (s.try) document.getElementById('s4try').textContent = 'try ' + s.try;
+      if (s.out) say('s4out', s.out);
+    }};
+  });
+  runSeq(steps, g, function(){ say('s4out', r.fin, r.cls); });
+}
+runLoop(document.querySelector('#s4 .pbtn'), 'money');
+
+/* ══ S5 REDUCER ══ */
+function redReset() {
+  document.getElementById('redA').innerHTML = '<div class="note-empty">empty board</div>';
+  document.getElementById('redB').innerHTML = '<div class="note-empty">empty board</div>';
+  say('redAout', 'waiting'); say('redBout', 'waiting');
+}
+function redAdd(boxId, txt, fresh) {
+  var box = document.getElementById(boxId);
+  if (box.querySelector('.note-empty')) box.innerHTML = '';
+  var d = document.createElement('div');
+  d.className = 'note' + (fresh ? ' fresh' : '');
+  d.textContent = txt;
+  box.appendChild(d);
+  return d;
+}
+function runRed() {
+  redReset();
+  var btn = document.getElementById('s5play'); btn.disabled = true;
+  var a1, b1;
+  setTimeout(function(){
+    a1 = redAdd('redA', 'human: "Hi, my name is Noor."');
+    b1 = redAdd('redB', 'human: "Hi, my name is Noor."');
+    say('redAout', 'node 1 \u2014 user wrote'); say('redBout', 'node 1 \u2014 user wrote');
+  }, 250);
+  setTimeout(function(){
+    redAdd('redA', 'ai: "Nice to meet you."', true);
+    redAdd('redB', 'ai: "Nice to meet you."', true);
+    if (a1) a1.classList.add('gone');
+    say('redAout', 'node 2 returned 1 message \u2014 it REPLACED the list');
+    say('redBout', 'node 2 returned 1 message \u2014 it was APPENDED');
+  }, 1150);
+  setTimeout(function(){
+    say('redAout', '\u2717 reporter: no human message \u2014 cannot answer', 'bad');
+    say('redBout', '\u2713 reporter: the name is still there \u2014 "Noor"', 'ok');
+    btn.disabled = false;
+  }, 2200);
+}
+
+/* ══ S7 BRANCH ══ */
+var s7q = [
+  { label:'SIMPLE',  edge:'s7e1', node:'s7n2', end:'s7e3', out:'SIMPLE \u2192 short_answer \u00b7 1 cheap call', cls:'ok' },
+  { label:'SIMPLE',  edge:'s7e1', node:'s7n2', end:'s7e3', out:'SIMPLE \u2192 short_answer \u00b7 1 cheap call', cls:'ok' },
+  { label:'COMPLEX', edge:'s7e2', node:'s7n3', end:'s7e4', out:'COMPLEX \u2192 detailed_answer \u00b7 retrieve + rerank + big model', cls:'' },
+  { label:'COMPLEX', edge:'s7e2', node:'s7n3', end:'s7e4', out:'COMPLEX \u2192 detailed_answer \u00b7 retrieve + rerank + big model', cls:'' }
+];
+function runBranch(btn, i) {
+  pick(btn);
+  var g = startRun('svg7');
+  var c = s7q[i];
+  document.getElementById('s7lbl').textContent = '\u2014';
+  say('s7out', 'classifying\u2026');
+  lightNode('s7n0');
+  runSeq([
+    { edge:'s7e0', node:'s7n1', hold:380, tick:function(){ document.getElementById('s7lbl').textContent = c.label; } },
+    { edge:c.edge, node:c.node, cls:c.cls, hold:280 },
+    { edge:c.end, node:'s7n4', cls:c.cls }
+  ], g, function(){ say('s7out', c.out, c.cls); });
+}
+runBranch(document.querySelector('#s7 .pbtn'), 0);
+
+/* ══ S8 CYCLE ══ */
+function runCycle(btn, threshold) {
+  pick(btn);
+  var g = startRun('svg8');
+  var scores = { 5:[6], 7:[5,8], 9:[5,6,7] }[threshold];
+  document.getElementById('s8score').textContent = 'score \u2014';
+  document.getElementById('s8calls').textContent = '';
+  say('s8out', 'writing\u2026');
+  lightNode('s8n0');
+  var steps = [{ edge:'s8e0', node:'s8n1', hold:300 }];
+  var calls = 1;
+  scores.forEach(function(sc, k) {
+    steps.push({ edge:'s8e1', node:'s8n2', hold:340, tick:function(){
+      calls++;
+      document.getElementById('s8score').textContent = 'score ' + sc;
+      say('s8out', 'critic round ' + (k + 1) + ' \u2014 score ' + sc + (sc >= threshold ? ' \u2265 ' + threshold : ' < ' + threshold));
+    }});
+    if (k !== scores.length - 1) {
+      steps.push({ edge:'s8e3', node:'s8n3', hold:220, tick:function(){ calls++; } });
+      steps.push({ edge:'s8e4', node:'s8n1', hold:180 });
+    }
+  });
+  steps.push({ edge:'s8e2', node:'s8n4', cls:'ok' });
+  runSeq(steps, g, function() {
+    var edits = scores.length - 1;
+    var capped = (threshold === 9);
+    document.getElementById('s8calls').textContent = calls + ' LLM calls';
+    say('s8out', edits + ' edit' + (edits === 1 ? '' : 's') + ' \u00b7 ' + calls + ' LLM calls' +
+      (capped ? ' \u00b7 stopped by the CAP, not by the critic' : ' \u00b7 critic satisfied'), capped ? 'bad' : 'ok');
+  });
+}
+runCycle(document.querySelector('#s8 .pbtn'), 5);
+
+/* ══ S9 AGENT ══ */
+var s9msgs = [
+  { k:'human', tag:'human', t:'"Weather in Dubai, and how many words in \'stateful agent graphs beat linear chains\'?"' },
+  { k:'ai',    tag:'ai \u00b7 asks', t:'tool_calls = [ get_weather, word_count ]   \u2190 no answer text at all' },
+  { k:'tool',  tag:'tool \u00d7 2', t:'get_weather \u2192 "38C, clear"      word_count \u2192 6' },
+  { k:'ai',    tag:'ai \u00b7 final', t:'"It\'s 38C and clear in Dubai, and that phrase has 6 words."' }
+];
+var s9i = 0;
+function agentReset() {
+  s9i = 0;
+  startRun('svg9');
+  document.getElementById('s9stack').innerHTML = '';
+  document.getElementById('s9count').textContent = '0';
+  document.getElementById('s9next').disabled = false;
+  say('s9out', '0 of 4 messages on the board');
+  lightNode('s9n0');
+}
+function agentStep() {
+  if (s9i >= 4) return;
+  var m = s9msgs[s9i];
+  var row = document.createElement('div');
+  row.className = 'mrow ' + m.k + (s9i === 3 ? ' done' : '');
+  row.innerHTML = '<span class="mtag">' + m.tag + '</span><span class="mtxt">' + m.t + '</span>';
+  document.getElementById('s9stack').appendChild(row);
+  setTimeout(function(){ row.classList.add('in'); }, 30);
+  var edges = [null, 's9e0', 's9e2', 's9e3'];
+  var nodes = ['s9n0', 's9n1', 's9n2', 's9n1'];
+  var e = edges[s9i], n = nodes[s9i];
+  if (e) travel(e, { svg:'svg9', n:GENS['svg9'] }, function(){ lightNode(n); }); else lightNode(n);
+  s9i++;
+  document.getElementById('s9count').textContent = s9i;
+  var notes = [
+    'the question lands on the board',
+    'the model ASKED for two tools \u2014 tools_condition routes to tools',
+    'one tools step, TWO results appended at once',
+    'no tool_calls \u2192 tools_condition routes to END'
+  ];
+  say('s9out', s9i + ' of 4 \u00b7 ' + notes[s9i - 1], s9i === 4 ? 'ok' : '');
+  if (s9i === 4) {
+    travel('s9e1', { svg:'svg9', n:GENS['svg9'] }, function(){ lightNode('s9n3', 'ok'); });
+    document.getElementById('s9next').disabled = true;
+  }
+}
+agentReset();
+
+/* ══ S10 MEMORY ══ */
+function askThread(btn, which) {
+  pick(btn);
+  var d1 = document.getElementById('drw1'), d2 = document.getElementById('drw2');
+  d1.className = 'drw'; d2.className = 'drw';
+  var body1 = document.getElementById('drw1b'), body2 = document.getElementById('drw2b');
+  body1.innerHTML = ''; body2.innerHTML = '';
+  if (which === 1) {
+    d1.classList.add('hit');
+    body1.innerHTML =
+      '<div class="mrow human in"><span class="mtag">restored</span><span class="mtxt">"My name is Noor."</span></div>' +
+      '<div class="mrow human in"><span class="mtag">asked</span><span class="mtxt">"What\'s my name?"</span></div>' +
+      '<div class="drw-ans y">"Your name is Noor."</div>';
+    body2.innerHTML = '<div class="note-empty" style="text-align:center;">not asked</div>';
+    document.getElementById('drw2n').textContent = '0 saved';
+  } else {
+    d2.classList.add('miss');
+    body2.innerHTML =
+      '<div class="mrow ai in"><span class="mtag">restored</span><span class="mtxt">nothing \u2014 new thread</span></div>' +
+      '<div class="mrow human in"><span class="mtag">asked</span><span class="mtxt">"What\'s my name?"</span></div>' +
+      '<div class="drw-ans n">"I don\'t know \u2014 you haven\'t told me."</div>';
+    body1.innerHTML = '<div class="note-empty" style="text-align:center;">not asked</div>';
+  }
+}
+askThread(document.querySelector('#s10 .pbtn'), 1);
+
+/* ══ S11 STREAMS ══ */
+function typeInto(el, txt, speed, done) {
+  el.innerHTML = '';
+  if (REDUCED) { el.textContent = txt; if (done) done(); return; }
+  var i = 0;
+  var span = document.createElement('span');
+  var caret = document.createElement('span');
+  caret.className = 'caret'; caret.innerHTML = '&nbsp;';
+  el.appendChild(span); el.appendChild(caret);
+  (function tick() {
+    if (i >= txt.length) { caret.remove(); if (done) done(); return; }
+    span.textContent += txt[i++];
+    setTimeout(tick, speed);
+  })();
+}
+function runStreams() {
+  var btn = document.getElementById('s11play'); btn.disabled = true;
+  var A = document.getElementById('stA'), B = document.getElementById('stB'), C = document.getElementById('stC');
+  A.innerHTML = ''; B.innerHTML = ''; C.innerHTML = '';
+  var aFrames = [
+    'messages: 1<br>\u2514 human',
+    'messages: 2<br>\u251c human<br>\u2514 ai (tool_calls)',
+    'messages: 3<br>\u251c human<br>\u251c ai (tool_calls)<br>\u2514 tool',
+    'messages: 4<br>\u251c human<br>\u251c ai (tool_calls)<br>\u251c tool<br>\u2514 ai (final)'
+  ];
+  var bLines = ['[agent]', '[tools]', '[agent]'];
+  aFrames.forEach(function(f, i){ setTimeout(function(){ A.innerHTML = f; }, 420 * (i + 1)); });
+  bLines.forEach(function(l, i){
+    setTimeout(function(){
+      var d = document.createElement('div');
+      d.textContent = l;
+      d.style.color = (l === '[tools]' ? '#0E9F6E' : '#146EB4');
+      d.style.fontWeight = '700';
+      B.appendChild(d);
+    }, 560 * (i + 1));
+  });
+  setTimeout(function(){
+    typeInto(C, "It's 38C and clear in Dubai.", 46, function(){ btn.disabled = false; });
+  }, 500);
+}
+runStreams();
+
+/* ══ RAIL + RISE ══ */
+var stages = document.querySelectorAll('.stage');
+var railNodes = document.querySelectorAll('.rail-node');
+var railFill = document.getElementById('railFill');
+function updateRail() {
+  var best = 0, bestVis = -1;
+  stages.forEach(function(s, i) {
+    var r = s.getBoundingClientRect();
+    var vis = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+    if (vis > bestVis) { bestVis = vis; best = i; }
+  });
+  railNodes.forEach(function(n, i){ n.classList.toggle('active', i === best); });
+  if (railFill) railFill.style.height = (best / (stages.length - 1)) * 100 + '%';
+}
+railNodes.forEach(function(n) {
+  n.addEventListener('click', function() {
+    var t = document.getElementById(n.dataset.s);
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+var io = new IntersectionObserver(function(es) {
+  es.forEach(function(e){ if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.rise').forEach(function(el){ io.observe(el); });
+addEventListener('scroll', updateRail, { passive: true });
+updateRail();
+</script>
+</body>
+</html>

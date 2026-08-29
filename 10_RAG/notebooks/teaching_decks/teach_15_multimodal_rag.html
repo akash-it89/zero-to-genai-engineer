@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multimodal RAG · Teaching Your Chatbot to See · Notebook 15</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FAFAF8;
+  --panel:#FFFFFF;
+  --panel-hi:#F1F2F5;
+  --ink:#161A20;
+  --muted:#565F6E;
+  --muted-dim:#8A93A2;
+  --line:rgba(22,26,32,0.09);
+  --line-hi:rgba(22,26,32,0.16);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --good:#0E9F6E;
+  --warn:#D97706;
+  --bad:#DC2626;
+  /* Amazon palette, deepened slightly for contrast on a light background */
+  --amz-orange:#E67E00;
+  --amz-blue:#146EB4;
+  --amz-teal:#00807A;
+  --amz-green:#067D62;
+  --amz-purple:#7C3AED;
+  --amz-red:#CC3333;
+  --ac:#E67E00;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+body{
+  margin:0;
+  background:
+    radial-gradient(900px 500px at 10% -5%,rgba(230,126,0,.09),transparent 55%),
+    radial-gradient(800px 480px at 90% 5%,rgba(20,110,180,.08),transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:rgba(230,126,0,.22);}
+a{color:inherit;}
+code{background:rgba(22,26,32,.06);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:.92em;}
+
+/* ===== LEFT RAIL ===== */
+.rail{position:fixed;left:20px;top:0;bottom:0;width:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;}
+.rail-track{position:absolute;left:50%;top:6%;bottom:6%;width:2px;transform:translateX(-50%);background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-teal),var(--amz-green),var(--amz-purple),var(--amz-red),#161A20);opacity:.16;}
+.rail-fill{position:absolute;left:0;top:0;width:100%;height:0%;background:linear-gradient(to bottom,var(--amz-orange),var(--amz-blue),var(--amz-teal),var(--amz-green),var(--amz-purple),var(--amz-red),#161A20);transition:height .25s linear;}
+.rail-nodes{position:relative;display:flex;flex-direction:column;justify-content:space-between;height:88%;z-index:2;}
+.rail-node{appearance:none;border:none;background:none;cursor:pointer;width:32px;height:20px;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
+.rail-dot{width:8px;height:8px;border-radius:50%;background:#E4E6EA;border:1.5px solid var(--line-hi);transition:all .22s ease;}
+.rail-node.active .rail-dot{background:var(--ac,#161A20);border-color:var(--ac,#161A20);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac,#161A20) 20%,transparent),0 0 10px color-mix(in srgb,var(--ac,#161A20) 60%,transparent);transform:scale(1.3);}
+.rail-tip{position:absolute;left:20px;top:50%;transform:translateY(-50%) translateX(-6px);font-family:var(--mono);font-size:10px;white-space:nowrap;color:var(--muted);background:var(--panel);border:1px solid var(--line-hi);padding:3px 8px;border-radius:3px;opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;box-shadow:0 4px 12px rgba(22,26,32,.08);}
+.rail-node:hover .rail-tip{opacity:1;transform:translateY(-50%) translateX(0);}
+@media(max-width:860px){.rail{display:none;}}
+
+/* ===== TOP BADGE ===== */
+.top-badge{position:fixed;top:16px;right:16px;z-index:60;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border:1px solid var(--line-hi);border-radius:8px;padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(22,26,32,.06);}
+.top-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--amz-orange);box-shadow:0 0 6px var(--amz-orange);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ===== STAGE ===== */
+.stage{min-height:100vh;width:100%;padding:11vh 8vw 11vh calc(8vw + 18px);display:flex;flex-direction:column;justify-content:center;position:relative;border-top:1px solid var(--line);}
+@media(max-width:860px){.stage{padding:8vh 5vw;}}
+.wrap{max-width:1020px;margin:0 auto;width:100%;}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;color:var(--ac,#161A20);}
+.eyebrow::before{content:"";width:18px;height:2px;background:var(--ac,#161A20);display:inline-block;}
+h1,h2{font-family:var(--sans);text-wrap:balance;margin:0;color:var(--ink);letter-spacing:-.01em;}
+h1{font-size:clamp(30px,5vw,56px);font-weight:800;line-height:1.08;}
+h2{font-size:clamp(24px,3.2vw,38px);font-weight:800;line-height:1.14;}
+.sub{font-size:clamp(14px,1.5vw,17px);color:var(--muted);margin:14px 0 0;max-width:680px;line-height:1.65;}
+.rise{opacity:0;transform:translateY(20px);transition:opacity .55s cubic-bezier(.2,.8,.2,1),transform .55s cubic-bezier(.2,.8,.2,1);}
+.rise.in{opacity:1;transform:translateY(0);}
+.rise.d1{transition-delay:.07s;}.rise.d2{transition-delay:.15s;}.rise.d3{transition-delay:.23s;}.rise.d4{transition-delay:.31s;}.rise.d5{transition-delay:.39s;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(22,26,32,.03);}
+.glow-rule{height:2px;width:50px;background:var(--ac,#161A20);border-radius:2px;margin:20px 0 0;}
+.chip{font-family:var(--mono);font-size:11.5px;padding:5px 11px;border-radius:5px;border:1px solid var(--line-hi);background:var(--panel);color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+
+/* code block */
+.code-block{background:#F4F5F8;border:1px solid var(--line-hi);border-radius:10px;padding:16px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;margin-top:14px;position:relative;color:#293040;}
+.code-block::before{content:attr(data-label);position:absolute;top:8px;right:12px;font-size:10px;color:var(--muted-dim);letter-spacing:.06em;}
+.kw{color:#8E3FE0;}.fn{color:#0B6FCB;}.st{color:#0E7D34;}.cm{color:#8A93A2;font-style:italic;}.hl{background:rgba(230,126,0,.16);border-radius:2px;padding:0 2px;}
+
+/* two/three col grid */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;}
+@media(max-width:780px){.two-col,.three-col{grid-template-columns:1fr;}}
+
+/* mem-card style generic feature card */
+.mem-card{padding:20px 22px;border-radius:10px;position:relative;overflow:hidden;}
+.mem-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#161A20);}
+.mem-card .mc-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:6px;}
+.mem-card .mc-title{font-size:17px;font-weight:800;color:var(--ink);}
+.mem-card .mc-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55;}
+.mem-card .mc-where{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;}
+.mem-card .tag{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:4px;border:1px solid var(--line-hi);color:var(--muted);}
+
+/* flow diagram */
+.flow{display:flex;align-items:center;gap:0;margin-top:22px;flex-wrap:wrap;}
+.flow-node{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:96px;}
+.flow-box{padding:11px 14px;border-radius:7px;border:1px solid var(--line-hi);background:var(--panel);font-family:var(--mono);font-size:11px;color:var(--ink);text-align:center;white-space:nowrap;box-shadow:0 1px 2px rgba(22,26,32,.04);}
+.flow-box.active{border-color:var(--ac);color:var(--ac);background:color-mix(in srgb,var(--ac) 6%,var(--panel));font-weight:700;}
+.flow-box.dim{opacity:.45;}
+.flow-arrow{font-size:16px;color:var(--muted-dim);padding:0 6px;}
+.flow-lbl{font-size:10px;color:var(--muted-dim);font-family:var(--mono);text-align:center;}
+
+/* comparison table */
+.cmp-table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px;}
+.cmp-table th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);border-bottom:1px solid var(--line-hi);}
+.cmp-table td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top;}
+.cmp-table td:first-child{color:var(--ink);font-weight:700;}
+.cmp-table tr:hover td{background:rgba(22,26,32,.02);}
+.yes{color:var(--good)!important;font-weight:700;}.no{color:var(--bad)!important;}
+
+/* timeline */
+.timeline{display:flex;flex-direction:column;gap:0;margin-top:22px;max-width:640px;}
+.tl-item{display:flex;gap:16px;position:relative;}
+.tl-item+.tl-item::before{content:"";position:absolute;left:11px;top:-16px;width:2px;height:16px;background:var(--line-hi);}
+.tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--ac);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ac);flex-shrink:0;margin-top:2px;}
+.tl-body{padding-bottom:22px;}
+.tl-title{font-size:15px;font-weight:700;color:var(--ink);}
+.tl-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.55;}
+
+/* callout box */
+.callout{margin-top:18px;padding:14px 18px;border-radius:8px;background:color-mix(in srgb,var(--ac) 6%,var(--panel));border-left:3px solid var(--ac);font-size:13.5px;color:var(--ink);line-height:1.6;max-width:720px;}
+.callout b{color:var(--ac);}
+
+/* deprecated / replacement pills */
+.dep{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:3px;background:rgba(220,38,38,.09);color:#B91C1C;border:1px solid rgba(220,38,38,.25);text-decoration:line-through;margin-right:4px;}
+.rep{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:3px;background:rgba(14,159,110,.1);color:#0A7A54;border:1px solid rgba(14,159,110,.28);}
+
+/* hero specific */
+.hero{border-top:none;background:none;}
+.hero h1{background:linear-gradient(92deg,var(--ink) 35%,var(--amz-orange) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:40px;max-width:920px;}
+@media(max-width:780px){.hero-grid{grid-template-columns:1fr 1fr;}}
+.hero-tile{padding:16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 2px rgba(22,26,32,.03);}
+.hero-tile .ht-n{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--ac);}
+.hero-tile .ht-l{font-size:12.5px;color:var(--muted);line-height:1.45;}
+
+/* score / cost bars (reused for real reranker-score visualization) */
+.cost-bars{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.cost-row{display:flex;align-items:center;gap:10px;}
+.cost-lbl{width:230px;font-size:11.5px;color:var(--muted);flex-shrink:0;font-family:var(--mono);line-height:1.35;}
+.cost-track{flex:1;height:22px;background:rgba(22,26,32,.05);border-radius:5px;overflow:hidden;position:relative;}
+.cost-track.neg{background:rgba(220,38,38,.06);}
+.cost-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:8px;font-family:var(--mono);font-size:10.5px;font-weight:700;color:#fff;white-space:nowrap;transition:width 1.2s cubic-bezier(.2,.8,.2,1);}
+.cost-val{font-family:var(--mono);font-size:11.5px;color:var(--muted);width:52px;text-align:right;flex-shrink:0;}
+
+/* verdict pill for the bug slide */
+.verdict-row{display:flex;align-items:center;gap:10px;margin-top:14px;}
+.verdict{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;letter-spacing:.04em;}
+.verdict.wrong{background:rgba(220,38,38,.1);color:#B91C1C;}
+.verdict.right{background:rgba(14,159,110,.1);color:#0A7A54;}
+
+/* quiz */
+.quiz{margin-top:36px;max-width:700px;border-radius:12px;background:var(--panel);border:1px solid var(--line-hi);padding:22px 24px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(22,26,32,.05);}
+.quiz::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#161A20);}
+.quiz-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:14px;}
+.quiz-q{font-size:16px;color:var(--ink);font-weight:700;line-height:1.5;margin-bottom:16px;}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-opt{text-align:left;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:8px;padding:11px 14px;cursor:pointer;transition:all .14s ease;line-height:1.5;}
+.quiz-opt:hover:not(:disabled){border-color:var(--ac);background:color-mix(in srgb,var(--ac) 7%,var(--panel));transform:translateX(3px);}
+.quiz-opt:disabled{cursor:default;}
+.quiz-opt .k{font-family:var(--mono);font-weight:700;color:var(--ac);margin-right:7px;}
+.quiz-opt.correct{border-color:var(--good);background:rgba(14,159,110,.09);}
+.quiz-opt.correct .k{color:var(--good);}
+.quiz-opt.incorrect{border-color:var(--bad);background:rgba(220,38,38,.08);animation:shake .38s ease;}
+.quiz-opt.incorrect .k{color:var(--bad);}
+.quiz-opt.dim{opacity:.45;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.quiz-fb{margin-top:16px;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.6;}
+.quiz-fb.ok{background:rgba(14,159,110,.08);border:1px solid rgba(14,159,110,.28);color:#0A7A54;}
+.quiz-fb.no{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.25);color:#B91C1C;}
+.fb-v{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 5px;}
+.fb-e{margin:0;color:var(--ink);opacity:.85;}
+
+/* interactive widget shell */
+.widget{margin-top:24px;border-radius:12px;background:var(--panel);border:1px solid var(--line-hi);padding:20px 22px;position:relative;overflow:hidden;max-width:780px;box-shadow:0 2px 10px rgba(22,26,32,.05);}
+.widget::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,#161A20);}
+.widget-hd{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:700;margin-bottom:4px;}
+.widget-hd .live{width:6px;height:6px;border-radius:50%;background:var(--ac);animation:blink 1.6s infinite;}
+.widget-note{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+.wbtn{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 15px;border-radius:8px;border:1px solid var(--line-hi);background:var(--panel-hi);color:var(--ink);cursor:pointer;transition:all .15s ease;}
+.wbtn:hover{border-color:var(--ac);transform:translateY(-1px);}
+.wbtn:active{transform:translateY(0);}
+.wbtn.accent{background:var(--ac);border-color:var(--ac);color:#fff;}
+.wbtn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.wbtn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;margin-bottom:16px;}
+
+/* citation demo */
+.cite-pool{display:flex;flex-direction:column;gap:8px;}
+.cite-item{padding:10px 13px;border-radius:8px;border:1px solid var(--line-hi);background:var(--panel-hi);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:10px;transition:all .4s ease;}
+.cite-item .ci-n{font-family:var(--mono);font-size:11px;color:var(--muted-dim);width:20px;flex-shrink:0;}
+.cite-item.used{border-color:var(--good);background:rgba(14,159,110,.07);color:var(--ink);box-shadow:0 0 0 1px rgba(14,159,110,.15);}
+.cite-item.used .ci-n{color:var(--good);font-weight:700;}
+.cite-item.dropped{opacity:.4;}
+.cite-item .ci-tag{margin-left:auto;font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:4px;background:var(--panel);border:1px solid var(--line-hi);color:var(--muted-dim);}
+.cite-item.used .ci-tag{background:rgba(14,159,110,.14);color:#0A7A54;border-color:transparent;}
+
+/* decision toggle */
+.decision-toggle{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.dtbtn{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:20px;border:1px solid var(--line-hi);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s;}
+.dtbtn.active{background:var(--ac);border-color:var(--ac);color:#fff;}
+.decision-result{padding:16px 18px;border-radius:10px;background:var(--panel-hi);border:1px solid var(--line-hi);font-size:13.5px;color:var(--ink);line-height:1.6;min-height:70px;}
+.decision-result b{color:var(--ac);}
+
+/* results scorecard */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;}
+@media(max-width:780px){.score-grid{grid-template-columns:1fr;}}
+.score-item{padding:13px 16px;border-radius:9px;border:1px solid var(--line);background:var(--panel);display:flex;gap:12px;align-items:flex-start;}
+.score-item .si-check{width:20px;height:20px;border-radius:50%;background:rgba(14,159,110,.12);color:var(--good);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.score-item .si-q{font-size:12px;color:var(--muted);line-height:1.45;}
+.score-item .si-a{font-size:13px;color:var(--ink);font-weight:700;margin-top:3px;}
+
+/* image icon (css-drawn chart icons, no external assets) */
+.icon-chart{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- LEFT RAIL -->
+<nav class="rail" aria-label="Slides">
+  <div class="rail-nodes" id="railNodes">
+    <div class="rail-track"><div class="rail-fill" id="railFill"></div></div>
+    <button class="rail-node" data-s="s0" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">Intro</span></button>
+    <button class="rail-node" data-s="s1" style="--ac:var(--amz-orange)"><span class="rail-dot"></span><span class="rail-tip">The Problem</span></button>
+    <button class="rail-node" data-s="s2" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Three Architectures</span></button>
+    <button class="rail-node" data-s="s3" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Multi-Vector Pattern</span></button>
+    <button class="rail-node" data-s="s4" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Full Pipeline</span></button>
+    <button class="rail-node" data-s="s5" style="--ac:var(--bad)"><span class="rail-dot"></span><span class="rail-tip">The Real Bug</span></button>
+    <button class="rail-node" data-s="s6" style="--ac:var(--amz-green)"><span class="rail-dot"></span><span class="rail-tip">Citation Filtering</span></button>
+    <button class="rail-node" data-s="s7" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">CLIP Embeddings</span></button>
+    <button class="rail-node" data-s="s8" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Late Interaction</span></button>
+    <button class="rail-node" data-s="s9" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Decision Framework</span></button>
+    <button class="rail-node" data-s="s10" style="--ac:var(--amz-green)"><span class="rail-dot"></span><span class="rail-tip">Real Results</span></button>
+    <button class="rail-node" data-s="s11" style="--ac:#161A20"><span class="rail-dot"></span><span class="rail-tip">Summary</span></button>
+  </div>
+</nav>
+
+<div class="top-badge"><span class="dot"></span>Notebook 15 · Multimodal RAG · Real Document Case Study</div>
+
+
+<!-- S0 HERO -->
+<section class="stage hero" id="s0" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">GenAI 2026 · Module 10 · Notebook 15</div>
+  <h1 class="rise d1">Multimodal RAG<br>Teaching Your Chatbot to See</h1>
+  <p class="sub rise d2">Every RAG pipeline so far reads text beautifully and throws every image straight in the trash.<br>
+  Real documents hide their most important numbers inside charts. This deck walks through three real,
+  working architectures — built and run against a real 63-page thesis, not a toy example.</p>
+  <div class="hero-grid rise d3">
+    <div class="hero-tile" style="--ac:var(--amz-orange)"><div class="ht-n">21</div><div class="ht-l">Real embedded chart images extracted from one real PDF</div></div>
+    <div class="hero-tile" style="--ac:var(--amz-blue)"><div class="ht-n">3</div><div class="ht-l">Full multimodal RAG architectures built and compared</div></div>
+    <div class="hero-tile" style="--ac:var(--amz-purple)"><div class="ht-n">252</div><div class="ht-l">Text + image chunks in one hybrid retrieval index</div></div>
+    <div class="hero-tile" style="--ac:var(--good)"><div class="ht-n">9/9</div><div class="ht-l">Real business questions, verified correct end-to-end</div></div>
+  </div>
+  <div class="chip-row rise d4">
+    <span class="chip">GPT-4o Vision</span><span class="chip">text-embedding-3-small</span><span class="chip">Chroma</span><span class="chip">BM25</span><span class="chip">Cross-Encoder Rerank</span><span class="chip">CLIP</span><span class="chip">ColPali / MaxSim</span>
+  </div>
+</div>
+</section>
+
+<!-- S1 THE PROBLEM -->
+<section class="stage" id="s1" style="--ac:var(--amz-orange)">
+<div class="wrap">
+  <div class="eyebrow rise">The Problem</div>
+  <h2 class="rise d1">Real documents hide their answers inside pixels</h2>
+  <p class="sub rise d2">Our loader from Notebook 02 (<code>PyMuPDF4LLMLoader</code>) extracts text beautifully.
+  It throws every embedded image straight in the trash — and business documents put their most
+  important findings <i>inside those images</i>.</p>
+
+  <div class="two-col rise d3">
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--bad);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--bad);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">TEXT-ONLY RAG</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.6;">Real 63-page dissertation: <i>"Apple as a Brand: A Detailed Analytical Approach."</i>
+      109-respondent survey. 21 charts embedded as Microsoft Forms screenshots. Text-only extraction sees none of them.</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12.5px;color:var(--bad);">✗ "Not provided in the context" for chart-only facts</div>
+        <div style="font-size:12.5px;color:var(--bad);">✗ Can be misled by the author's own prose errors</div>
+        <div style="font-size:12.5px;color:var(--bad);">✗ Zero of the 21 charts are searchable at all</div>
+      </div>
+    </div>
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--good);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--good);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">MULTIMODAL RAG</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.6;">Same document. The chart itself gets read by a vision model and grounded on
+      the actual pixels — not a caption someone wrote about it.</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:12.5px;color:var(--good);">✓ Reads exact numbers straight off the chart</div>
+        <div style="font-size:12.5px;color:var(--good);">✓ Resolves conflicts between prose and data</div>
+        <div style="font-size:12.5px;color:var(--good);">✓ All 21 charts become genuinely searchable</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout rise d4"><b>A genuine gotcha we found in this real document:</b> the author's own prose analysis of "Chart 4.1" states
+  <i>"46 out of 121"</i> respondents used Apple products for 5–10 years. The chart itself — the original data — shows
+  <b>43</b> (across six categories that sum to 108, not 121). Two numbers, one document, one true answer — and only
+  the one that actually reads the chart pixels gets it right.</div>
+
+  <div class="quiz rise d5">
+    <div class="quiz-eyebrow">🎯 Check your understanding</div>
+    <div class="quiz-q" id="q1-q">A document's prose paragraph and its own chart disagree on a number. What should a well-designed multimodal RAG system do?</div>
+    <div class="quiz-opts" id="q1-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q1',0,false,'Averaging two numbers with no shared basis just invents a third, equally wrong number.')"><span class="k">A</span> Average the two numbers to split the difference</button>
+      <button class="quiz-opt" onclick="answerQuiz('q1',1,true,'Correct. The chart is the original data — the prose is someone’s secondhand description of it, and secondhand descriptions can drift. Ground the answer on the actual pixels.')"><span class="k">B</span> Trust the chart pixels — they are the original data, prose can drift</button>
+      <button class="quiz-opt" onclick="answerQuiz('q1',2,false,'Refusing to answer throws away information the system actually has — the chart genuinely does contain the true value.')"><span class="k">C</span> Refuse to answer since the source is inconsistent</button>
+    </div>
+    <div class="quiz-fb" id="q1-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+<!-- S2 THREE ARCHITECTURES -->
+<section class="stage" id="s2" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">The Landscape</div>
+  <h2 class="rise d1">Three ways to make an image searchable</h2>
+  <p class="sub rise d2">An embedding model can't search raw image bytes unless you pick one of three real
+  architectures. As of 2026 the market has converged on exactly these three — and this notebook
+  <b>builds and runs all three</b> against the same real document, not just describes them.</p>
+
+  <table class="cmp-table rise d3">
+    <tr><th>Architecture</th><th>How it works</th><th>Best for</th><th>Tradeoff</th></tr>
+    <tr>
+      <td>① Caption-and-index</td>
+      <td>A vision LLM writes a detailed text caption of each image; embed the <i>caption</i>; keep the raw image linked by ID</td>
+      <td>Business/report documents — reads exact chart numbers correctly</td>
+      <td>Extra LLM call per image; needs generation grounded on real pixels</td>
+    </tr>
+    <tr>
+      <td>② Unified embeddings</td>
+      <td>One model (CLIP here; Cohere Embed-v4 / Voyage multimodal-3.5 in production) embeds text <i>and</i> images in the same vector space — no captioning at all</td>
+      <td>Genuinely diverse visual corpora — zero LLM calls</td>
+      <td>Can't read the fine legend text that tells two similar charts apart</td>
+    </tr>
+    <tr>
+      <td>③ Page-as-image / late interaction</td>
+      <td>Skip parsing — embed at <b>patch level</b> (dozens of regions per image), score with MaxSim (ColBERT-style)</td>
+      <td>Visually dense documents, layout-sensitive matching</td>
+      <td>Needs a purpose-trained backbone (real ColPali); heavier infra</td>
+    </tr>
+  </table>
+
+  <div class="callout rise d4">We start with ① because it reuses everything already built in Notebooks 05–08 unchanged — and
+  by the end of this deck you'll see real evidence for exactly <i>why</i> it's the right default for a document like this one.</div>
+</div>
+</section>
+
+<!-- S3 MULTI-VECTOR PATTERN -->
+<section class="stage" id="s3" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Architecture ① — Core Idea</div>
+  <h2 class="rise d1">What you search on ≠ what you return</h2>
+  <p class="sub rise d2">A vector index needs <i>searchable text</i>. A user answer needs the <i>real content</i>.
+  For an image chunk those are two different things — and treating them as the same thing is the root
+  cause of most broken multimodal RAG demos.</p>
+
+  <div class="flow rise d3">
+    <div class="flow-node"><div class="flow-box">Chart image<br>(pixels)</div><div class="flow-lbl">docstore value</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box active">GPT-4o Vision<br>caption</div><div class="flow-lbl">searchable text</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box active">Embed +<br>index</div><div class="flow-lbl">what gets searched</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box">Winning ID</div><div class="flow-lbl">retrieval result</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box active">Look up real<br>image bytes</div><div class="flow-lbl">what the user sees</div></div>
+  </div>
+
+  <div class="callout rise d4">LangChain calls this the <b>multi-vector retriever</b> pattern: a <code>docstore</code> (id → raw content, text
+  <i>or</i> image) kept separate from the <code>vector store</code> (id → embedding of the <i>searchable</i> representation).
+  Retrieval searches the vector store; once you have the winning ID, you look up the real content in the docstore.</div>
+
+  <div class="two-col rise d5">
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amz-purple);font-weight:700;margin-bottom:8px;">CAPTION PROMPT — WHAT MAKES IT WORK</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">Ask for the chart title, every axis/legend label, and every exact number —
+      never "describe this image." A vague prompt invites editorializing; a specific one produces genuinely searchable text.</div>
+    </div>
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amz-purple);font-weight:700;margin-bottom:8px;">A REAL CAPTION FROM THIS RUN</div>
+      <div style="font-size:12px;color:var(--ink);font-family:var(--mono);line-height:1.65;">"...it notes that <b>'43 respondents (43%) answered Samsung for this question.'</b>"</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S4 FULL PIPELINE -->
+<section class="stage" id="s4" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Architecture ① — End to End</div>
+  <h2 class="rise d1">Extract → Caption → Index → Retrieve → Ground</h2>
+  <p class="sub rise d2">No new retrieval machinery beyond Notebooks 05–08 — dense (Chroma) + sparse (BM25) + RRF
+  fusion + cross-encoder rerank. The index has no idea it's holding a mix of modalities.</p>
+
+  <div class="code-block rise d3" data-label="extract_images_from_pdf.py"><span class="kw">for</span> page_num <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(doc)):
+    <span class="kw">for</span> img_index, img <span class="kw">in</span> <span class="fn">enumerate</span>(doc[page_num].<span class="fn">get_images</span>(full=<span class="kw">True</span>)):
+        base = doc.<span class="fn">extract_image</span>(img[<span class="hl">0</span>])
+        <span class="cm"># drop tiny decorative icons — real charts only</span>
+        <span class="kw">if</span> base[<span class="st">"width"</span>] &lt; <span class="hl">100</span> <span class="kw">or</span> base[<span class="st">"height"</span>] &lt; <span class="hl">100</span>: <span class="kw">continue</span>
+        images.<span class="fn">append</span>({<span class="st">"id"</span>: <span class="fn">f</span><span class="st">"img_{page_num}_{img_index}"</span>, <span class="st">"bytes"</span>: base[<span class="st">"image"</span>]})
+<span class="cm"># → 21 real chart images extracted (PyMuPDF4LLMLoader extracted 0)</span></div>
+
+  <div class="three-col rise d4">
+    <div class="mem-card card" style="--ac:var(--amz-teal)">
+      <div class="mc-eyebrow">Step 1–2</div>
+      <div class="mc-title">Extract + Caption</div>
+      <div class="mc-sub"><code>fitz</code> pulls real embedded raster images. GPT-4o Vision (temperature=0)
+      captions each one with exact numbers.</div>
+      <div class="mc-where"><span class="tag">21 images</span><span class="tag">temp=0</span></div>
+    </div>
+    <div class="mem-card card" style="--ac:var(--amz-blue)">
+      <div class="mc-eyebrow">Step 3</div>
+      <div class="mc-title">Hybrid Index</div>
+      <div class="mc-sub">231 text chunks + 21 image captions = 252 chunks, indexed into Chroma (dense) and BM25 (sparse).</div>
+      <div class="mc-where"><span class="tag">Chroma</span><span class="tag">BM25</span></div>
+    </div>
+    <div class="mem-card card" style="--ac:var(--amz-green)">
+      <div class="mc-eyebrow">Step 4–5</div>
+      <div class="mc-title">Retrieve + Ground</div>
+      <div class="mc-sub">RRF fusion, cross-encoder rerank, then GPT-4o Vision reads the <i>actual pixels</i> of any retrieved chart — not its caption.</div>
+      <div class="mc-where"><span class="tag">Real pixels</span><span class="tag">Citations</span></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- S5 THE REAL BUG -->
+<section class="stage" id="s5" style="--ac:var(--bad)">
+<div class="wrap">
+  <div class="eyebrow rise">A Real Bug We Found And Fixed</div>
+  <h2 class="rise d1">The reranker was biased against charts</h2>
+  <p class="sub rise d2">The obvious first design: one unified ranking — dense + BM25 fusion over all 252 chunks,
+  then a single cross-encoder reranker picks the winners, text and image captions competing head to head.
+  Checking the actual scores against a known-correct answer exposed a real problem.</p>
+
+  <div class="cost-bars rise d3">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim);margin-bottom:4px;">RERANK SCORE FOR: "What % considered Samsung as an alternative?"</div>
+    <div class="cost-row">
+      <div class="cost-lbl">[text] "Customer Loyalty and Satisfaction..."</div>
+      <div class="cost-track"><div class="cost-fill" data-w="86" style="width:0;background:var(--muted-dim);">+5.06</div></div>
+    </div>
+    <div class="cost-row">
+      <div class="cost-lbl">[text] "Samsung emerges as a significant..."</div>
+      <div class="cost-track"><div class="cost-fill" data-w="76" style="width:0;background:var(--muted-dim);">+4.48</div></div>
+    </div>
+    <div class="cost-row">
+      <div class="cost-lbl">[text] "Chart 4.2. What alternatives did..."</div>
+      <div class="cost-track"><div class="cost-fill" data-w="67" style="width:0;background:var(--muted-dim);">+3.92</div></div>
+    </div>
+    <div class="cost-row">
+      <div class="cost-lbl" style="color:var(--bad);font-weight:700;">[image] has the real "43%" answer</div>
+      <div class="cost-track neg"><div class="cost-fill" data-w="7" style="width:0;background:var(--bad);">−3.65</div></div>
+    </div>
+  </div>
+  <div class="verdict-row rise d4"><span class="verdict wrong">✗ BURIED OUTSIDE TOP 6</span><span style="font-size:12.5px;color:var(--muted);">— the chunk with the actual answer never reaches GPT-4o's context at all</span></div>
+
+  <div class="callout rise d5"><b>Why:</b> the cross-encoder was trained on natural prose passages (MS-MARCO). It consistently rates a chart
+  caption's plain data listing <i>below</i> a flowing paragraph that merely discusses the same topic — even when only
+  the caption has the exact number. <b>The fix:</b> don't force text and image captions into one ranking. Rerank text among
+  itself; let images compete in their own dedicated embedding-similarity ranking, guaranteed into context. Not a hack —
+  production multimodal RAG systems commonly score modalities separately for exactly this reason.</div>
+</div>
+</section>
+
+<!-- S6 CITATION FILTERING -->
+<section class="stage" id="s6" style="--ac:var(--amz-green)">
+<div class="wrap">
+  <div class="eyebrow rise">Architecture ① — The Other Half Of Correctness</div>
+  <h2 class="rise d1">Show exactly what was used — nothing more</h2>
+  <p class="sub rise d2">Guaranteeing charts reach context doesn't mean every chart retrieved was actually relevant.
+  GPT-4o cites its sources inline as <code>[1]</code>, <code>[2]</code>... — parse those citation numbers and
+  display <i>only</i> the chart(s) genuinely used in the final answer.</p>
+
+  <div class="widget rise d3" style="--ac:var(--amz-green)">
+    <div class="widget-hd"><span class="live"></span>Two real runs from this notebook</div>
+    <p class="widget-note">Click a question to see which of its retrieved candidates actually got cited and shown to the user.</p>
+    <div class="wbtn-row">
+      <button class="wbtn accent" onclick="citeShow('two')">"Highest level of education?" (needs 2 charts)</button>
+      <button class="wbtn" onclick="citeShow('zero')">"Brand positioning strategy?" (needs 0 charts)</button>
+    </div>
+    <div class="cite-pool" id="citePool"></div>
+  </div>
+
+  <div class="callout rise d4">This is the actual fix for the classic multimodal RAG failure mode: showing <i>every</i> image
+  the retriever pulled back, whether the answer used it or not. Verified across 9 real questions on this document —
+  exactly the right number of charts get shown every time, from 0 up to 2, never a fixed count.</div>
+</div>
+</section>
+
+<!-- S7 CLIP -->
+<section class="stage" id="s7" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Architecture ②</div>
+  <h2 class="rise d1">Unified embeddings — CLIP<br><span style="color:var(--amz-blue)">No captioning step at all</span></h2>
+  <p class="sub rise d2">CLIP is trained by contrastive learning: millions of (image, caption) pairs, pulled together
+  in one shared vector space, everything else pushed apart. The result — a single model that embeds
+  <i>raw pixels</i> and <i>raw text</i> into the same space, so cosine similarity alone can match them. Zero LLM calls.</p>
+
+  <div class="two-col rise d3">
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--good);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--good);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">REAL WIN — CHART TYPE</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.7;font-family:var(--mono);">
+      "a word cloud of survey responses" → <b style="color:var(--ink)">img_35_0</b> (0.254) ✓<br>
+      "a pie chart" → <b style="color:var(--ink)">img_39_0</b> (0.279) ✓<br>
+      "a bar chart" → <b style="color:var(--ink)">img_41_0</b> (0.282) ✓</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:10px;">CLIP genuinely tells word clouds, pie charts, and bar charts apart by their broad visual shape.</div>
+    </div>
+    <div class="card" style="padding:18px 20px;border-top:3px solid var(--bad);">
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--bad);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">REAL LOSS — CHART TOPIC</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.7;font-family:var(--mono);">
+      "a chart about age" → <b style="color:var(--bad)">img_41_0</b> ✗ <span style="color:var(--muted-dim)">(wrong)</span><br>
+      "a chart about gender" → <b style="color:var(--bad)">img_41_0</b> ✗ <span style="color:var(--muted-dim)">(wrong, same wrong pick)</span></div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:10px;">Both queries default to the same unrelated bar chart. CLIP never learned to read the tiny legend text that actually distinguishes them.</div>
+    </div>
+  </div>
+
+  <div class="quiz rise d4">
+    <div class="quiz-eyebrow">🎯 Check your understanding</div>
+    <div class="quiz-q" id="q2-q">Why can CLIP tell a pie chart from a bar chart, but not the "age" chart from the "gender" chart?</div>
+    <div class="quiz-opts" id="q2-opts">
+      <button class="quiz-opt" onclick="answerQuiz('q2',0,false,'Both age and gender were shown as pie charts in this document — same shape, different data.')"><span class="k">A</span> Age and gender happen to use different chart shapes</button>
+      <button class="quiz-opt" onclick="answerQuiz('q2',1,true,'Correct. Pie vs. bar vs. word-cloud is a broad visual pattern CLIP’s pretraining captures well. “Which topic” lives only in small printed legend text — reading that is closer to OCR, which CLIP’s pooled embedding was never optimized to do.')"><span class="k">B</span> Chart type is a broad visual pattern; chart topic requires reading tiny legend text, which CLIP was never trained to do</button>
+      <button class="quiz-opt" onclick="answerQuiz('q2',2,false,'This isn’t a training-data-size problem — it’s a capability gap: pooled embeddings compress away fine text detail by design.')"><span class="k">C</span> CLIP just needs more images in the corpus to learn the difference</button>
+    </div>
+    <div class="quiz-fb" id="q2-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+<!-- S8 LATE INTERACTION -->
+<section class="stage" id="s8" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Architecture ③</div>
+  <h2 class="rise d1">Page-as-image — late interaction<br><span style="color:var(--amz-purple)">The real ColPali/ColQwen mechanism</span></h2>
+  <p class="sub rise d2">Instead of <i>one</i> pooled vector per image, keep <b>every patch</b> — roughly 49 small
+  regions, each with its own vector. Score with <b>MaxSim</b> (the ColBERT "late interaction" rule): for every
+  query token, find its single best-matching patch anywhere in the image, then sum those best matches.</p>
+
+  <div class="flow rise d3">
+    <div class="flow-node"><div class="flow-box">Image</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box active">49 patch<br>vectors</div><div class="flow-lbl">not 1 pooled vector</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box active">Query token<br>vs. every patch</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="flow-box">Sum of<br>best matches</div><div class="flow-lbl">= MaxSim score</div></div>
+  </div>
+
+  <div class="callout rise d4"><b>The honest finding:</b> naive MaxSim on CLIP's own raw patches did <i>worse</i> than pooled CLIP —
+  on the exact same "easy" chart-type queries pooled CLIP got 3/3 right, patch-level MaxSim got <b>0/3</b>. Reason: CLIP's
+  projection layers were trained only on the single pooled vector, never on individual patches — repurposing them
+  per-patch is out-of-distribution, so the signal is noisier, not richer.</div>
+
+  <div class="two-col rise d5">
+    <div class="card" style="padding:16px 18px;">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amz-purple);font-weight:700;margin-bottom:8px;">WHY REAL COLPALI IS DIFFERENT</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">Real ColPali fine-tunes the vision-language backbone <i>with</i> a MaxSim loss —
+      directly supervising patch-level alignment, instead of bolting MaxSim onto a backbone that never saw it during training.</div>
+    </div>
+    <div class="code-block" data-label="production reference — not run here"><span class="kw">from</span> colpali_engine.models <span class="kw">import</span> <span class="fn">ColPali</span>, ColPaliProcessor
+model = ColPali.<span class="fn">from_pretrained</span>(<span class="st">"vidore/colpali-v1.2"</span>, device_map=<span class="st">"cuda"</span>)
+scores = processor.<span class="fn">score_multi_vector</span>(query_emb, page_emb)</div>
+  </div>
+</div>
+</section>
+
+<!-- S9 DECISION FRAMEWORK -->
+<section class="stage" id="s9" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">Putting It Together</div>
+  <h2 class="rise d1">Which architecture, for which document?</h2>
+  <p class="sub rise d2">No architecture wins everything — that's the actual lesson from running all three
+  against one real document. The right choice depends on how visually <i>diverse</i> your images are.</p>
+
+  <div class="widget rise d3" style="--ac:var(--amz-teal)">
+    <div class="widget-hd"><span class="live"></span>Interactive · Pick a document type</div>
+    <div class="decision-toggle" id="decisionToggle">
+      <button class="dtbtn active" onclick="decisionPick(this,'homog')">Homogeneous chart-heavy report</button>
+      <button class="dtbtn" onclick="decisionPick(this,'diverse')">Diverse visual corpus (photos, diagrams, UI screenshots)</button>
+      <button class="dtbtn" onclick="decisionPick(this,'scale')">Massive scale, GPU available, layout-sensitive</button>
+    </div>
+    <div class="decision-result" id="decisionResult"></div>
+  </div>
+</div>
+</section>
+
+<!-- S10 REAL RESULTS -->
+<section class="stage" id="s10" style="--ac:var(--amz-green)">
+<div class="wrap">
+  <div class="eyebrow rise">Verified, Not Claimed</div>
+  <h2 class="rise d1">9 real questions, 9 correct answers</h2>
+  <p class="sub rise d2">Every answer below was checked against the actual chart pixels by hand before being
+  accepted — not just "the code ran without an error."</p>
+
+  <div class="score-grid rise d3">
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Samsung considered as an alternative?</div><div class="si-a">43%</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Most valuable product feature?</div><div class="si-a">Camera quality</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Biggest factor behind Apple's growth?</div><div class="si-a">Strong brand reputation (39)</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Largest respondent age group?</div><div class="si-a">26–35 (78 respondents)</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Gender split of respondents?</div><div class="si-a">58 women / 49 men</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Marital status breakdown?</div><div class="si-a">70 single / 33 married</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Highest level of education?</div><div class="si-a">Bachelor's degree (49)</div></div></div>
+    <div class="score-item"><div class="si-check">✓</div><div><div class="si-q">Avg. rating to recommend Apple?</div><div class="si-a">7.89 / 9</div></div></div>
+    <div class="score-item" style="grid-column:1/-1;"><div class="si-check">✓</div><div><div class="si-q">Brand positioning strategy? (text-only control — should cite <b>zero</b> charts)</div><div class="si-a">Customer experience, innovation, design — 0 images cited ✓</div></div></div>
+  </div>
+</div>
+</section>
+
+<!-- S11 SUMMARY -->
+<section class="stage" id="s11" style="--ac:#161A20">
+<div class="wrap">
+  <div class="eyebrow rise">Summary</div>
+  <h2 class="rise d1">The idea generalizes further than images</h2>
+  <p class="sub rise d2"><b>What you search on</b> and <b>what you show the user</b> don't have to be the same
+  object. That's the multi-vector pattern — and it's one instance of a bigger idea: search doesn't have to
+  happen in text-space at all (CLIP), and it doesn't have to happen at one-vector-per-item granularity either
+  (patch-level late interaction).</p>
+
+  <table class="cmp-table rise d3">
+    <tr><th>Architecture</th><th>What we actually saw it do well</th><th>What we actually saw it struggle with</th></tr>
+    <tr><td>① Caption-and-index</td><td>Correctly read exact survey numbers off 8 different real charts</td><td>Extra LLM call per image; needs generation grounded on pixels</td></tr>
+    <tr><td>② CLIP embeddings</td><td>Told word cloud / pie / bar chart types apart, zero LLM calls</td><td>Couldn't tell <i>which</i> pie chart — no OCR ability</td></tr>
+    <tr><td>③ Late interaction</td><td>Real, working MaxSim mechanism, end to end</td><td>Worse than pooled CLIP without a purpose-trained backbone</td></tr>
+  </table>
+
+  <div class="callout rise d4"><b>What's still missing:</b> scale (captioning doesn't work at 50,000 pages), scanned
+  documents with no text layer at all, the real cost of grounding on pixels twice, and video/audio as the next
+  modalities where the same "decouple search key from returned value" idea applies unchanged.</div>
+
+  <div class="chip-row rise d5">
+    <span class="chip">Notebook 15 · zero-to-genai-engineer</span><span class="chip">Module 10 · RAG</span><span class="chip">GenAI 2026</span>
+  </div>
+</div>
+</section>
+
+<script>
+// ── QUIZ ENGINE ────────────────────────────────────────────────────────────
+function answerQuiz(id, idx, correct, explanation) {
+  var opts = document.querySelectorAll('#' + id + '-opts .quiz-opt');
+  opts.forEach(function(o, i) {
+    o.disabled = true;
+    if (i === idx) o.classList.add(correct ? 'correct' : 'incorrect');
+    else o.classList.add('dim');
+  });
+  var fb = document.getElementById(id + '-fb');
+  fb.className = 'quiz-fb ' + (correct ? 'ok' : 'no');
+  fb.innerHTML = '<p class="fb-v">' + (correct ? '✓ Correct' : '✗ Not quite') + '</p><p class="fb-e">' + explanation + '</p>';
+  fb.style.display = 'block';
+}
+
+// ── S6 · CITATION FILTERING DEMO ────────────────────────────────────────────
+var citeData = {
+  two: {
+    label: 'Q: "What is respondents\' highest level of education?"',
+    items: [
+      { n: 1, txt: 'Text: Chapter 4 demographics section intro', used: false },
+      { n: 2, txt: 'Chart 4.19: education levels (bar chart)', used: true, tag: 'cited [2]' },
+      { n: 3, txt: 'Text: unrelated job-title commentary', used: false },
+      { n: 4, txt: 'Chart 4.20: same education data, duplicated in the source PDF', used: true, tag: 'cited [4]' },
+    ]
+  },
+  zero: {
+    label: 'Q: "What are the three key elements of Apple’s brand positioning strategy?"',
+    items: [
+      { n: 1, txt: 'Text: Executive Summary paragraph', used: true, tag: 'cited [1]' },
+      { n: 2, txt: 'Text: Chapter 1 background section', used: true, tag: 'cited [2]' },
+      { n: 3, txt: 'Chart: growth factors bar chart', used: false },
+      { n: 4, txt: 'Chart: gender split pie chart', used: false },
+    ]
+  }
+};
+function citeShow(key) {
+  var d = citeData[key];
+  var pool = document.getElementById('citePool');
+  pool.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--muted-dim);margin-bottom:6px;">' + d.label + '</div>';
+  d.items.forEach(function(it, i) {
+    var el = document.createElement('div');
+    el.className = 'cite-item';
+    el.innerHTML = '<span class="ci-n">[' + it.n + ']</span><span>' + it.txt + '</span>' +
+      (it.tag ? '<span class="ci-tag">' + it.tag + '</span>' : '<span class="ci-tag">not cited</span>');
+    pool.appendChild(el);
+    setTimeout(function(){ el.classList.add(it.used ? 'used' : 'dropped'); }, 120 * (i + 1));
+  });
+}
+citeShow('two');
+
+// ── S9 · DECISION FRAMEWORK TOGGLE ──────────────────────────────────────────
+var decisionData = {
+  homog: 'For a document like this one — 21 charts, all the same "legend + chart" visual template — <b>Architecture ① (caption-and-index) wins</b>. CLIP and late interaction can’t tell the charts apart by topic; only reading the actual printed text does that reliably.',
+  diverse: 'For a corpus with genuinely different visual content — product photos, UI screenshots, diagrams, illustrations — <b>Architecture ② (CLIP)</b> shines: zero LLM calls, instant cross-modal search, and the visual differences are large enough for pooled embeddings to catch.',
+  scale: 'At real production scale with a GPU budget, where fine-grained layout inside a page matters (dense tables, mixed columns) — <b>Architecture ③ with a real purpose-trained backbone</b> (ColPali/ColQwen, not raw CLIP patches) is the production answer.'
+};
+function decisionPick(btn, key) {
+  document.querySelectorAll('#decisionToggle .dtbtn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('decisionResult').innerHTML = decisionData[key];
+}
+decisionPick(document.querySelector('#decisionToggle .dtbtn'), 'homog');
+
+// ── RAIL + PROGRESS ────────────────────────────────────────────────────────
+var stages = document.querySelectorAll('.stage');
+var railNodes = document.querySelectorAll('.rail-node');
+var railFill = document.getElementById('railFill');
+
+function getActiveIdx() {
+  var best = 0, bestRatio = -1;
+  stages.forEach(function(s, i) {
+    var r = s.getBoundingClientRect();
+    var vis = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+    if (vis > bestRatio) { bestRatio = vis; best = i; }
+  });
+  return best;
+}
+function updateRail() {
+  var idx = getActiveIdx();
+  railNodes.forEach(function(n, i) { n.classList.toggle('active', i === idx); });
+  var pct = stages.length > 1 ? (idx / (stages.length - 1)) * 100 : 0;
+  if (railFill) railFill.style.height = pct + '%';
+}
+railNodes.forEach(function(n) {
+  n.addEventListener('click', function() {
+    var target = document.getElementById(n.dataset.s);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ── RISE (scroll reveal) ───────────────────────────────────────────────────
+var riseEls = document.querySelectorAll('.rise');
+var io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.1 });
+riseEls.forEach(function(el) { io.observe(el); });
+
+// ── SCORE BARS (animate when visible) ───────────────────────────────────────
+var barFills = document.querySelectorAll('.cost-fill');
+var barObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var w = e.target.getAttribute('data-w');
+      e.target.style.width = w + '%';
+    }
+  });
+}, { threshold: 0.2 });
+barFills.forEach(function(b) { barObserver.observe(b); });
+
+// ── SCROLL LISTENER ────────────────────────────────────────────────────────
+window.addEventListener('scroll', updateRail, { passive: true });
+updateRail();
+</script>
+</body>
+</html>

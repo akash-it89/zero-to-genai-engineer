@@ -1,28 +1,34 @@
-# Session 08 — Full Course Recap (S00–S07)
+<div align="center">
 
-> Visual recap of all 8 sessions covering TF-IDF → Word2Vec → Transformers → GPT → BPE → Local LLMs → DSPy → LangChain.
+# Session 08 — Recap (S00–S07)
+
+*TF-IDF → embeddings → Transformers → GPT → BPE → local LLMs → DSPy → LangChain — one visual pass.*
+
+[▶ Interactive presentation](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_PRESENTATION.html)
+·
+[▶ Full-text slides](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_SLIDES.html)
+
+</div>
 
 ---
 
-## Contents
+## Start here
 
-| File | Description | How to View |
-|------|-------------|-------------|
-| `RECAP_PRESENTATION.html` | Interactive visual presentation — styled slides with navigation | Open in browser |
-| `RECAP_SLIDES.html` | Markdown-rendered recap — full text content | Open in browser |
+Open the [interactive presentation](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_PRESENTATION.html) in a browser. Then continue to [S09](../09_AgenticCoding_LoopEngineering/).
 
-### Viewing the Slides
-
-**Live hosted versions (recommended):**
-- [▶ Recap Presentation (interactive slides)](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_PRESENTATION.html)
-- [▶ Recap Slides (full text)](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_SLIDES.html)
-
-Or open locally in your browser:
-
-```bash
-open RECAP_PRESENTATION.html    # macOS
-xdg-open RECAP_PRESENTATION.html  # Linux
+```text
+08_Recap/
+├── README.md
+├── RECAP_PRESENTATION.html
+└── RECAP_SLIDES.html
 ```
+
+| File | Description | How to view |
+|------|-------------|-------------|
+| `RECAP_PRESENTATION.html` | Interactive visual presentation | [▶ GitHub Pages](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_PRESENTATION.html) |
+| `RECAP_SLIDES.html` | Full-text recap | [▶ GitHub Pages](https://nursnaaz.github.io/zero-to-genai-engineer/08_Recap/RECAP_SLIDES.html) |
+
+Do **not** open these as raw files on GitHub — use the Pages links (also listed on the [deck index](https://nursnaaz.github.io/zero-to-genai-engineer/)).
 
 ---
 
@@ -44,3 +50,5 @@ The recap traces the "MISSING chain" — what each session added that the previo
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S07 LangChain](../07_LangChain_Notebooks/) · [All sessions](../README.md) · [S09 Agentic Coding →](../09_AgenticCoding_LoopEngineering/)

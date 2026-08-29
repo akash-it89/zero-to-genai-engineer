@@ -1,7 +1,23 @@
-# Self-Correcting Agentic RAG — Capstone App
+<div align="center">
 
-The graph built in [`../notebooks/03_agentic_rag_capstone.ipynb`](../notebooks/03_agentic_rag_capstone.ipynb),
-exported as a standalone module (`graph.py`) and wrapped in a Streamlit chat app (`app.py`).
+# Self-Correcting Agentic RAG
+
+### Session 11 · optional portfolio (not Day 3)
+
+*The S10 hybrid pipeline, wrapped in a graph that grades, retries, and escalates.*
+
+</div>
+
+Day 3 (required) is the [helpdesk orchestrator](../notebooks/03_multi_agent_orchestrator.ipynb). This folder is a **side project**.
+
+<p align="center">
+  <img src="docs/screenshots/app.png" alt="Self-Correcting Agentic RAG Streamlit app with knowledge-base sidebar and chat" width="920">
+</p>
+<p align="center"><em>Upload a document, chat over it, and watch the graph grade, rewrite, and escalate. Answer style lives in the long-term Store.</em></p>
+
+The teaching notebook for *this* single-agent RAG graph lives at
+[`self_correcting_rag.ipynb`](self_correcting_rag.ipynb). The graph is exported as
+`graph.py` and wrapped in a Streamlit chat app (`app.py`).
 
 Built on top of Module 10's `ProductionRAGChatbot` pipeline
 (`10_RAG/notebooks/production_rag_chatbot/rag_pipeline.py`) — `HybridIndex`, `Reranker`, and
@@ -22,10 +38,6 @@ genuinely wired in rather than referenced:
 - **Structured output** (S10f §11) — export any answer + its sources as a validated
   `{answer, citations: [...]}` object, on demand
 
-See [`../README.md`](../README.md)'s coverage map for the full accounting of what's reused,
-what's upgraded, and what's a deliberate extension point (Pinecone, SPLADE, DeepEval,
-multimodal, MCP) rather than a gap.
-
 ## Run it
 
 ```bash
@@ -34,8 +46,7 @@ cd 11_LangGraph/capstone_agentic_rag
 streamlit run app.py
 ```
 
-Needs `OPENAI_API_KEY` in a `.env` file at the repo root (same as every other app in this
-course).
+Needs `OPENAI_API_KEY` in `11_LangGraph/.env`, `10_RAG/.env`, or the repo root.
 
 ## What to try
 
@@ -80,3 +91,6 @@ in under 3 seconds.
 | `app.py` | Streamlit chat UI: upload docs, chat, live agent trace, human-in-the-loop approval box, answer-style setting, structured-citation export |
 | `tests/test_graph.py` | Trajectory-assertion pytest suite (routers + full graph, no API key needed) |
 | `requirements.txt` | Everything needed to run both |
+| `self_correcting_rag.ipynb` | Teaching notebook — build the graph line by line before the app |
+
+← [Session 11](../README.md)

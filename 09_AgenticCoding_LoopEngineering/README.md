@@ -1,7 +1,30 @@
+<div align="center">
+
 # Session 09 — Agentic Coding & Loop Engineering
-### M05 — Complete
+
+**M05 · Complete**
+
+*Stop typing every line. Spec the goal, verify with tests, loop until green.*
+
+</div>
 
 > **What was MISSING from S07:** We could call LLMs, chain them, optimise prompts — but we were still writing all the code ourselves. This session teaches how to make the AI write the code FOR you, reliably, through spec-driven workflows and loop engineering.
+
+## Start here
+
+**Browser:** [ReAct with a calculator](https://nursnaaz.github.io/tutorial/one-tool-one-loop)
+
+1. Read [`AGENTIC_CODING_GUIDE.md`](AGENTIC_CODING_GUIDE.md)
+2. Then [`loop_demo/LOOP_ENGINEERING_PLAYBOOK.md`](loop_demo/LOOP_ENGINEERING_PLAYBOOK.md)
+
+```text
+09_AgenticCoding_LoopEngineering/
+├── README.md
+├── AGENTIC_CODING_GUIDE.md
+└── loop_demo/
+    ├── LoopEngineering.md
+    └── LOOP_ENGINEERING_PLAYBOOK.md
+```
 
 ---
 
@@ -71,3 +94,5 @@ The [Bullish Stock Scanner V3](https://github.com/nursnaaz/TechnicalStockPredict
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S08 Recap](../08_Recap/) · [All sessions](../README.md) · [S10 RAG →](../10_RAG/)

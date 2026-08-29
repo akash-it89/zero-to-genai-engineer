@@ -1,5 +1,12 @@
-# 04 — BPE Tokenization & Sampling Parameters
-### M01 Foundation — Part 1 of 2 · Modern LLM Internals
+<div align="center">
+
+# Session 04 — BPE & Sampling
+
+**M01 · Modern LLM internals · Day 1–2**
+
+*How models read (BPE) and how they choose the next token (temperature, top-k, top-p).*
+
+</div>
 
 > **Where we are in the curriculum:**
 >
@@ -24,6 +31,14 @@
 > 2. **How does an LLM decide which word to generate next?** It doesn't pick the most probable word every time. *What controls that choice?*
 >
 > This session answers both.
+
+## Start here
+
+**Browser (no API key):** [Tokens / BPE](https://nursnaaz.github.io/tutorial/tokens-are-money) · [Temperature, top-k, top-p](https://nursnaaz.github.io/tutorial/sampling-temperature-topk-topp) · [Context window](https://nursnaaz.github.io/tutorial/context-window-budget)
+
+1. [`notebooks/NB1_BPE_Tokenization.ipynb`](notebooks/NB1_BPE_Tokenization.ipynb)
+2. [`notebooks/NB2_Temperature_TopK_TopP.ipynb`](notebooks/NB2_Temperature_TopK_TopP.ipynb)
+3. Open the Excel workbooks in this folder alongside the notebooks.
 
 ---
 
@@ -236,3 +251,5 @@ Post in the WhatsApp group with:
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S03 GPT Evolution](../03_GPT_Evolution_and_Alignment/) · [All sessions](../README.md) · [S05 Local LLMs →](../05_Local_LLMs_and_API_Providers/)

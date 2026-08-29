@@ -1,11 +1,18 @@
-# 05 — Running LLMs Locally and Via API Providers
-### M01 Foundation — Part 2 of 2 · Completes M01
+<div align="center">
 
-> **Where we are in M01:**
+# Session 05 — Local LLMs & API Providers
+
+**M02 · Complete**
+
+*Run models on your laptop for free — or switch cloud providers with one line of code.*
+
+</div>
+
+> **Where we are in M02:**
 >
 > | Session | Covers |
 > |---|---|
-> | S04 | BPE Tokenization + Sampling Parameters (temperature, top-K, top-P) |
+> | S04 | BPE Tokenization + Sampling Parameters (temperature, top-K, top-P) — **M01** |
 > | **S05 ← you are here** | **Running LLMs locally (Ollama, LM Studio) and via cloud providers (OpenRouter, Databricks)** |
 >
 > S04 showed us what happens inside an LLM. S05 answers: how do we actually USE one?  
@@ -14,6 +21,17 @@
 ---
 
 > **MISSING chain:** S04 taught us how tokens flow through a model and how sampling parameters control output. But we were treating the LLM as a black box we call via one provider's API. What if that provider goes down? What if the cost is too high? What if you need to keep data on-premises? This session closes that gap: you will run a full LLM on your own machine and learn to call any cloud provider with a single unified pattern.
+
+## Start here
+
+**Browser:** [Your first LLM call](https://nursnaaz.github.io/tutorial/first-llm-call) · [Local vs cloud](https://nursnaaz.github.io/tutorial/local-vs-cloud)
+
+Open [`notebooks/NB1_multi_provider_api_calls.ipynb`](notebooks/NB1_multi_provider_api_calls.ipynb), then NB2–NB6 as labelled in the folder tree below. Distill is the Day 2 product.
+
+<p align="center">
+  <img src="distill/docs/screenshots/app.png" alt="Distill transcript upload screen" width="920">
+</p>
+<p align="center"><em>Distill — paste a class transcript, get a concept map and an adaptive quiz. See [`distill/README.md`](distill/README.md).</em></p>
 
 ---
 
@@ -47,6 +65,12 @@
 │   └── map_reduce_demo.py                   ← full map-reduce pipeline demo
 └── distill/                                 ← bonus project: Distill classroom assessment tool
 ```
+
+---
+
+## Slides
+
+Class slides: [S05 session PDF](https://nursnaaz.github.io/zero-to-genai-engineer/05_Local_LLMs_and_API_Providers/slides.pdf). Same file in-repo as [`slides.pdf`](slides.pdf).
 
 ---
 
@@ -289,3 +313,5 @@ Post in the WhatsApp group with:
 ---
 
 *Part of the GenAI-2026 curriculum — zero-to-genai-engineer track*
+
+**Course nav:** [← S04 BPE & Sampling](../04_BPE_Temperature_Top_K_Top_P/) · [All sessions](../README.md) · [S06 Prompt Optimisation →](../06_Prompt_Engineering_DSPY_GEPA_COT/)

@@ -1,0 +1,30 @@
+# Hierarchical helpdesk orchestrator (Session 11 Day 3)
+#   pip install -r requirements.txt
+#
+# Also needs the Module 10 helpdesk stack (MCP + RAG pipeline). If you already
+# ran 10_RAG Notebook 16, those packages are installed.
+
+langgraph>=0.6
+langgraph-supervisor>=0.0.27
+langchain>=1.0
+langchain-openai
+langchain-core
+langchain-mcp-adapters
+mcp>=1.0.0
+python-dotenv
+nest_asyncio
+streamlit
+tavily-python
+ddgs
+langsmith
+langgraph-cli[inmem]
+
+# Reused RAG / MCP helpdesk (same as 10_RAG production_mcp_agents_rag_capstone)
+langchain-community
+langchain-text-splitters
+langchain-pymupdf4llm
+sentence-transformers
+bm25s
+PyStemmer
+chromadb
+numpy<2

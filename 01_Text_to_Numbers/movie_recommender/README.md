@@ -17,17 +17,20 @@ The core insight: every method converts text → numbers, then uses **cosine sim
 
 ## Screenshots
 
-### React App
-![React App](./ReactApp.png)
-*Movie recommendations for "The Dark Knight" using TF-IDF cosine similarity*
+<p align="center">
+  <img src="./ReactApp.png" alt="CineMatch recommendations for The Dark Knight using TF-IDF" width="920">
+</p>
+<p align="center"><em>Recommendations for <strong>The Dark Knight</strong>, ranked by TF-IDF cosine similarity — Batman Begins, The Dark Knight Rises, The Prestige…</em></p>
 
-### FastAPI — Request (Swagger UI)
-![FastAPI Request](./FastAPI.png)
-*Interactive API docs at `http://localhost:8000/docs` — try any movie and method*
+<p align="center">
+  <img src="./FastAPI.png" alt="CineMatch FastAPI Swagger — try /recommend" width="920">
+</p>
+<p align="center"><em>Interactive API docs at <code>http://localhost:8000/docs</code> — pick a movie and an embedding method.</em></p>
 
-### FastAPI — Response
-![FastAPI Response](./RecommedAPI.png)
-*JSON response from `/recommend` — title, rating, genre, overview, and match score*
+<p align="center">
+  <img src="./RecommedAPI.png" alt="CineMatch JSON response from /recommend" width="920">
+</p>
+<p align="center"><em>JSON from <code>/recommend</code> — title, rating, genre, overview, and match score.</em></p>
 
 ---
 

@@ -15,6 +15,11 @@ Distill turns any Teams / Zoom / Google Meet transcript into a complete learning
 4. **Evaluates every answer** — MCQ explanations + Dr. Priya's AI interview debrief across 5 dimensions
 5. **Exports results** — WhatsApp-ready report with score, verdict, and study recommendations
 
+<p align="center">
+  <img src="docs/screenshots/app.png" alt="Distill — paste or upload a class transcript" width="920">
+</p>
+<p align="center"><em>Paste a Teams / Zoom transcript (or upload .txt / .vtt / .docx). Distill extracts concepts, draws a map, and builds an adaptive quiz.</em></p>
+
 All processing happens locally. No data leaves your machine when using Ollama or LM Studio.
 
 ---

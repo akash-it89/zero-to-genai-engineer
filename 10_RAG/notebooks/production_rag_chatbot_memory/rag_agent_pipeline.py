@@ -51,8 +51,13 @@ from langgraph.store.sqlite import SqliteStore
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "production_rag_chatbot"))
 from rag_pipeline import (  # noqa: E402
-    HybridIndex, Reranker, chunk_documents, format_sources, load_document, semantic_chunk_documents,
+    HybridIndex, Reranker, chunk_documents, format_sources, load_document,
 )
+try:
+    from rag_pipeline import semantic_chunk_documents  # noqa: E402
+except ImportError:
+    # Notebook 13 pipeline is character-chunk only; memory app can fall back.
+    semantic_chunk_documents = chunk_documents
 
 MODEL = "gpt-4o-mini"
 FALLBACK_MODEL = "openai:gpt-4o-mini"

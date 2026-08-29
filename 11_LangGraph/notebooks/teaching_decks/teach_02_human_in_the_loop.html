@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Human-in-the-Loop · Visual Deck · Notebook 02</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FAFAF8;--panel:#FFFFFF;--panel-hi:#F1F2F5;--ink:#161A20;--muted:#565F6E;--muted-dim:#8A93A2;
+  --line:rgba(22,26,32,0.09);--line-hi:rgba(22,26,32,0.16);
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --good:#0E9F6E;--warn:#D97706;--bad:#DC2626;
+  --amz-orange:#E67E00;--amz-blue:#146EB4;--amz-teal:#00807A;--amz-green:#067D62;--amz-purple:#7C3AED;
+  --ac:#D97706;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:radial-gradient(900px 520px at 8% -8%,rgba(217,119,6,.11),transparent 58%),radial-gradient(820px 500px at 92% 4%,rgba(20,110,180,.09),transparent 58%),var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+::selection{background:rgba(217,119,6,.22);}
+code{background:rgba(22,26,32,.06);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:.9em;}
+
+.rail{position:fixed;left:18px;top:0;bottom:0;width:32px;display:flex;align-items:center;justify-content:center;z-index:60;}
+.rail-track{position:absolute;left:50%;top:6%;bottom:6%;width:2px;transform:translateX(-50%);background:linear-gradient(to bottom,var(--warn),var(--bad),var(--amz-blue),var(--good),var(--amz-purple),#161A20);opacity:.15;}
+.rail-fill{position:absolute;left:0;top:0;width:100%;height:0%;background:linear-gradient(to bottom,var(--warn),var(--bad),var(--amz-blue),var(--good),var(--amz-purple),#161A20);transition:height .25s linear;}
+.rail-nodes{position:relative;display:flex;flex-direction:column;justify-content:space-between;height:80%;z-index:2;}
+.rail-node{appearance:none;border:none;background:none;cursor:pointer;width:32px;height:20px;display:flex;align-items:center;justify-content:center;padding:0;position:relative;}
+.rail-dot{width:8px;height:8px;border-radius:50%;background:#E4E6EA;border:1.5px solid var(--line-hi);transition:all .22s ease;}
+.rail-node.active .rail-dot{background:var(--ac);border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 20%,transparent);transform:scale(1.35);}
+.rail-tip{position:absolute;left:20px;top:50%;transform:translateY(-50%) translateX(-6px);font-family:var(--mono);font-size:10px;white-space:nowrap;color:var(--muted);background:var(--panel);border:1px solid var(--line-hi);padding:3px 8px;border-radius:3px;opacity:0;pointer-events:none;transition:all .15s ease;box-shadow:0 4px 12px rgba(22,26,32,.08);}
+.rail-node:hover .rail-tip{opacity:1;transform:translateY(-50%) translateX(0);}
+@media(max-width:900px){.rail{display:none;}}
+.top-badge{position:fixed;top:16px;right:16px;z-index:60;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border:1px solid var(--line-hi);border-radius:8px;padding:7px 13px;font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(22,26,32,.06);}
+.top-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--ac);animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@media(max-width:640px){.top-badge{display:none;}}
+
+.stage{min-height:100vh;width:100%;padding:9vh 7vw 9vh calc(7vw + 16px);display:flex;flex-direction:column;justify-content:center;border-top:1px solid var(--line);}
+@media(max-width:900px){.stage{padding:7vh 5vw;}}
+.wrap{max-width:1060px;margin:0 auto;width:100%;}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--ac);}
+.eyebrow::before{content:"";width:16px;height:2px;background:var(--ac);}
+h1,h2{margin:0;text-wrap:balance;letter-spacing:-.015em;color:var(--ink);}
+h1{font-size:clamp(32px,5.4vw,60px);font-weight:800;line-height:1.05;}
+h2{font-size:clamp(25px,3.6vw,42px);font-weight:800;line-height:1.1;}
+.cap{font-size:clamp(14px,1.55vw,17.5px);color:var(--muted);margin:12px 0 0;max-width:600px;line-height:1.6;}
+.rise{opacity:0;transform:translateY(18px);transition:opacity .5s cubic-bezier(.2,.8,.2,1),transform .5s cubic-bezier(.2,.8,.2,1);}
+.rise.in{opacity:1;transform:translateY(0);}
+.rise.d1{transition-delay:.06s}.rise.d2{transition-delay:.13s}.rise.d3{transition-delay:.2s}.rise.d4{transition-delay:.27s}
+
+.canvas{margin-top:28px;width:100%;}
+.canvas svg{width:100%;height:auto;display:block;overflow:visible;}
+.gedge{fill:none;stroke:#C9CDD6;stroke-width:2;transition:stroke .3s ease,stroke-width .3s ease;}
+.gedge.on{stroke:var(--ac);stroke-width:3;}
+.gedge.back{stroke-dasharray:6 5;}
+.gnode rect,.gnode circle{fill:var(--panel);stroke:var(--line-hi);stroke-width:1.6;transition:all .3s ease;}
+.gnode text{font-family:var(--mono);font-size:13px;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;transition:fill .3s ease;}
+.gnode .sub{font-size:10.5px;fill:var(--muted-dim);}
+.gnode.on rect,.gnode.on circle{stroke:var(--ac);stroke-width:2.6;fill:color-mix(in srgb,var(--ac) 8%,var(--panel));}
+.gnode.on text{fill:var(--ac);font-weight:700;}
+.gnode.on .sub{fill:var(--ac);opacity:.75;}
+.gnode.bad rect,.gnode.bad circle{stroke:var(--bad);stroke-width:2.6;fill:rgba(220,38,38,.06);}
+.gnode.bad text{fill:var(--bad);font-weight:700;}
+.gnode.ok rect,.gnode.ok circle{stroke:var(--good);stroke-width:2.6;fill:rgba(14,159,110,.07);}
+.gnode.ok text{fill:var(--good);font-weight:700;}
+.gnode.frozen rect{stroke:var(--warn);stroke-width:3;fill:rgba(217,119,6,.1);}
+.gnode.frozen text{fill:#92400E;font-weight:700;}
+.elabel{font-family:var(--mono);font-size:10px;fill:var(--muted-dim);text-anchor:middle;}
+.elabel.hot{fill:var(--ac);font-weight:700;}
+.pulse{fill:var(--ac);filter:drop-shadow(0 0 7px color-mix(in srgb,var(--ac) 75%,transparent));}
+/* the frozen ring that throbs on the paused node */
+.freeze-ring{fill:none;stroke:var(--warn);stroke-width:2.5;opacity:0;}
+.freeze-ring.on{opacity:1;animation:ring 1.5s ease-out infinite;}
+@keyframes ring{0%{transform:scale(.98);opacity:.85}100%{transform:scale(1.06);opacity:0}}
+
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:22px;}
+.pbtn{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 16px;border-radius:22px;border:1px solid var(--line-hi);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s;}
+.pbtn:hover:not(:disabled){border-color:var(--ac);color:var(--ac);transform:translateY(-1px);}
+.pbtn.on{background:var(--ac);border-color:var(--ac);color:#fff;}
+.pbtn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.pbtn.yes{border-color:var(--good);color:#0A7A54;}
+.pbtn.yes:hover:not(:disabled){background:var(--good);color:#fff;border-color:var(--good);}
+.pbtn.no{border-color:var(--bad);color:#B91C1C;}
+.pbtn.no:hover:not(:disabled){background:var(--bad);color:#fff;border-color:var(--bad);}
+.readout{font-family:var(--mono);font-size:12.5px;color:var(--ink);padding:9px 15px;border-radius:22px;background:var(--panel-hi);border:1px solid var(--line-hi);min-height:38px;display:inline-flex;align-items:center;gap:8px;transition:all .25s;}
+.readout .rdot{width:7px;height:7px;border-radius:50%;background:var(--ac);flex-shrink:0;}
+.readout.ok{border-color:var(--good);background:rgba(14,159,110,.07);color:#0A7A54;}
+.readout.ok .rdot{background:var(--good);}
+.readout.bad{border-color:var(--bad);background:rgba(220,38,38,.06);color:#B91C1C;}
+.readout.bad .rdot{background:var(--bad);}
+.readout.warn{border-color:var(--warn);background:rgba(217,119,6,.09);color:#92400E;}
+.readout.warn .rdot{background:var(--warn);}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:36px;}
+@media(max-width:820px){.tiles{grid-template-columns:1fr 1fr;}}
+.tile{padding:17px 18px;border-radius:12px;border:1px solid var(--line);background:var(--panel);box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.tile .tn{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1;color:var(--ac);}
+.tile .tl{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:8px;}
+
+/* ===== REVIEW CARD — the payload a human sees ===== */
+.review{border-radius:14px;border:2px solid var(--warn);background:#fff;overflow:hidden;box-shadow:0 8px 28px rgba(217,119,6,.16);max-width:520px;}
+.review-hd{background:rgba(217,119,6,.11);padding:12px 18px;border-bottom:1px solid rgba(217,119,6,.3);display:flex;align-items:center;gap:9px;}
+.review-hd .pz{width:9px;height:9px;border-radius:50%;background:var(--warn);animation:blink 1.2s ease-in-out infinite;}
+.review-hd span{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#92400E;}
+.review-body{padding:16px 18px;display:flex;flex-direction:column;gap:9px;}
+.rrow{display:flex;gap:12px;font-family:var(--mono);font-size:12.5px;line-height:1.5;}
+.rrow .rk{color:var(--muted-dim);width:62px;flex-shrink:0;text-align:right;}
+.rrow .rv{color:var(--ink);}
+.review-ft{padding:12px 18px;border-top:1px solid var(--line);background:var(--panel-hi);font-family:var(--mono);font-size:11px;color:var(--muted);}
+.review.settled{border-color:var(--line-hi);box-shadow:0 2px 10px rgba(22,26,32,.06);}
+.review.settled .review-hd{background:var(--panel-hi);border-bottom-color:var(--line-hi);}
+.review.settled .review-hd .pz{animation:none;background:var(--muted-dim);}
+.review.settled .review-hd span{color:var(--muted);}
+
+.pairgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-top:28px;}
+@media(max-width:860px){.pairgrid{grid-template-columns:1fr;}}
+
+/* ===== OUTCOME PANEL ===== */
+.outcome{border-radius:12px;border:1px solid var(--line-hi);background:var(--panel);padding:18px 20px;min-height:180px;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.outcome.y{border-color:var(--good);background:rgba(14,159,110,.05);}
+.outcome.n{border-color:var(--bad);background:rgba(220,38,38,.045);}
+.outcome .oc-t{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--muted-dim);margin-bottom:12px;}
+.outcome.y .oc-t{color:#0A7A54;}
+.outcome.n .oc-t{color:#B91C1C;}
+.outcome .oc-big{font-size:19px;font-weight:800;line-height:1.3;margin-bottom:12px;}
+.mstack{display:flex;flex-direction:column;gap:7px;}
+.mrow{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:8px;background:var(--panel-hi);border:1px solid var(--line-hi);opacity:0;transform:translateX(-10px);transition:all .4s cubic-bezier(.2,.8,.2,1);}
+.mrow.in{opacity:1;transform:translateX(0);}
+.mrow .mtag{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 7px;border-radius:4px;flex-shrink:0;width:78px;text-align:center;}
+.mrow .mtxt{font-family:var(--mono);font-size:11.5px;color:var(--ink);line-height:1.5;}
+.mrow.human .mtag{background:rgba(20,110,180,.13);color:#0E5486;}
+.mrow.ai .mtag{background:rgba(124,58,237,.13);color:#5B21B6;}
+.mrow.tool .mtag{background:rgba(14,159,110,.13);color:#0A7A54;}
+.mrow.rej .mtag{background:rgba(220,38,38,.13);color:#B91C1C;}
+
+/* ===== FOUR PARTS — clickable ===== */
+.parts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px;}
+@media(max-width:900px){.parts{grid-template-columns:1fr 1fr;}}
+.part{text-align:left;font-family:var(--sans);border-radius:12px;border:1px solid var(--line-hi);background:var(--panel);padding:18px 17px;cursor:pointer;transition:all .18s;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.part:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:0 8px 20px rgba(22,26,32,.09);}
+.part.on{border-color:var(--c);border-width:2px;background:color-mix(in srgb,var(--c) 6%,var(--panel));}
+.part svg{display:block;margin-bottom:11px;}
+.part .p-n{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--c);line-height:1.3;}
+.part .p-r{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45;}
+.breaks{margin-top:16px;border-radius:12px;border:1px solid var(--line-hi);background:var(--panel);padding:18px 20px;display:flex;gap:16px;align-items:flex-start;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.breaks .bx{width:34px;height:34px;border-radius:9px;background:rgba(220,38,38,.1);color:var(--bad);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex-shrink:0;}
+.breaks .bt{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--bad);font-weight:700;}
+.breaks .bd{font-size:14px;color:var(--ink);margin-top:5px;line-height:1.55;}
+
+/* ===== THREAD DRAWERS ===== */
+.drawers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px;}
+@media(max-width:820px){.drawers{grid-template-columns:1fr;}}
+.drw{border:1px solid var(--line-hi);border-radius:12px;background:var(--panel);overflow:hidden;transition:all .25s;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.drw-hd{padding:11px 16px;background:var(--panel-hi);border-bottom:1px solid var(--line-hi);font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;}
+.drw-hd b{color:var(--ink);}
+.drw-body{padding:15px 16px;min-height:150px;display:flex;flex-direction:column;gap:8px;justify-content:center;}
+.drw.paused{border-color:var(--warn);}
+.drw.paused .drw-hd{background:rgba(217,119,6,.1);border-bottom-color:rgba(217,119,6,.3);}
+.drw.sent{border-color:var(--good);}
+.drw.sent .drw-hd{background:rgba(14,159,110,.09);border-bottom-color:rgba(14,159,110,.3);}
+.drw.blocked{border-color:var(--bad);}
+.drw.blocked .drw-hd{background:rgba(220,38,38,.07);border-bottom-color:rgba(220,38,38,.26);}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 11px;border-radius:20px;}
+.pill.w{background:rgba(217,119,6,.12);color:#92400E;}
+.pill.g{background:rgba(14,159,110,.12);color:#0A7A54;}
+.pill.r{background:rgba(220,38,38,.1);color:#B91C1C;}
+.drw-ans{font-size:14px;font-weight:700;padding:12px 14px;border-radius:8px;text-align:center;line-height:1.4;}
+.drw-ans.y{background:rgba(14,159,110,.1);color:#0A7A54;}
+.drw-ans.n{background:rgba(220,38,38,.08);color:#B91C1C;}
+.drw-ans.w{background:rgba(217,119,6,.1);color:#92400E;}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px;}
+@media(max-width:820px){.split{grid-template-columns:1fr;}}
+.sp{border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.sp::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c);}
+.sp .sp-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--c);margin-bottom:12px;}
+.sp .sp-big{font-size:22px;font-weight:800;color:var(--ink);line-height:1.22;}
+.sp .sp-mono{font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:1.85;margin-top:12px;}
+.sp .sp-mono b{color:var(--c);}
+
+.iconrow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px;}
+@media(max-width:900px){.iconrow{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.iconrow{grid-template-columns:1fr;}}
+.ic{padding:18px;border-radius:12px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 3px rgba(22,26,32,.04);}
+.ic svg{display:block;margin-bottom:11px;}
+.ic .ic-t{font-size:14.5px;font-weight:800;color:var(--ink);}
+.ic .ic-s{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.ic .ic-p{font-family:var(--mono);font-size:11px;color:var(--c);margin-top:9px;font-weight:700;}
+
+.quiz{margin-top:32px;max-width:680px;border-radius:12px;background:var(--panel);border:1px solid var(--line-hi);padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(22,26,32,.05);}
+.quiz::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--ac);}
+.quiz-q{font-size:15px;color:var(--ink);font-weight:800;line-height:1.45;margin-bottom:14px;}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;}
+.quiz-opt{text-align:left;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel-hi);border:1px solid var(--line-hi);border-radius:8px;padding:10px 13px;cursor:pointer;transition:all .14s;line-height:1.45;}
+.quiz-opt:hover:not(:disabled){border-color:var(--ac);transform:translateX(3px);}
+.quiz-opt:disabled{cursor:default;}
+.quiz-opt .k{font-family:var(--mono);font-weight:700;color:var(--ac);margin-right:6px;}
+.quiz-opt.correct{border-color:var(--good);background:rgba(14,159,110,.09);}
+.quiz-opt.incorrect{border-color:var(--bad);background:rgba(220,38,38,.08);}
+.quiz-opt.dim{opacity:.4;}
+.quiz-fb{margin-top:13px;padding:11px 14px;border-radius:8px;font-size:12.5px;line-height:1.55;}
+.quiz-fb.ok{background:rgba(14,159,110,.08);border:1px solid rgba(14,159,110,.28);color:#0A7A54;}
+.quiz-fb.no{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.25);color:#B91C1C;}
+
+.hero{border-top:none;}
+.hero h1{background:linear-gradient(92deg,var(--ink) 40%,var(--warn) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.oneline{margin-top:26px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;padding:11px 18px;border-radius:10px;background:color-mix(in srgb,var(--ac) 7%,var(--panel));border:1px solid color-mix(in srgb,var(--ac) 28%,transparent);color:var(--ink);line-height:1.5;}
+.oneline b{color:var(--ac);}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;}}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Slides">
+  <div class="rail-nodes">
+    <div class="rail-track"><div class="rail-fill" id="railFill"></div></div>
+    <button class="rail-node" data-s="s0" style="--ac:var(--warn)"><span class="rail-dot"></span><span class="rail-tip">The Pause</span></button>
+    <button class="rail-node" data-s="s1" style="--ac:var(--bad)"><span class="rail-dot"></span><span class="rail-tip">Free vs Risky</span></button>
+    <button class="rail-node" data-s="s2" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">Four Parts</span></button>
+    <button class="rail-node" data-s="s3" style="--ac:var(--warn)"><span class="rail-dot"></span><span class="rail-tip">Frozen</span></button>
+    <button class="rail-node" data-s="s4" style="--ac:var(--good)"><span class="rail-dot"></span><span class="rail-tip">You Decide</span></button>
+    <button class="rail-node" data-s="s5" style="--ac:var(--amz-purple)"><span class="rail-dot"></span><span class="rail-tip">Two Threads</span></button>
+    <button class="rail-node" data-s="s6" style="--ac:var(--amz-teal)"><span class="rail-dot"></span><span class="rail-tip">Resume ≠ Restart</span></button>
+    <button class="rail-node" data-s="s7" style="--ac:var(--amz-blue)"><span class="rail-dot"></span><span class="rail-tip">In Products</span></button>
+    <button class="rail-node" data-s="s8" style="--ac:#161A20"><span class="rail-dot"></span><span class="rail-tip">Recap</span></button>
+  </div>
+</nav>
+
+<div class="top-badge"><span class="dot"></span>Module 11 · Notebook 02</div>
+
+
+<!-- ══ S0 HERO ══ -->
+<section class="stage hero" id="s0" style="--ac:var(--warn)">
+<div class="wrap">
+  <div class="eyebrow rise">GenAI 2026 · LangGraph</div>
+  <h1 class="rise d1">The graph stops.<br>A human answers.</h1>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 900 220" role="img" aria-label="A script sends the email immediately; a graph freezes and waits for a human">
+      <defs>
+        <marker id="mG" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#C9CDD6"/></marker>
+        <marker id="mO" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#D97706"/></marker>
+        <marker id="mR" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#DC2626"/></marker>
+        <marker id="mV" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#0E9F6E"/></marker>
+      </defs>
+
+      <text x="18" y="26" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;fill:#DC2626;font-weight:700;">PLAIN SCRIPT</text>
+      <path class="gedge" d="M126,62 L190,62" marker-end="url(#mG)"/>
+      <path class="gedge" d="M350,62 L414,62" marker-end="url(#mR)" style="stroke:#DC2626"/>
+      <g class="gnode"><rect x="18" y="40" width="108" height="44" rx="9"/><text x="72" y="62">"fire Bob"</text></g>
+      <g class="gnode"><rect x="190" y="40" width="160" height="44" rx="9"/><text x="270" y="62">send_email()</text></g>
+      <g class="gnode bad"><rect x="414" y="40" width="200" height="44" rx="9"/><text x="514" y="62">already delivered</text></g>
+      <text class="elabel" x="700" y="67" style="fill:#DC2626;font-weight:700;font-size:11px;">nobody could stop it</text>
+
+      <text x="18" y="140" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;fill:#D97706;font-weight:700;">LANGGRAPH</text>
+      <path class="gedge on" d="M126,176 L190,176" marker-end="url(#mO)"/>
+      <path class="gedge on" d="M350,176 L414,176" marker-end="url(#mO)"/>
+      <path class="gedge on" d="M614,164 C660,150 666,132 700,132" marker-end="url(#mV)" style="stroke:#0E9F6E"/>
+      <path class="gedge on" d="M614,188 C660,202 666,214 700,214" marker-end="url(#mR)" style="stroke:#DC2626"/>
+      <g class="gnode"><rect x="18" y="154" width="108" height="44" rx="9"/><text x="72" y="176">"fire Bob"</text></g>
+      <g class="gnode"><rect x="190" y="154" width="160" height="44" rx="9"/><text x="270" y="176">agent</text></g>
+      <g class="gnode frozen"><rect x="414" y="154" width="200" height="44" rx="9"/><text x="514" y="176">⏸ FROZEN</text>
+        <rect class="freeze-ring on" x="414" y="154" width="200" height="44" rx="9" style="transform-origin:514px 176px"/></g>
+      <text x="704" y="136" style="font-family:var(--mono);font-size:12px;fill:#0A7A54;font-weight:700;">you say yes → sent</text>
+      <text x="704" y="218" style="font-family:var(--mono);font-size:12px;fill:#B91C1C;font-weight:700;">you say no → blocked</text>
+    </svg>
+  </div>
+
+  <div class="tiles rise d3">
+    <div class="tile" style="--ac:var(--warn)"><div class="tn">4</div><div class="tl">parts, and a pause needs all four</div></div>
+    <div class="tile" style="--ac:var(--amz-blue)"><div class="tn">1</div><div class="tl">graph, two risk levels</div></div>
+    <div class="tile" style="--ac:var(--amz-purple)"><div class="tn">2</div><div class="tl">threads pause independently</div></div>
+    <div class="tile" style="--ac:var(--good)"><div class="tn">0</div><div class="tl">restarts — it resumes mid-node</div></div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S1 FREE VS RISKY ══ -->
+<section class="stage" id="s1" style="--ac:var(--bad)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 1 · the routing rule</div>
+  <h2 class="rise d1">Weather is free. Email is not.</h2>
+  <p class="cap rise d1">One graph, one router. It reads the <b>tool name</b>, nothing else.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn on" onclick="route(this,'wx')">"weather in Dubai?"</button>
+    <button class="pbtn" onclick="route(this,'mail')">"email Bob he's fired"</button>
+    <button class="pbtn" onclick="route(this,'chat')">"who are you?"</button>
+  </div>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 800 300" id="svgR">
+      <path id="r0" class="gedge" d="M56,140 L100,140" marker-end="url(#mG)"/>
+      <path id="rEnd" class="gedge" d="M250,140 L676,140" marker-end="url(#mG)"/>
+      <path id="rTools" class="gedge" d="M250,124 C300,124 330,66 380,66" marker-end="url(#mG)"/>
+      <path id="rHuman" class="gedge" d="M250,158 C290,158 300,240 340,240" marker-end="url(#mG)"/>
+      <path id="rBack" class="gedge back" d="M380,54 C300,18 190,18 175,112" marker-end="url(#mG)"/>
+      <path id="rApp" class="gedge" d="M570,226 C640,200 640,104 532,74" marker-end="url(#mG)"/>
+      <path id="rRej" class="gedge back" d="M340,256 C238,272 175,222 175,170" marker-end="url(#mG)"/>
+
+      <g class="gnode" id="rn0"><circle cx="34" cy="140" r="22"/><text x="34" y="140" style="font-size:10px">START</text></g>
+      <g class="gnode" id="rn1"><rect x="100" y="114" width="150" height="52" rx="10"/><text x="175" y="132">agent</text><text class="sub" x="175" y="152" id="rlbl">the model</text></g>
+      <g class="gnode" id="rn2"><rect x="380" y="40" width="150" height="52" rx="10"/><text x="455" y="58">tools</text><text class="sub" x="455" y="78">runs for real</text></g>
+      <g class="gnode" id="rn3"><rect x="340" y="214" width="230" height="52" rx="10"/><text x="455" y="232">human_approval</text><text class="sub" x="455" y="252">interrupt()</text>
+        <rect class="freeze-ring" id="rring" x="340" y="214" width="230" height="52" rx="10" style="transform-origin:455px 240px"/></g>
+      <g class="gnode" id="rn4"><circle cx="700" cy="140" r="22"/><text x="700" y="140" style="font-size:10px">END</text></g>
+
+      <text class="elabel" x="430" y="128">no tool asked</text>
+      <text class="elabel" x="316" y="52">SAFE</text>
+      <text class="elabel" x="286" y="206">RISKY</text>
+      <text class="elabel" x="626" y="160">approved</text>
+      <text class="elabel" x="238" y="286">rejected</text>
+      <text class="elabel" x="278" y="14">result</text>
+    </svg>
+  </div>
+
+  <div class="ctrl rise d3"><div class="readout" id="rout"><span class="rdot"></span>Pick a question.</div></div>
+
+  <div class="oneline rise d4">The router is <b>four lines of Python</b>: is there a tool call? is the name in <code>RISKY</code>? That's the whole safety gate.</div>
+</div>
+</section>
+
+
+<!-- ══ S2 FOUR PARTS ══ -->
+<section class="stage" id="s2" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 2 · the anatomy</div>
+  <h2 class="rise d1">Four parts. Remove one, it breaks.</h2>
+  <p class="cap rise d1">Click a part to delete it and see what fails.</p>
+
+  <div class="parts rise d2" id="parts">
+    <button class="part on" style="--c:var(--warn)" onclick="breakPart(this,0)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><rect x="8" y="7" width="5" height="16" rx="1.6" fill="#D97706"/><rect x="17" y="7" width="5" height="16" rx="1.6" fill="#D97706"/></svg>
+      <div class="p-n">interrupt(payload)</div><div class="p-r">Freezes the node. Hands your UI the tool, args and reason.</div>
+    </button>
+    <button class="part" style="--c:var(--amz-blue)" onclick="breakPart(this,1)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><ellipse cx="15" cy="8" rx="10" ry="3.6" fill="none" stroke="#146EB4" stroke-width="2.2"/><path d="M5 8v14c0 2 4.5 3.6 10 3.6s10-1.6 10-3.6V8" fill="none" stroke="#146EB4" stroke-width="2.2"/><path d="M5 15c0 2 4.5 3.6 10 3.6s10-1.6 10-3.6" fill="none" stroke="#146EB4" stroke-width="2.2"/></svg>
+      <div class="p-n">checkpointer</div><div class="p-r">Saves the whiteboard so the pause outlives the process.</div>
+    </button>
+    <button class="part" style="--c:var(--amz-purple)" onclick="breakPart(this,2)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><circle cx="11" cy="15" r="5.5" fill="none" stroke="#7C3AED" stroke-width="2.2"/><path d="M16 15h11M23 15v5" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="p-n">thread_id</div><div class="p-r">The key to that saved whiteboard. Resume must reuse it.</div>
+    </button>
+    <button class="part" style="--c:var(--good)" onclick="breakPart(this,3)">
+      <svg width="30" height="30" viewBox="0 0 30 30"><path d="M6 15h14" stroke="#0E9F6E" stroke-width="2.4" stroke-linecap="round"/><path d="M16 9l6 6-6 6" fill="none" stroke="#0E9F6E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="15" r="2.4" fill="#0E9F6E"/></svg>
+      <div class="p-n">Command(resume=…)</div><div class="p-r">The human's answer. Becomes <code>interrupt()</code>'s return value.</div>
+    </button>
+  </div>
+
+  <div class="breaks rise d3" id="breaks">
+    <div class="bx">✕</div>
+    <div>
+      <div class="bt" id="bkt">without interrupt()</div>
+      <div class="bd" id="bkd">The node runs straight through. The email is already gone before anyone could look at it.</div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-blue)">Module 10's <code>HumanInTheLoopMiddleware</code> is exactly these four, pre-packaged. We build them by hand so we can pause for <b>any</b> reason.</div>
+</div>
+</section>
+
+
+<!-- ══ S3 FROZEN ══ -->
+<section class="stage" id="s3" style="--ac:var(--warn)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 4 · run until it pauses</div>
+  <h2 class="rise d1">This is what "paused" looks like</h2>
+
+  <div class="pairgrid rise d2">
+    <div class="review" id="rev">
+      <div class="review-hd"><span class="pz"></span><span>human review · graph frozen</span></div>
+      <div class="review-body">
+        <div class="rrow"><span class="rk">tool</span><span class="rv">send_email</span></div>
+        <div class="rrow"><span class="rk">to</span><span class="rv">jane@example.com</span></div>
+        <div class="rrow"><span class="rk">subject</span><span class="rv">Meeting confirmed</span></div>
+        <div class="rrow"><span class="rk">body</span><span class="rv">Hi Jane — confirming Tuesday 3pm. See you then.</span></div>
+        <div class="rrow"><span class="rk">reason</span><span class="rv">This tool call needs a human before it runs.</span></div>
+      </div>
+      <div class="review-ft">thread_id: <b>approval-jane</b> &nbsp;·&nbsp; nothing has been sent</div>
+    </div>
+
+    <div>
+      <div class="outcome" style="min-height:0;">
+        <div class="oc-t">what the state says</div>
+        <div class="mstack">
+          <div class="mrow human in"><span class="mtag">next</span><span class="mtxt">('human_approval',) &nbsp;\u2190 we are stopped inside this node</span></div>
+          <div class="mrow ai in"><span class="mtag">last msg</span><span class="mtxt">AIMessage with a send_email tool_call</span></div>
+          <div class="mrow rej in"><span class="mtag">missing</span><span class="mtxt">no ToolMessage yet \u2014 the tool never ran</span></div>
+        </div>
+      </div>
+      <div class="oneline" style="--ac:var(--warn);margin-top:18px;">Three signals, one meaning: the draft exists, <b>the send does not.</b></div>
+    </div>
+  </div>
+
+  <div class="split rise d3">
+    <div class="sp" style="--c:var(--bad)">
+      <div class="sp-tag">what dies with the process</div>
+      <div class="sp-big"><code>input("ok? ")</code></div>
+      <div class="sp-mono">Kill the terminal and the pending decision is <b>gone forever</b>.</div>
+    </div>
+    <div class="sp" style="--c:var(--good)">
+      <div class="sp-tag">what survives it</div>
+      <div class="sp-big">interrupt + checkpointer</div>
+      <div class="sp-mono">The API request ends. A reviewer opens the ticket <b>tomorrow</b>. Same graph continues.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S4 YOU DECIDE ══ -->
+<section class="stage" id="s4" style="--ac:var(--good)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 5 · you are the reviewer</div>
+  <h2 class="rise d1">Press one. Watch the graph obey you.</h2>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn yes" id="btnYes" onclick="decide(true)">✓ Approve — send it</button>
+    <button class="pbtn no" id="btnNo" onclick="decide(false)">✕ Reject — block it</button>
+    <button class="pbtn" onclick="decideReset()">↺ Back to paused</button>
+  </div>
+
+  <div class="pairgrid rise d2">
+    <div>
+      <svg viewBox="0 0 480 260" id="svgD">
+        <path id="d0" class="gedge on" d="M52,60 L96,60" marker-end="url(#mO)"/>
+        <path id="d1" class="gedge on" d="M246,74 C280,110 300,150 320,178" marker-end="url(#mO)"/>
+        <path id="d2" class="gedge" d="M320,178 C300,140 300,100 300,84" marker-end="url(#mG)" style="opacity:0"/>
+        <path id="dApp" class="gedge" d="M436,178 C468,140 460,80 396,64" marker-end="url(#mG)"/>
+        <path id="dRej" class="gedge back" d="M320,204 C220,230 150,180 150,90" marker-end="url(#mG)"/>
+        <g class="gnode" id="dn0"><circle cx="30" cy="60" r="21"/><text x="30" y="60" style="font-size:10px">START</text></g>
+        <g class="gnode on" id="dn1"><rect x="96" y="36" width="150" height="48" rx="10"/><text x="171" y="60">agent</text></g>
+        <g class="gnode" id="dn2"><rect x="300" y="36" width="96" height="48" rx="10"/><text x="348" y="60" style="font-size:12px">tools</text></g>
+        <g class="gnode frozen" id="dn3"><rect x="320" y="178" width="116" height="48" rx="10"/><text x="378" y="202" style="font-size:11px">⏸ approval</text>
+          <rect class="freeze-ring on" id="dring" x="320" y="178" width="116" height="48" rx="10" style="transform-origin:378px 202px"/></g>
+        <text class="elabel" x="470" y="120" id="dlabApp">approved</text>
+        <text class="elabel" x="196" y="238" id="dlabRej">rejected</text>
+      </svg>
+    </div>
+    <div class="outcome" id="oc">
+      <div class="oc-t" id="oct">waiting for you</div>
+      <div class="oc-big" id="ocb">The graph is frozen inside <code>human_approval</code>.</div>
+      <div class="mstack" id="ocm"></div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--good)">Reject does not crash. It writes a <b>ToolMessage</b> saying the tool was blocked, so the model cannot claim it sent the email.</div>
+</div>
+</section>
+
+
+<!-- ══ S5 TWO THREADS ══ -->
+<section class="stage" id="s5" style="--ac:var(--amz-purple)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 5b · isolation</div>
+  <h2 class="rise d1">Approving Jane does not approve Bob</h2>
+  <p class="cap rise d1">Two <code>thread_id</code>s. Two saved whiteboards. Two independent pauses.</p>
+
+  <div class="ctrl rise d2">
+    <button class="pbtn" onclick="thr('jane',true)">Jane · approve</button>
+    <button class="pbtn" onclick="thr('bob',false)">Bob · reject</button>
+    <button class="pbtn" onclick="thrReset()">↺ Both paused</button>
+  </div>
+
+  <div class="drawers rise d2">
+    <div class="drw paused" id="tJane">
+      <div class="drw-hd"><span>thread_id <b>approval-jane</b></span><span id="tJaneS">paused</span></div>
+      <div class="drw-body" id="tJaneB"></div>
+    </div>
+    <div class="drw paused" id="tBob">
+      <div class="drw-hd"><span>thread_id <b>approval-bob</b></span><span id="tBobS">paused</span></div>
+      <div class="drw-body" id="tBobB"></div>
+    </div>
+  </div>
+
+  <div class="oneline rise d4" style="--ac:var(--amz-purple)">Lose the <code>thread_id</code> and you lose the pause. There is <b>no other way back</b> into that frozen node.</div>
+</div>
+</section>
+
+
+<!-- ══ S6 RESUME NOT RESTART ══ -->
+<section class="stage" id="s6" style="--ac:var(--amz-teal)">
+<div class="wrap">
+  <div class="eyebrow rise">The idea people get wrong</div>
+  <h2 class="rise d1">Resume ≠ restart</h2>
+  <p class="cap rise d1">Where does execution pick up after you answer?</p>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 880 260">
+      <text x="18" y="24" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:#DC2626;font-weight:700;">WHAT PEOPLE ASSUME · restart from START</text>
+      <path class="gedge" d="M96,66 L140,66" marker-end="url(#mR)" style="stroke:#DC2626"/>
+      <path class="gedge" d="M290,66 L334,66" marker-end="url(#mR)" style="stroke:#DC2626"/>
+      <path class="gedge" d="M484,66 L528,66" marker-end="url(#mR)" style="stroke:#DC2626"/>
+      <g class="gnode bad"><circle cx="70" cy="66" r="21"/><text x="70" y="66" style="font-size:10px">START</text></g>
+      <g class="gnode bad"><rect x="140" y="42" width="150" height="48" rx="10"/><text x="215" y="66">agent again</text></g>
+      <g class="gnode bad"><rect x="334" y="42" width="150" height="48" rx="10"/><text x="409" y="66">new draft</text></g>
+      <g class="gnode bad"><rect x="528" y="42" width="230" height="48" rx="10"/><text x="643" y="66">approved the wrong text</text></g>
+      <text class="elabel" x="800" y="71" style="fill:#DC2626;font-weight:700;font-size:11px;">✗ unsafe</text>
+
+      <text x="18" y="164" style="font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;fill:#00807A;font-weight:700;">WHAT ACTUALLY HAPPENS · continue inside the node</text>
+      <path class="gedge on" d="M244,206 L296,206" marker-end="url(#mV)" style="stroke:#0E9F6E"/>
+      <path class="gedge on" d="M480,206 L532,206" marker-end="url(#mV)" style="stroke:#0E9F6E"/>
+      <g class="gnode ok"><rect x="18" y="182" width="226" height="48" rx="10"/><text x="131" y="200" style="font-size:12px">interrupt() returns</text><text class="sub" x="131" y="218">{"approved": True}</text></g>
+      <g class="gnode ok"><rect x="296" y="182" width="184" height="48" rx="10"/><text x="388" y="200" style="font-size:12px">same node, next line</text><text class="sub" x="388" y="218">Command(goto="tools")</text></g>
+      <g class="gnode ok"><rect x="532" y="182" width="226" height="48" rx="10"/><text x="645" y="206" style="font-size:12px">the exact draft you saw</text></g>
+      <text class="elabel" x="800" y="211" style="fill:#0E9F6E;font-weight:700;font-size:11px;">✓ safe</text>
+    </svg>
+  </div>
+
+  <div class="quiz rise d3" style="--ac:var(--amz-teal)">
+    <div class="quiz-q">You type <code>no</code>. What happens next?</div>
+    <div class="quiz-opts" id="q1-opts">
+      <button class="quiz-opt" onclick="qz('q1',0,false,'No exception. Rejection is a normal, expected path \u2014 that is why it is a graph edge and not a crash.')"><span class="k">A</span> The graph raises an error and the run fails</button>
+      <button class="quiz-opt" onclick="qz('q1',1,false,'It never returns to START. Re-running the model could produce a completely different email from the one you reviewed.')"><span class="k">B</span> It rewinds to START and asks the model again</button>
+      <button class="quiz-opt" onclick="qz('q1',2,true,'Correct. interrupt() returns your dict, the same node continues, and Command(goto=\"agent\") plus a rejection ToolMessage lets the model tell the user honestly.')"><span class="k">C</span> <code>interrupt()</code> returns <code>{"approved": False}</code> and the same node continues</button>
+    </div>
+    <div class="quiz-fb" id="q1-fb" style="display:none;"></div>
+  </div>
+</div>
+</section>
+
+
+<!-- ══ S7 PRODUCTS ══ -->
+<section class="stage" id="s7" style="--ac:var(--amz-blue)">
+<div class="wrap">
+  <div class="eyebrow rise">Step 7 · where this ships</div>
+  <h2 class="rise d1">Every one of these is the same four parts</h2>
+
+  <div class="iconrow rise d2">
+    <div class="ic" style="--c:var(--amz-orange)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#E67E00" stroke-width="2.2"/><path d="M16 10v7l5 3" fill="none" stroke="#E67E00" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="ic-t">Support</div><div class="ic-s">Refund over $50, "cancel my account".</div>
+      <div class="ic-p">shows: amount · customer · reason</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-green)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><path d="M5 24V14M12 24V8M19 24v-7M26 24v-11" stroke="#067D62" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <div class="ic-t">Banking / trading</div><div class="ic-s">Wire transfer, place an order.</div>
+      <div class="ic-p">shows: destination · size · type YES</div>
+    </div>
+    <div class="ic" style="--c:var(--bad)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><rect x="5" y="8" width="22" height="16" rx="3" fill="none" stroke="#DC2626" stroke-width="2.2"/><path d="M9 14l4 3-4 3" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20h7" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <div class="ic-t">DevOps agent</div><div class="ic-s"><code>kubectl delete</code>, drop a table.</div>
+      <div class="ic-p">shows: the exact command</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-blue)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="17" rx="3" fill="none" stroke="#146EB4" stroke-width="2.2"/><path d="M4 11l12 8 12-8" fill="none" stroke="#146EB4" stroke-width="2.2" stroke-linejoin="round"/></svg>
+      <div class="ic-t">Email / CRM</div><div class="ic-s">Any outbound send. This notebook.</div>
+      <div class="ic-p">shows: to · subject · body</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-teal)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><path d="M16 5l10 4v8c0 6-4.4 9.4-10 11-5.6-1.6-10-5-10-11V9z" fill="none" stroke="#00807A" stroke-width="2.2" stroke-linejoin="round"/><path d="M11 16l4 3.5 6-7" fill="none" stroke="#00807A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="ic-t">Healthcare / legal</div><div class="ic-s">Anything that leaves the building.</div>
+      <div class="ic-p">shows: draft · release or hold</div>
+    </div>
+    <div class="ic" style="--c:var(--amz-purple)">
+      <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="14" cy="14" r="8.5" fill="none" stroke="#7C3AED" stroke-width="2.2"/><path d="M20 20l7 7" stroke="#7C3AED" stroke-width="2.4" stroke-linecap="round"/><path d="M14 10v5" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round"/><circle cx="14" cy="18" r="1.1" fill="#7C3AED"/></svg>
+      <div class="ic-t">Agentic RAG</div><div class="ic-s">Retries exhausted, still ungrounded.</div>
+      <div class="ic-p">next notebook → 03</div>
+    </div>
+  </div>
+
+  <div class="oneline rise d3">Say this in an interview: <b>"Risky tools never run in the same turn. We pause with a payload, store the state under a thread id, and resume from that node when a reviewer decides."</b></div>
+</div>
+</section>
+
+
+<!-- ══ S8 RECAP ══ -->
+<section class="stage" id="s8" style="--ac:#161A20">
+<div class="wrap">
+  <div class="eyebrow rise">Recap</div>
+  <h2 class="rise d1">Four questions you should answer out loud</h2>
+
+  <div class="canvas rise d2">
+    <svg viewBox="0 0 900 200">
+      <path class="gedge on" d="M186,100 L226,100" marker-end="url(#mO)"/>
+      <path class="gedge on" d="M386,100 L426,100" marker-end="url(#mO)"/>
+      <path class="gedge on" d="M586,100 L626,100" marker-end="url(#mO)"/>
+      <g class="gnode on" style="--ac:var(--warn)"><rect x="18" y="70" width="168" height="60" rx="11"/><text x="102" y="92" style="font-size:12px">1 · PAUSE</text><text class="sub" x="102" y="112">interrupt(payload)</text></g>
+      <g class="gnode on" style="--ac:var(--amz-blue)"><rect x="226" y="70" width="160" height="60" rx="11"/><text x="306" y="92" style="font-size:12px">2 · PERSIST</text><text class="sub" x="306" y="112">checkpointer</text></g>
+      <g class="gnode on" style="--ac:var(--amz-purple)"><rect x="426" y="70" width="160" height="60" rx="11"/><text x="506" y="92" style="font-size:12px">3 · ADDRESS</text><text class="sub" x="506" y="112">thread_id</text></g>
+      <g class="gnode on" style="--ac:var(--good)"><rect x="626" y="70" width="196" height="60" rx="11"/><text x="724" y="92" style="font-size:12px">4 · CONTINUE</text><text class="sub" x="724" y="112">Command(resume=…)</text></g>
+    </svg>
+  </div>
+
+  <div class="iconrow rise d3">
+    <div class="ic" style="--c:var(--warn)"><div class="ic-t">What are the four parts?</div><div class="ic-s">Pause, persist, show a payload, resume with an answer.</div></div>
+    <div class="ic" style="--c:var(--amz-purple)"><div class="ic-t">Why the same <code>thread_id</code>?</div><div class="ic-s">It's the key to the saved whiteboard holding the unfinished review.</div></div>
+    <div class="ic" style="--c:var(--bad)"><div class="ic-t">Why doesn't weather pause?</div><div class="ic-s">The router checks the tool name. Only names in <code>RISKY</code> divert.</div></div>
+    <div class="ic" style="--c:var(--good)"><div class="ic-t">What does "no" do?</div><div class="ic-s">Continues inside <code>human_approval</code>. No restart, no crash.</div></div>
+    <div class="ic" style="--c:var(--amz-blue)"><div class="ic-t">Why not <code>input()</code>?</div><div class="ic-s">It dies with the process. A pause must survive a deploy.</div></div>
+    <div class="ic" style="--c:var(--amz-teal)"><div class="ic-t">Next up</div><div class="ic-s">Notebook 03 — a helpdesk team, with this same pause on DB writes.</div></div>
+  </div>
+</div>
+</section>
+
+<script>
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ══ ANIMATION ENGINE (per-canvas run tokens) ══ */
+var GENS = {}, TRAVEL = 300, HOLD = 170;
+function stale(tok){ return !tok || GENS[tok.svg] !== tok.n; }
+function startRun(svgId) {
+  GENS[svgId] = (GENS[svgId] || 0) + 1;
+  var svg = document.getElementById(svgId);
+  if (svg) {
+    svg.querySelectorAll('.gedge').forEach(function(e){ e.classList.remove('on'); });
+    svg.querySelectorAll('.gnode').forEach(function(n){ n.classList.remove('on','bad','ok','frozen'); });
+    svg.querySelectorAll('.freeze-ring').forEach(function(r){ r.classList.remove('on'); });
+    svg.querySelectorAll('.pulse').forEach(function(d){ d.remove(); });
+  }
+  return { svg: svgId, n: GENS[svgId] };
+}
+function travel(pathId, tok, cb) {
+  var p = document.getElementById(pathId);
+  if (!p || stale(tok)) { if (cb) cb(); return; }
+  p.classList.add('on');
+  if (REDUCED) { if (cb) cb(); return; }
+  var svg = p.ownerSVGElement, len = p.getTotalLength();
+  var dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('r','6.5'); dot.setAttribute('class','pulse');
+  svg.appendChild(dot);
+  var t0 = null;
+  function frame(t) {
+    if (stale(tok)) { dot.remove(); return; }
+    if (!t0) t0 = t;
+    var k = Math.min(1, (t - t0) / TRAVEL);
+    var pt = p.getPointAtLength(len * k);
+    dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+    if (k < 1) requestAnimationFrame(frame); else { dot.remove(); if (cb) cb(); }
+  }
+  requestAnimationFrame(frame);
+}
+function lightNode(id, cls) {
+  var n = document.getElementById(id);
+  if (n) { n.classList.remove('on','bad','ok','frozen'); n.classList.add(cls || 'on'); }
+}
+function runSeq(steps, tok, done, i) {
+  i = i || 0;
+  if (stale(tok)) return;
+  if (i >= steps.length) { if (done) done(); return; }
+  var s = steps[i];
+  var go = function() {
+    if (stale(tok)) return;
+    if (s.node) lightNode(s.node, s.cls);
+    if (s.tick) s.tick();
+    setTimeout(function(){ runSeq(steps, tok, done, i + 1); }, REDUCED ? 40 : (s.hold || HOLD));
+  };
+  if (s.edge) travel(s.edge, tok, go); else go();
+}
+function say(id, txt, cls) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'readout' + (cls ? ' ' + cls : '');
+  el.innerHTML = '<span class="rdot"></span>' + txt;
+}
+function pick(btn) {
+  btn.parentNode.querySelectorAll('.pbtn').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function qz(id, idx, ok, why) {
+  document.querySelectorAll('#' + id + '-opts .quiz-opt').forEach(function(o, i) {
+    o.disabled = true;
+    o.classList.add(i === idx ? (ok ? 'correct' : 'incorrect') : 'dim');
+  });
+  var fb = document.getElementById(id + '-fb');
+  fb.className = 'quiz-fb ' + (ok ? 'ok' : 'no');
+  fb.innerHTML = '<b>' + (ok ? '\u2713 ' : '\u2717 ') + '</b>' + why;
+  fb.style.display = 'block';
+}
+function rows(hostId, list) {
+  var host = document.getElementById(hostId);
+  host.innerHTML = '';
+  list.forEach(function(m, i) {
+    var r = document.createElement('div');
+    r.className = 'mrow ' + m[0];
+    r.innerHTML = '<span class="mtag">' + m[1] + '</span><span class="mtxt">' + m[2] + '</span>';
+    host.appendChild(r);
+    setTimeout(function(){ r.classList.add('in'); }, 90 * i + 40);
+  });
+}
+
+/* ══ S1 ROUTING ══ */
+var routes = {
+  wx:   { lbl:'asked get_weather', seq:[{edge:'r0',node:'rn1'},{edge:'rTools',node:'rn2',cls:'ok'},{edge:'rBack',node:'rn1'},{edge:'rEnd',node:'rn4',cls:'ok'}],
+          out:'SAFE \u2014 get_weather ran immediately, no pause', cls:'ok', freeze:false },
+  mail: { lbl:'asked send_email', seq:[{edge:'r0',node:'rn1'},{edge:'rHuman',node:'rn3',cls:'frozen'}],
+          out:'RISKY \u2014 frozen in human_approval. Nothing sent.', cls:'warn', freeze:true },
+  chat: { lbl:'no tool_calls', seq:[{edge:'r0',node:'rn1'},{edge:'rEnd',node:'rn4',cls:'ok'}],
+          out:'no tool asked \u2014 straight to END', cls:'ok', freeze:false }
+};
+function route(btn, key) {
+  pick(btn);
+  var tok = startRun('svgR');
+  var r = routes[key];
+  document.getElementById('rlbl').textContent = 'the model';
+  say('rout', 'running\u2026');
+  lightNode('rn0');
+  var steps = r.seq.map(function(s, i) {
+    return { edge:s.edge, node:s.node, cls:s.cls, hold:280, tick:function(){
+      if (i === 0) document.getElementById('rlbl').textContent = r.lbl;
+    }};
+  });
+  runSeq(steps, tok, function() {
+    say('rout', r.out, r.cls);
+    if (r.freeze) document.getElementById('rring').classList.add('on');
+  });
+}
+route(document.querySelector('#s1 .pbtn'), 'wx');
+
+/* ══ S2 FOUR PARTS ══ */
+var breaksData = [
+  ['without interrupt()','The node runs straight through. The email is already gone before anyone could look at it.'],
+  ['without a checkpointer','There is nothing to come back to. The pause cannot be resumed \u2014 LangGraph raises an error.'],
+  ['without the same thread_id','You resume a different, empty whiteboard. The frozen review is orphaned forever.'],
+  ['without Command(resume=\u2026)','interrupt() never returns a value. The graph sits paused for eternity.']
+];
+function breakPart(btn, i) {
+  document.querySelectorAll('#parts .part').forEach(function(p){ p.classList.remove('on'); });
+  btn.classList.add('on');
+  document.getElementById('bkt').textContent = breaksData[i][0];
+  document.getElementById('bkd').textContent = breaksData[i][1];
+}
+
+/* ══ S4 DECIDE ══ */
+function decideReset() {
+  startRun('svgD');
+  ['d0','d1'].forEach(function(id){ document.getElementById(id).classList.add('on'); });
+  lightNode('dn1'); lightNode('dn3','frozen');
+  document.getElementById('dring').classList.add('on');
+  document.getElementById('btnYes').disabled = false;
+  document.getElementById('btnNo').disabled = false;
+  var oc = document.getElementById('oc');
+  oc.className = 'outcome';
+  document.getElementById('oct').textContent = 'waiting for you';
+  document.getElementById('ocb').innerHTML = 'The graph is frozen inside <code>human_approval</code>.';
+  document.getElementById('ocm').innerHTML = '';
+}
+function decide(yes) {
+  var tok = startRun('svgD');
+  document.getElementById('d0').classList.add('on');
+  document.getElementById('d1').classList.add('on');
+  lightNode('dn1'); lightNode('dn3', yes ? 'ok' : 'bad');
+  document.getElementById('btnYes').disabled = true;
+  document.getElementById('btnNo').disabled = true;
+  var oc = document.getElementById('oc');
+  oc.className = 'outcome ' + (yes ? 'y' : 'n');
+  document.getElementById('oct').textContent = yes ? 'you approved' : 'you rejected';
+  if (yes) {
+    document.getElementById('ocb').innerHTML = 'Command(goto=<b>"tools"</b>) \u2014 the email actually sends.';
+    travel('dApp', tok, function(){ lightNode('dn2','ok'); });
+    rows('ocm', [
+      ['ai','ai · asks','send_email(to="jane@\u2026", subject="Meeting confirmed")'],
+      ['tool','tool · ran','"Email sent to jane@example.com"'],
+      ['ai','ai · final','"Done \u2014 I sent Jane the confirmation."']
+    ]);
+  } else {
+    document.getElementById('ocb').innerHTML = 'Command(goto=<b>"agent"</b>) \u2014 the tool never runs.';
+    travel('dRej', tok, function(){ lightNode('dn1'); });
+    rows('ocm', [
+      ['ai','ai · asks','send_email(to="jane@\u2026", subject="Meeting confirmed")'],
+      ['rej','tool · blocked','"Rejected by a human reviewer. Do not claim the email was sent."'],
+      ['ai','ai · final','"I drafted it but a reviewer blocked the send."']
+    ]);
+  }
+}
+decideReset();
+
+/* ══ S5 THREADS ══ */
+var thrState = { jane:null, bob:null };
+var thrCopy = {
+  jane: { to:'jane@example.com', subj:'Meeting confirmed' },
+  bob:  { to:'bob@example.com',  subj:"You're fired" }
+};
+function thrRender() {
+  ['jane','bob'].forEach(function(k) {
+    var box = document.getElementById('t' + (k === 'jane' ? 'Jane' : 'Bob'));
+    var body = document.getElementById('t' + (k === 'jane' ? 'Jane' : 'Bob') + 'B');
+    var stat = document.getElementById('t' + (k === 'jane' ? 'Jane' : 'Bob') + 'S');
+    var v = thrState[k], c = thrCopy[k];
+    box.className = 'drw ' + (v === null ? 'paused' : (v ? 'sent' : 'blocked'));
+    stat.textContent = v === null ? 'paused' : (v ? 'approved' : 'rejected');
+    var pill = v === null ? '<span class="pill w">\u23f8 waiting for a human</span>'
+             : v ? '<span class="pill g">\u2713 you approved</span>'
+                 : '<span class="pill r">\u2715 you rejected</span>';
+    var ans = v === null ? '<div class="drw-ans w">nothing sent yet</div>'
+            : v ? '<div class="drw-ans y">Email sent to ' + c.to + '</div>'
+                : '<div class="drw-ans n">Blocked \u2014 nothing left the building</div>';
+    body.innerHTML =
+      '<div style="display:flex;justify-content:center;">' + pill + '</div>' +
+      '<div class="mrow ai in" style="margin-top:6px;"><span class="mtag">draft</span><span class="mtxt">' + c.subj + ' \u2192 ' + c.to + '</span></div>' +
+      ans;
+  });
+}
+function thr(who, yes) { thrState[who] = yes; thrRender(); }
+function thrReset() { thrState = { jane:null, bob:null }; thrRender(); }
+thrReset();
+
+/* ══ RAIL + RISE ══ */
+var stages = document.querySelectorAll('.stage');
+var railNodes = document.querySelectorAll('.rail-node');
+var railFill = document.getElementById('railFill');
+function updateRail() {
+  var best = 0, bestVis = -1;
+  stages.forEach(function(s, i) {
+    var r = s.getBoundingClientRect();
+    var vis = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+    if (vis > bestVis) { bestVis = vis; best = i; }
+  });
+  railNodes.forEach(function(n, i){ n.classList.toggle('active', i === best); });
+  if (railFill) railFill.style.height = (best / (stages.length - 1)) * 100 + '%';
+}
+railNodes.forEach(function(n) {
+  n.addEventListener('click', function() {
+    var t = document.getElementById(n.dataset.s);
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+var io = new IntersectionObserver(function(es) {
+  es.forEach(function(e){ if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.rise').forEach(function(el){ io.observe(el); });
+addEventListener('scroll', updateRail, { passive: true });
+updateRail();
+</script>
+</body>
+</html>

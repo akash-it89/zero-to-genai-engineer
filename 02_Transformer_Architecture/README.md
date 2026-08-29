@@ -1,10 +1,31 @@
+<div align="center">
+
 # Session 02 — Transformer Architecture
+
+**M00 · Foundations**
+
+*Self-attention from scratch — then train English → Italian on the original Transformer.*
+
+</div>
 
 > **The big question:** How does the same word mean different things in different sentences — and how does a model know the difference?
 
 In Session 01, every embedding method gave each word one fixed vector. `"bank"` (river) and `"bank"` (finance) got the same representation. The Transformer solves this with **self-attention** — a mechanism that builds a new, context-aware vector for each word by looking at every other word in the sentence simultaneously.
 
 This session builds an Encoder-Decoder Transformer from scratch in PyTorch, following the original *Attention is All You Need* paper. By the end, you will have trained a working English → Italian translation model.
+
+## Start here
+
+Open [`notebooks/01_transformer_from_scratch.ipynb`](notebooks/01_transformer_from_scratch.ipynb) (Colab Pro + GPU recommended). Paper: [`papers/Attention_Is_All_You_Need.pdf`](papers/Attention_Is_All_You_Need.pdf).
+
+```text
+02_Transformer_Architecture/
+├── README.md
+├── notebooks/
+├── papers/
+├── slides/
+└── assets/          ← animation + spreadsheet
+```
 
 ---
 
@@ -88,9 +109,7 @@ That gap — **how to use a pre-trained LLM efficiently** — is what the next s
 
 ## Slides
 
-| File | Contents |
-|---|---|
-| [Transformers.pptx.pdf](slides/Transformers.pptx.pdf) | Full Transformer architecture walkthrough — attention, encoder-decoder, positional encoding |
+Class slides: [Transformer architecture](https://nursnaaz.github.io/zero-to-genai-engineer/02_Transformer_Architecture/slides/Transformers.pptx.pdf). PDF also lives in [`slides/`](slides/).
 
 ---
 
@@ -111,6 +130,7 @@ Before or after running the notebook, go through these interactive tutorials. Ea
 | [Self-Attention Mechanism](https://nursnaaz.github.io/tutorial/self-attention) | How Query, Key, and Value work — step-by-step using "I bought apple to eat" | Beginner | 30 min |
 | [Positional Encoding](https://nursnaaz.github.io/tutorial/positional-encoding) | Why self-attention is blind to word order, and how sinusoidal encoding solves it — with full calculations from the original paper | Beginner | 35 min |
 | [Multi-Head Attention](https://nursnaaz.github.io/tutorial/multi-head-attention) | How 3 attention heads run in parallel — semantic, syntactic, and purpose-driven relationships computed step-by-step | Intermediate | 60 min |
+| [Transformer implementation](https://nursnaaz.github.io/tutorial/transformer-code) | Keras/TensorFlow walkthrough of the same stack you build in PyTorch here | Intermediate | 60 min |
 
 These tutorials are interactive — you can run the calculations yourself in the browser. Use them to verify your understanding before writing the A1 article.
 
@@ -156,3 +176,7 @@ pip install torch transformers tokenizers datasets tqdm
 ```
 
 For Colab: click the **"Open in Colab"** badge above, upgrade to **Colab Pro**, and select `Runtime → Change runtime type → H100 GPU`.
+
+---
+
+**Course nav:** [← S01 Text to Numbers](../01_Text_to_Numbers/) · [All sessions](../README.md) · [S03 GPT Evolution →](../03_GPT_Evolution_and_Alignment/)

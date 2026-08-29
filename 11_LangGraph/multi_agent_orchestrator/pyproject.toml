@@ -1,0 +1,6 @@
+[project]
+name = "helpdesk-orchestrator"
+version = "0.1.0"
+description = "Session 11 Day 3 hierarchical helpdesk — LangGraph Studio entry"
+requires-python = ">=3.11"
+dependencies = []

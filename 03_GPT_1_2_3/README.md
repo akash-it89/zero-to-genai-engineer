@@ -19,3 +19,5 @@ Go to [`03_GPT_Evolution_and_Alignment/`](../03_GPT_Evolution_and_Alignment/) fo
 - Interactive slide deck
 
 This folder is kept for historical reference only.
+
+**Course nav:** Use **[S03 — GPT Evolution & Alignment](../03_GPT_Evolution_and_Alignment/)** instead.

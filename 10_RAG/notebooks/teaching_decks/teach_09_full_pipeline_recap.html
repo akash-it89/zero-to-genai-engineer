@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Path · The Full RAG Pipeline Recap</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0A0D13;
+    --panel:#10141C;
+    --panel-hi:#161B26;
+    --ink:#EAF0F5;
+    --muted:#8791A3;
+    --muted-dim:#5B6577;
+    --line:rgba(234,240,245,0.10);
+    --line-hi:rgba(234,240,245,0.20);
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --good:#34D399;
+    --bad:#FF5C7A;
+
+    /* pipeline stage spectrum — hue advances with pipeline order, like a spectrometer */
+    --c1:#FF7A45; /* 01 why rag        */
+    --c2:#FF5C7A; /* 02 chunking       */
+    --c3:#C77DFF; /* 03 frameworks     */
+    --c4:#5AC8FA; /* 04 embeddings     */
+    --c5:#34D399; /* 05 vector db      */
+    --c6:#FFD166; /* 06 sparse / bm25  */
+    --c7:#8BE0D6; /* 07 hybrid (blend) */
+    --c8:#F72585; /* 08 reranking      */
+  }
+  :root[data-theme="light"]{ color-scheme: light; }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } * { animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; } }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 620px at 14% -8%, rgba(255,122,69,0.14), transparent 60%),
+      radial-gradient(900px 560px at 88% 8%, rgba(90,200,250,0.10), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:rgba(255,122,69,0.35); }
+
+  a{ color:inherit; }
+
+  /* ================= CIRCUIT RAIL (left nav) ================= */
+  .rail{
+    position:fixed;
+    left:22px; top:0; bottom:0;
+    width:34px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0;
+    z-index:60;
+  }
+  .rail-line{
+    position:absolute;
+    left:50%; top:8%; bottom:8%;
+    width:2px;
+    transform:translateX(-50%);
+    background:linear-gradient(to bottom, var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c8));
+    opacity:0.22;
+  }
+  .rail-fill{
+    position:absolute; left:0; top:0; width:100%; height:0%;
+    background:linear-gradient(to bottom, var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c8));
+    box-shadow:0 0 10px 1px rgba(255,255,255,0.25);
+    transition:height 0.25s linear;
+  }
+  .rail-nodes{ position:relative; display:flex; flex-direction:column; justify-content:space-between; height:84%; z-index:2; }
+  .rail-node{
+    appearance:none; border:none; background:none; cursor:pointer;
+    width:34px; height:22px; display:flex; align-items:center; justify-content:center;
+    position:relative; padding:0;
+  }
+  .rail-dot{
+    width:9px; height:9px; border-radius:50%;
+    background:#232936; border:1.5px solid var(--line-hi);
+    transition:all .25s ease;
+  }
+  .rail-node.active .rail-dot{
+    background:var(--ac,#fff);
+    border-color:var(--ac,#fff);
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--ac,#fff) 25%, transparent), 0 0 14px var(--ac,#fff);
+    transform:scale(1.25);
+  }
+  .rail-tip{
+    position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;
+    white-space:nowrap; color:var(--muted); background:var(--panel-hi);
+    border:1px solid var(--line); padding:4px 8px; border-radius:3px;
+    opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
+    transform:translateY(-50%) translateX(-6px);
+  }
+  .rail-node:hover .rail-tip{ opacity:1; transform:translateY(-50%) translateX(0); }
+  @media (max-width:900px){ .rail{ display:none; } }
+
+  /* ================= SCORE METER (fixed top-right) ================= */
+  .meter{
+    position:fixed; top:18px; right:18px; z-index:60;
+    font-family:var(--mono);
+    background:rgba(16,20,28,0.82);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line-hi);
+    border-radius:8px;
+    padding:9px 14px;
+    display:flex; flex-direction:column; gap:6px;
+    min-width:158px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .meter-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .meter-lbl{ font-size:9px; letter-spacing:.14em; color:var(--muted-dim); text-transform:uppercase; }
+  .meter-val{ font-size:13px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .meter-bar{ height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden; }
+  .meter-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--c1),var(--c4),var(--c8)); transition:width .5s cubic-bezier(.2,.8,.2,1); }
+  @media (max-width:640px){ .meter{ min-width:120px; padding:7px 10px; top:10px; right:10px; } }
+
+  /* ================= STAGE (section) base ================= */
+  .stage{
+    min-height:100vh;
+    width:100%;
+    padding:12vh 8vw 12vh calc(8vw + 20px);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+    border-top:1px solid var(--line);
+  }
+  @media (max-width:900px){ .stage{ padding:9vh 6vw; } }
+  .wrap{ max-width:980px; margin:0 auto; width:100%; }
+
+  .eyebrow{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+    font-weight:600; display:inline-flex; align-items:center; gap:9px; margin:0 0 16px 0;
+    color:var(--ac,#fff);
+  }
+  .eyebrow::before{ content:""; width:20px; height:2px; background:var(--ac,#fff); display:inline-block; }
+
+  h1,h2{ font-family:var(--sans); text-wrap:balance; margin:0; color:#fff; letter-spacing:-0.01em; }
+  h1{ font-size:clamp(32px,5vw,60px); font-weight:800; line-height:1.06; }
+  h2{ font-size:clamp(26px,3.4vw,42px); font-weight:800; line-height:1.12; }
+
+  .sub{ font-size:clamp(15px,1.6vw,18px); color:var(--muted); margin:16px 0 0 0; max-width:640px; line-height:1.6; }
+
+  /* reveal-on-scroll */
+  .rise{ opacity:0; transform:translateY(22px); transition:opacity .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1); }
+  .rise.in{ opacity:1; transform:translateY(0); }
+  .rise.d1{ transition-delay:.06s; } .rise.d2{ transition-delay:.14s; } .rise.d3{ transition-delay:.22s; } .rise.d4{ transition-delay:.30s; }
+
+  /* card */
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+
+  /* chip */
+  .chip{
+    font-family:var(--mono); font-size:12px; padding:6px 12px; border-radius:5px;
+    border:1px solid var(--line); background:var(--panel); color:var(--muted);
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .chip-row{ display:flex; gap:9px; flex-wrap:wrap; margin-top:18px; }
+
+  /* ================= HERO (S0) ================= */
+  .hero{ align-items:flex-start; border-top:none; }
+  .hero-kicker{ font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#FF9E6D; margin-bottom:18px; }
+  .hero h1{ background:linear-gradient(92deg,#fff 40%, #FFB98A 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero .sub{ max-width:600px; font-size:18px; }
+
+  .signal-path{ position:relative; width:100%; max-width:820px; margin-top:56px; height:110px; }
+  .sp-line{ position:absolute; top:44px; left:0; right:0; height:2px; background:repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0 8px, transparent 8px 16px); }
+  .sp-packet{
+    position:absolute; top:38px; width:12px; height:12px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fff, #FF7A45);
+    box-shadow:0 0 16px 3px rgba(255,122,69,0.7);
+    animation:travel 6s linear infinite;
+  }
+  @keyframes travel{
+    0%{ left:0%; }
+    100%{ left:calc(100% - 12px); }
+  }
+  .sp-stops{ position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; }
+  .sp-stop{ display:flex; flex-direction:column; align-items:center; gap:8px; width:12%; }
+  .sp-node{ width:9px; height:9px; border-radius:50%; background:#2A303C; border:1.5px solid var(--line-hi); animation:pulseNode 6s linear infinite; }
+  .sp-stop:nth-child(1) .sp-node{ animation-delay:0s; }
+  .sp-stop:nth-child(2) .sp-node{ animation-delay:0.75s; }
+  .sp-stop:nth-child(3) .sp-node{ animation-delay:1.5s; }
+  .sp-stop:nth-child(4) .sp-node{ animation-delay:2.25s; }
+  .sp-stop:nth-child(5) .sp-node{ animation-delay:3.0s; }
+  .sp-stop:nth-child(6) .sp-node{ animation-delay:3.75s; }
+  .sp-stop:nth-child(7) .sp-node{ animation-delay:4.5s; }
+  .sp-stop:nth-child(8) .sp-node{ animation-delay:5.25s; }
+  @keyframes pulseNode{ 0%,88%,100%{ background:#2A303C; box-shadow:none; transform:scale(1);} 4%{ background:#FF7A45; box-shadow:0 0 12px 3px rgba(255,122,69,0.8); transform:scale(1.5);} 12%{ background:#2A303C; box-shadow:none; transform:scale(1);} }
+  .sp-lbl{ font-family:var(--mono); font-size:9.5px; color:var(--muted-dim); text-align:center; letter-spacing:.02em; }
+
+  .scroll-cta{
+    margin-top:64px; display:inline-flex; align-items:center; gap:10px;
+    font-family:var(--mono); font-size:13px; color:var(--muted); letter-spacing:.05em;
+  }
+  .scroll-cta .chev{ animation:bounce 1.8s ease-in-out infinite; color:#FF9E6D; }
+  @keyframes bounce{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(6px);} }
+
+  /* ================= generic accent glow per stage ================= */
+  .stage[style*="--ac"] .card:hover{ border-color:color-mix(in srgb, var(--ac) 45%, var(--line-hi)); }
+  .glow-rule{ height:2px; width:56px; background:var(--ac,#fff); border-radius:2px; margin:22px 0 0; box-shadow:0 0 10px var(--ac,transparent); }
+
+  /* ================= S1 — closed vs open book ================= */
+  .book-row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:28px; }
+  @media (max-width:760px){ .book-row{ grid-template-columns:1fr; } }
+  .book-card{ padding:20px 22px; }
+  .book-card .tag{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:4px; display:inline-block; margin-bottom:12px; }
+  .book-card.closed{ border-top:3px solid var(--bad); }
+  .book-card.closed .tag{ color:var(--bad); background:rgba(255,92,122,0.12); }
+  .book-card.open{ border-top:3px solid var(--good); }
+  .book-card.open .tag{ color:var(--good); background:rgba(52,211,153,0.12); }
+  .book-card .q{ font-size:13.5px; color:var(--muted); margin-bottom:8px; }
+  .book-card .a{ font-family:var(--mono); font-size:14px; line-height:1.6; color:var(--ink); }
+  .fail-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
+  .fail-chip{ font-family:var(--mono); font-size:12px; padding:7px 13px; border-radius:5px; border:1px solid rgba(255,92,122,0.3); background:rgba(255,92,122,0.08); color:#FF9EB1; }
+
+  /* ================= S2 — chunking strategies + size tradeoff ================= */
+  .strat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:26px; }
+  @media (max-width:760px){ .strat-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:480px){ .strat-grid{ grid-template-columns:1fr; } }
+  .strat{ padding:14px 16px; }
+  .strat .n{ font-family:var(--mono); font-size:11px; color:var(--ac); font-weight:700; }
+  .strat .t{ font-size:14.5px; font-weight:700; color:#fff; margin-top:4px; }
+  .strat .d{ font-size:12.5px; color:var(--muted); margin-top:5px; line-height:1.5; }
+
+  .size-slider{ margin-top:30px; display:flex; gap:16px; align-items:stretch; flex-wrap:wrap; }
+  .size-box{ flex:1; min-width:220px; padding:18px 20px; border-radius:8px; }
+  .size-box.small{ background:rgba(90,200,250,0.06); border:1px solid rgba(90,200,250,0.25); }
+  .size-box.large{ background:rgba(255,92,122,0.06); border:1px solid rgba(255,92,122,0.25); }
+  .size-box .k{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; }
+  .size-box.small .k{ color:#5AC8FA; }
+  .size-box.large .k{ color:#FF5C7A; }
+  .size-box .v{ font-size:13.5px; color:var(--muted); margin-top:8px; line-height:1.55; }
+  .size-bar{ height:8px; border-radius:4px; margin-top:14px; }
+  .size-box.small .size-bar{ width:22%; background:#5AC8FA; }
+  .size-box.large .size-bar{ width:88%; background:#FF5C7A; }
+
+  /* ================= S3 — framework compare ================= */
+  .fw-row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:26px; }
+  @media (max-width:760px){ .fw-row{ grid-template-columns:1fr; } }
+  .fw-card{ padding:20px 22px; }
+  .fw-card .name{ font-weight:800; font-size:18px; color:#fff; }
+  .fw-card .role{ font-family:var(--mono); font-size:11.5px; color:var(--muted-dim); margin-top:2px; }
+  .fw-card ul{ margin:14px 0 0; padding-left:18px; color:var(--muted); font-size:13.5px; line-height:1.8; }
+  .callout{ margin-top:22px; padding:16px 20px; border-radius:7px; background:rgba(199,125,255,0.08); border-left:3px solid var(--ac); font-size:14px; color:var(--ink); line-height:1.6; max-width:680px; }
+  .callout b{ color:var(--ac); }
+
+  /* ================= S4 — embeddings scatter ================= */
+  .embed-grid{ display:grid; grid-template-columns:1fr 1fr; gap:34px; margin-top:28px; align-items:center; }
+  @media (max-width:820px){ .embed-grid{ grid-template-columns:1fr; } }
+  .rule-box{ margin-top:24px; padding:18px 22px; border-radius:8px; background:var(--panel-hi); border-left:4px solid var(--ac); max-width:640px; }
+  .rule-box .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--ac); text-transform:uppercase; font-weight:700; }
+  .rule-box .v{ font-size:15.5px; margin-top:7px; line-height:1.55; color:var(--ink); }
+  .broken-row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .broken-chip{ font-family:var(--mono); font-size:11.5px; padding:6px 11px; border-radius:5px; border:1px solid rgba(255,92,122,0.3); background:rgba(255,92,122,0.08); color:#FF9EB1; }
+
+  /* ================= S5 — vector db three-step + curve ================= */
+  .three-step{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:26px; }
+  @media (max-width:760px){ .three-step{ grid-template-columns:1fr; } }
+  .three-step .box{ padding:20px; position:relative; }
+  .three-step .box:nth-child(1){ border-top:3px solid var(--muted-dim); }
+  .three-step .box:nth-child(2){ border-top:3px solid var(--c4); }
+  .three-step .box:nth-child(3){ border-top:3px solid var(--ac); }
+  .three-step .box .name{ font-weight:800; font-size:17px; color:#fff; }
+  .three-step .box .role{ font-size:11.5px; color:var(--muted-dim); font-family:var(--mono); margin-top:2px; }
+  .three-step .box .d{ font-size:13px; color:var(--muted); margin-top:10px; line-height:1.55; }
+  .curve-wrap{ margin-top:30px; display:flex; gap:30px; align-items:flex-end; flex-wrap:wrap; }
+  .curve-legend{ font-size:13.5px; color:var(--muted); max-width:300px; line-height:1.6; }
+  .curve-legend b{ color:#fff; }
+
+  /* ================= S6 — bm25 saturation ================= */
+  .sat-wrap{ display:flex; gap:32px; margin-top:28px; flex-wrap:wrap; align-items:center; }
+  .sat-legend{ font-size:13.5px; color:var(--muted); max-width:300px; line-height:1.6; }
+  .sat-legend b{ color:#fff; }
+
+  /* ================= S7 — hybrid blind spots ================= */
+  .blind-row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:26px; }
+  @media (max-width:760px){ .blind-row{ grid-template-columns:1fr; } }
+  .blind-card{ padding:20px 22px; }
+  .blind-card .tag{ font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding:3px 9px; border-radius:4px; display:inline-block; margin-bottom:10px; }
+  .blind-card.sparse .tag{ color:#FFD166; background:rgba(255,209,102,0.12); }
+  .blind-card.dense .tag{ color:#5AC8FA; background:rgba(90,200,250,0.12); }
+  .blind-card .d{ font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:6px; }
+  .fusion-note{ margin-top:22px; padding:16px 20px; border-radius:7px; background:linear-gradient(90deg, rgba(255,209,102,0.10), rgba(90,200,250,0.10)); border-left:3px solid var(--ac); font-size:14px; color:var(--ink); max-width:700px; line-height:1.6; }
+
+  /* ================= S8 — reranking ================= */
+  .rerank-row{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:26px; }
+  @media (max-width:760px){ .rerank-row{ grid-template-columns:1fr; } }
+  .rerank-card{ padding:20px 22px; }
+  .rerank-card .name{ font-weight:800; font-size:17px; color:#fff; }
+  .rerank-card .speed{ font-family:var(--mono); font-size:11px; margin-top:3px; }
+  .rerank-card.bi .speed{ color:#5AC8FA; }
+  .rerank-card.cross .speed{ color:var(--ac); }
+  .rerank-card .d{ font-size:13.5px; color:var(--muted); margin-top:10px; line-height:1.6; }
+  .vendor-row{ display:flex; gap:9px; flex-wrap:wrap; margin-top:22px; }
+  .vendor{ font-family:var(--mono); font-size:11.5px; padding:6px 12px; border-radius:5px; border:1px solid var(--line); background:var(--panel); color:var(--muted); }
+
+  /* ================= INTERACTIVE VIZ (per-station) ================= */
+  .viz-card{
+    margin-top:26px; max-width:700px; padding:22px 24px; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px; position:relative; overflow:hidden;
+  }
+  .viz-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--ac,#fff); opacity:0.7; }
+  .viz-hd{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ac); font-weight:700; margin-bottom:6px; }
+  .viz-note{ font-size:12.5px; color:var(--muted); margin:0 0 16px; line-height:1.5; }
+
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:2px; background:var(--line-hi); outline:none; cursor:pointer; margin:10px 0; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:17px; height:17px; border-radius:50%; background:var(--ac,#fff); cursor:pointer; box-shadow:0 0 10px var(--ac,#fff); border:2px solid #0A0D13; }
+  input[type=range]::-moz-range-thumb{ width:17px; height:17px; border-radius:50%; background:var(--ac,#fff); border:2px solid #0A0D13; cursor:pointer; box-shadow:0 0 10px var(--ac,#fff); }
+  .viz-readout{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  .viz-readout .big{ font-size:20px; font-weight:800; color:var(--ac); font-variant-numeric:tabular-nums; }
+
+  .bar-chart{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+  .bar-row{ display:flex; align-items:center; gap:12px; }
+  .bar-lbl{ width:150px; font-size:12.5px; color:var(--muted); flex-shrink:0; }
+  .bar-track{ flex:1; height:15px; background:rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; }
+  .bar-fill{ height:100%; width:0%; border-radius:8px; transition:width 1.1s cubic-bezier(.2,.8,.2,1); }
+  .bar-val{ width:52px; text-align:right; font-family:var(--mono); font-size:12.5px; color:var(--ink); flex-shrink:0; font-variant-numeric:tabular-nums; }
+
+  .chunk-text{ font-size:13px; line-height:1.9; color:var(--ink); background:#0d1119; border:1px solid var(--line); border-radius:7px; padding:14px 16px; margin-top:14px; }
+  .chunk-text span{ padding:1px 0; border-radius:2px; transition:background .2s; }
+  .chunk-stat-row{ display:flex; gap:22px; margin-top:14px; flex-wrap:wrap; }
+  .chunk-stat{ font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .chunk-stat b{ display:block; font-size:18px; color:var(--ac); margin-top:2px; }
+
+  .toggle-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .toggle-btn{
+    font-family:var(--mono); font-size:11.5px; font-weight:700; padding:8px 14px; border-radius:20px;
+    border:1px solid var(--line-hi); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s ease;
+  }
+  .toggle-btn:hover{ border-color:var(--ac); color:#fff; }
+  .toggle-btn.on{ background:var(--ac,#fff); border-color:var(--ac,#fff); color:#0A0D13; }
+
+  .curve-marker{ transition:cx .5s cubic-bezier(.2,.8,.2,1), cy .5s cubic-bezier(.2,.8,.2,1); }
+
+  .fusion-list{ display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+  .fusion-row{ display:flex; align-items:center; gap:12px; padding:10px 14px; background:#0d1119; border:1px solid var(--line); border-radius:7px; transition:transform .5s cubic-bezier(.2,.8,.2,1), border-color .3s; }
+  .fusion-rank{ font-family:var(--mono); font-weight:800; color:var(--ac); width:20px; flex-shrink:0; }
+  .fusion-doc{ flex:1; font-size:13px; color:var(--ink); }
+  .fusion-score{ font-family:var(--mono); font-size:12px; color:var(--muted); flex-shrink:0; }
+
+  .embed-toggle-dot{ transition:cx 0.7s cubic-bezier(.34,1.56,.64,1), cy 0.7s cubic-bezier(.34,1.56,.64,1); }
+  .float-dot{ animation:floaty 4s ease-in-out infinite; }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+
+  /* ================= QUIZ (interview radar) — paginated, 5 per station ================= */
+  .quiz{
+    margin-top:38px; max-width:700px; border-radius:10px;
+    background:var(--panel-hi); border:1px solid var(--line-hi);
+    padding:24px 26px; position:relative; overflow:hidden;
+  }
+  .quiz::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--ac,#fff);
+  }
+  .quiz-hd{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .quiz-hd-l{ display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ac); font-weight:700; }
+  .quiz-icon{ font-size:13px; }
+  .quiz-count{ font-family:var(--mono); font-size:11px; color:var(--muted-dim); }
+
+  .quiz-dots{ display:flex; gap:6px; margin-top:14px; }
+  .quiz-dot{ width:22px; height:5px; border-radius:3px; background:var(--line-hi); border:none; cursor:pointer; padding:0; transition:background .2s; }
+  .quiz-dot.current{ background:var(--ac,#fff); }
+  .quiz-dot.correct{ background:var(--good); }
+  .quiz-dot.incorrect{ background:var(--bad); }
+
+  .quiz-q{ font-size:16.5px; color:#fff; margin:16px 0 0; line-height:1.5; font-weight:600; }
+  .quiz-opts{ display:flex; flex-direction:column; gap:9px; margin-top:18px; }
+  .quiz-opt{
+    text-align:left; font-family:var(--sans); font-size:14px; color:var(--ink);
+    background:var(--panel); border:1px solid var(--line); border-radius:7px;
+    padding:12px 14px; cursor:pointer; transition:all .15s ease; line-height:1.5;
+  }
+  .quiz-opt:hover:not(:disabled){ border-color:var(--ac); background:color-mix(in srgb, var(--ac) 8%, var(--panel)); transform:translateX(3px); }
+  .quiz-opt:disabled{ cursor:default; }
+  .quiz-opt .k{ font-family:var(--mono); font-weight:700; color:var(--ac); margin-right:8px; }
+  .quiz-opt.correct{ border-color:var(--good); background:rgba(52,211,153,0.12); }
+  .quiz-opt.correct .k{ color:var(--good); }
+  .quiz-opt.incorrect{ border-color:var(--bad); background:rgba(255,92,122,0.12); animation:shake .4s ease; }
+  .quiz-opt.incorrect .k{ color:var(--bad); }
+  .quiz-opt.dim{ opacity:0.45; }
+  @keyframes shake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-5px);} 75%{ transform:translateX(5px);} }
+
+  .quiz-feedback{ margin-top:18px; padding:14px 16px; border-radius:7px; font-size:13.5px; line-height:1.6; }
+  .quiz-feedback.ok{ background:rgba(52,211,153,0.10); border:1px solid rgba(52,211,153,0.3); color:#B9F3DA; }
+  .quiz-feedback.no{ background:rgba(255,92,122,0.10); border:1px solid rgba(255,92,122,0.3); color:#FFC9D4; }
+  .fb-verdict{ font-family:var(--mono); font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase; margin:0 0 6px; }
+  .fb-explain{ margin:0; color:var(--ink); opacity:0.92; }
+  .quiz-helpful{ margin:8px 0 0; font-size:11.5px; color:var(--muted-dim); font-style:italic; }
+
+  .quiz-nav{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:20px; }
+  .quiz-btn{ font-family:var(--mono); font-size:12.5px; font-weight:700; padding:9px 16px; border-radius:20px; cursor:pointer; border:1px solid var(--line-hi); transition:all .15s ease; }
+  .quiz-btn.ghost{ background:transparent; color:var(--muted); }
+  .quiz-btn.ghost:hover:not(:disabled){ background:rgba(255,255,255,0.06); color:#fff; }
+  .quiz-btn.primary{ background:var(--ac,#fff); border-color:var(--ac,#fff); color:#0A0D13; }
+  .quiz-btn.primary:hover:not(:disabled){ filter:brightness(1.1); }
+  .quiz-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+
+  /* confetti */
+  .confetti{ position:fixed; width:7px; height:7px; border-radius:1px; pointer-events:none; z-index:200; top:0; left:0; }
+
+  /* ================= S9 — final pipeline + score reveal ================= */
+  .final-pipe{ display:flex; gap:0; margin-top:34px; flex-wrap:wrap; }
+  .fp-node{ flex:1; min-width:104px; text-align:center; padding:16px 6px; border-top:3px solid var(--line); opacity:0.35; transition:opacity .5s ease, border-color .5s ease; }
+  .fp-node.on{ opacity:1; }
+  .fp-node .nb{ font-family:var(--mono); font-size:10px; color:var(--muted-dim); font-weight:700; }
+  .fp-node .t{ font-size:13px; font-weight:700; color:#fff; margin-top:5px; }
+
+  .score-reveal{ margin-top:48px; display:flex; gap:36px; align-items:center; flex-wrap:wrap; }
+  .ring-wrap{ position:relative; width:150px; height:150px; flex-shrink:0; }
+  .ring-wrap svg{ transform:rotate(-90deg); }
+  .ring-track{ fill:none; stroke:rgba(255,255,255,0.08); stroke-width:10; }
+  .ring-fill{ fill:none; stroke:url(#ringGrad); stroke-width:10; stroke-linecap:round; stroke-dasharray:408; stroke-dashoffset:408; transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1); }
+  .ring-txt{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring-txt .n{ font-family:var(--mono); font-size:26px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .ring-txt .l{ font-family:var(--mono); font-size:9.5px; color:var(--muted-dim); letter-spacing:.1em; text-transform:uppercase; }
+
+  .badge-block .badge{ font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.06em; padding:8px 16px; border-radius:6px; display:inline-block; }
+  .badge-block .badge-note{ font-size:14px; color:var(--muted); margin-top:12px; max-width:420px; line-height:1.6; }
+
+  .station-summary{ margin-top:40px; display:flex; flex-direction:column; gap:9px; max-width:640px; }
+  .ss-row{ display:flex; align-items:center; gap:14px; }
+  .ss-swatch{ width:9px; height:26px; border-radius:3px; flex-shrink:0; }
+  .ss-name{ flex:1; font-size:13.5px; color:var(--ink); font-weight:600; }
+  .ss-bar{ width:120px; height:6px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; flex-shrink:0; }
+  .ss-bar-fill{ height:100%; width:0%; transition:width .8s cubic-bezier(.2,.8,.2,1); }
+  .ss-score{ font-family:var(--mono); font-size:12px; color:var(--muted); width:34px; text-align:right; flex-shrink:0; }
+
+  .restart-btn{
+    margin-top:32px; font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:.04em;
+    color:#0A0D13; background:linear-gradient(90deg,#FF7A45,#F72585);
+    border:none; padding:12px 24px; border-radius:7px; cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .restart-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(247,37,133,0.35); }
+
+  .footer-line{ margin-top:56px; color:var(--muted-dim); font-size:12.5px; font-family:var(--mono); }
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Pipeline stages">
+  <div class="rail-nodes" id="railNodes">
+    <div class="rail-line"><div class="rail-fill" id="railFill"></div></div>
+    <button class="rail-node" data-target="s0" style="--ac:#FF9E6D"><span class="rail-dot"></span><span class="rail-tip">Start</span></button>
+    <button class="rail-node" data-target="s1" style="--ac:#FF7A45"><span class="rail-dot"></span><span class="rail-tip">01 · Why RAG</span></button>
+    <button class="rail-node" data-target="s2" style="--ac:#FF5C7A"><span class="rail-dot"></span><span class="rail-tip">02 · Chunking</span></button>
+    <button class="rail-node" data-target="s3" style="--ac:#C77DFF"><span class="rail-dot"></span><span class="rail-tip">03 · Frameworks</span></button>
+    <button class="rail-node" data-target="s4" style="--ac:#5AC8FA"><span class="rail-dot"></span><span class="rail-tip">04 · Embeddings</span></button>
+    <button class="rail-node" data-target="s5" style="--ac:#34D399"><span class="rail-dot"></span><span class="rail-tip">05 · Vector DB</span></button>
+    <button class="rail-node" data-target="s6" style="--ac:#FFD166"><span class="rail-dot"></span><span class="rail-tip">06 · Sparse</span></button>
+    <button class="rail-node" data-target="s7" style="--ac:#8BE0D6"><span class="rail-dot"></span><span class="rail-tip">07 · Hybrid</span></button>
+    <button class="rail-node" data-target="s8" style="--ac:#F72585"><span class="rail-dot"></span><span class="rail-tip">08 · Rerank</span></button>
+    <button class="rail-node" data-target="s9" style="--ac:#fff"><span class="rail-dot"></span><span class="rail-tip">Score</span></button>
+  </div>
+</nav>
+
+<div class="meter">
+  <div class="meter-top"><span class="meter-lbl">Signal Score</span><span class="meter-val" id="meterVal">00/40</span></div>
+  <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+</div>
+
+<!-- S0 — HERO -->
+<section class="stage hero" id="s0">
+  <div class="wrap">
+    <div class="hero-kicker">GenAI 2026 · Module 10 · RAG Pipeline Recap</div>
+    <h1>Signal Path</h1>
+    <p class="sub">Eight notebooks, eight capabilities that turn a guessing LLM into a grounded one. Five interview questions wait at every station below.</p>
+
+    <div class="signal-path">
+      <div class="sp-line"></div>
+      <div class="sp-packet"></div>
+      <div class="sp-stops">
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Why</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Chunk</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Frame</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Embed</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Store</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Sparse</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Hybrid</div></div>
+        <div class="sp-stop"><div class="sp-node"></div><div class="sp-lbl">Rerank</div></div>
+      </div>
+    </div>
+
+    <div class="scroll-cta"><span>Begin the recap</span><span class="chev">&darr;</span></div>
+  </div>
+</section>
+
+<!-- S1 — WHY RAG -->
+<section class="stage" id="s1" style="--ac:#FF7A45">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 01 · The Problem</div>
+    <h2 class="rise d1">A model that never opened your files</h2>
+    <p class="sub rise d2">Ask any LLM about your internal policy and it answers instantly and confidently, using patterns from its training data instead of your actual document. Three failure modes, one root cause: it has never read your world.</p>
+
+    <div class="fail-row rise d3">
+      <span class="fail-chip">Hallucination</span>
+      <span class="fail-chip">Knowledge freeze</span>
+      <span class="fail-chip">Private data isolation</span>
+    </div>
+
+    <div class="book-row rise d4">
+      <div class="card book-card closed">
+        <span class="tag">Closed book</span>
+        <div class="q">"What is the home internet stipend at Northwind Logistics?"</div>
+        <div class="a">"&hellip;a stipend of <b style="color:#FF9EB1">$75</b> per month&hellip;"</div>
+      </div>
+      <div class="card book-card open">
+        <span class="tag">With retrieval</span>
+        <div class="q">Same question, after handing it the real policy PDF</div>
+        <div class="a">"&hellip;a stipend of <b style="color:#B9F3DA">$45</b> per month&hellip; [HR-2024-17 &sect;7.3]"</div>
+      </div>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Live &middot; Failure Rate on Knowledge Queries</div>
+      <p class="viz-note">Scroll this into view to watch the measured gap between closed-book and grounded answers.</p>
+      <div class="bar-chart" id="viz-s1-bars">
+        <div class="bar-row"><div class="bar-lbl">Closed-book LLM</div><div class="bar-track"><div class="bar-fill" data-w="42" style="background:var(--bad);"></div></div><div class="bar-val">42%</div></div>
+        <div class="bar-row"><div class="bar-lbl">With RAG grounding</div><div class="bar-track"><div class="bar-fill" data-w="8" style="background:var(--good);"></div></div><div class="bar-val">8%</div></div>
+      </div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s1"></div>
+  </div>
+</section>
+
+<!-- S2 — INGESTION & CHUNKING -->
+<section class="stage" id="s2" style="--ac:#FF5C7A">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 02 · Ingestion &amp; Chunking</div>
+    <h2 class="rise d1">Parsing decides what's even possible to retrieve</h2>
+    <p class="sub rise d2">A table read as flat text loses its meaning before chunking ever begins. Once parsing is right, six chunking strategies compete on the same tradeoff: precision vs. context.</p>
+
+    <div class="strat-grid rise d3">
+      <div class="card strat"><div class="n">01</div><div class="t">Fixed size</div><div class="d">Cuts blindly, even through a table row.</div></div>
+      <div class="card strat"><div class="n">02</div><div class="t">Recursive</div><div class="d">Prefers paragraph and line breaks.</div></div>
+      <div class="card strat"><div class="n">03</div><div class="t">Semantic</div><div class="d">Cuts where the topic actually shifts.</div></div>
+      <div class="card strat"><div class="n">04</div><div class="t">Sentence window</div><div class="d">Match small, hand back the neighbours.</div></div>
+      <div class="card strat"><div class="n">05</div><div class="t">Parent / small-to-big</div><div class="d">Match a child, return its parent section.</div></div>
+      <div class="card strat"><div class="n">06</div><div class="t">Doc-type aware</div><div class="d">Code, Markdown, HTML each split on their own structure.</div></div>
+    </div>
+
+    <div class="size-slider rise d4">
+      <div class="size-box small">
+        <div class="k">Small chunk (&asymp;150 tok)</div>
+        <div class="size-bar"></div>
+        <div class="v">High precision, narrow context. Risk: the retrieved sentence has lost the paragraph that explains it.</div>
+      </div>
+      <div class="size-box large">
+        <div class="k">Large chunk (&asymp;1500 tok)</div>
+        <div class="size-bar"></div>
+        <div class="v">Broad context, diluted embedding. Risk: the vector represents three topics blended into one average.</div>
+      </div>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Drag the Chunk Size</div>
+      <p class="viz-note">Move the slider and this paragraph gets re-cut live. Watch the chunk count change.</p>
+      <input type="range" id="viz-s2-slider" min="40" max="320" value="120" step="10">
+      <div class="viz-readout"><span>chunk size</span><span class="big" id="viz-s2-size">120 chars</span></div>
+      <div class="chunk-text" id="viz-s2-text"></div>
+      <div class="chunk-stat-row">
+        <div class="chunk-stat">Chunks produced<b id="viz-s2-count">0</b></div>
+        <div class="chunk-stat">Precision (narrow match)<b id="viz-s2-precision">0%</b></div>
+        <div class="chunk-stat">Context breadth<b id="viz-s2-context">0%</b></div>
+      </div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s2"></div>
+  </div>
+</section>
+
+<!-- S3 — FRAMEWORKS -->
+<section class="stage" id="s3" style="--ac:#C77DFF">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 03 · Frameworks</div>
+    <h2 class="rise d1">Same lesson, two toolkits</h2>
+    <p class="sub rise d2">We built the same ingestion and chunking pipeline twice: once in LangChain, once in LlamaIndex. The parser mattered. The framework mostly didn't, except for one thing.</p>
+
+    <div class="fw-row rise d3">
+      <div class="card fw-card">
+        <div class="name">LangChain</div>
+        <div class="role">notebook 02 &middot; manual wiring</div>
+        <ul>
+          <li>Explicit loaders + splitters, composed by hand</li>
+          <li>Sentence-window &amp; parent-child needed custom code</li>
+          <li>Maximum control, more boilerplate</li>
+        </ul>
+      </div>
+      <div class="card fw-card">
+        <div class="name">LlamaIndex</div>
+        <div class="role">notebook 03 &middot; batteries included</div>
+        <ul>
+          <li><code>SentenceWindowNodeParser</code> in one line</li>
+          <li><code>HierarchicalNodeParser</code> builds parent/child automatically</li>
+          <li>Less code for retrieval-specific node structures</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout rise d4"><b>Takeaway:</b> the parser and chunking strategy decide retrieval quality. The framework just decides how much code it takes to get there. LlamaIndex earns its keep on the hierarchical and windowed node parsers.</div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Live &middot; Lines of Code to Ship Each Pattern</div>
+      <p class="viz-note">Scroll into view: same three retrieval patterns, counted in each framework.</p>
+      <div class="bar-chart" id="viz-s3-bars">
+        <div class="bar-row"><div class="bar-lbl">Basic loader + split</div><div class="bar-track"><div class="bar-fill" data-w="18" style="background:#C77DFF;"></div></div><div class="bar-val" data-end="18">18</div></div>
+        <div class="bar-row"><div class="bar-lbl" style="opacity:0.55">&#8627; LlamaIndex</div><div class="bar-track"><div class="bar-fill" data-w="9" style="background:#5AC8FA;"></div></div><div class="bar-val" data-end="9">9</div></div>
+        <div class="bar-row"><div class="bar-lbl">Sentence window</div><div class="bar-track"><div class="bar-fill" data-w="46" style="background:#C77DFF;"></div></div><div class="bar-val" data-end="46">46</div></div>
+        <div class="bar-row"><div class="bar-lbl" style="opacity:0.55">&#8627; LlamaIndex</div><div class="bar-track"><div class="bar-fill" data-w="6" style="background:#5AC8FA;"></div></div><div class="bar-val" data-end="6">6</div></div>
+        <div class="bar-row"><div class="bar-lbl">Parent / child</div><div class="bar-track"><div class="bar-fill" data-w="64" style="background:#C77DFF;"></div></div><div class="bar-val" data-end="64">64</div></div>
+        <div class="bar-row"><div class="bar-lbl" style="opacity:0.55">&#8627; LlamaIndex</div><div class="bar-track"><div class="bar-fill" data-w="8" style="background:#5AC8FA;"></div></div><div class="bar-val" data-end="8">8</div></div>
+      </div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s3"></div>
+  </div>
+</section>
+
+<!-- S4 — EMBEDDINGS -->
+<section class="stage" id="s4" style="--ac:#5AC8FA">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 04 · Embeddings</div>
+    <h2 class="rise d1">Meaning, turned into geometry</h2>
+
+    <div class="embed-grid rise d2">
+      <div>
+        <p class="sub" style="margin-top:0;">"How do plants make food using light" and "Photosynthesis converts sunlight into glucose" share almost no words, yet they sit close together once embedded. An unrelated sentence sits far away.</p>
+        <div class="broken-row">
+          <span class="broken-chip">Broken #1 &middot; different dims</span>
+          <span class="broken-chip">Broken #2 &middot; same dims, wrong model</span>
+        </div>
+      </div>
+      <svg viewBox="0 0 300 200" width="100%" height="200" role="img" aria-label="Scatter plot: two paraphrases close together, one unrelated point far away">
+        <line x1="118" y1="70" x2="168" y2="92" stroke="#34D399" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="128" y="76" font-family="ui-monospace,monospace" font-size="10" fill="#34D399">0.87</text>
+        <circle cx="118" cy="70" r="7" fill="#5AC8FA"/>
+        <circle cx="168" cy="92" r="7" fill="#5AC8FA"/>
+        <circle cx="250" cy="35" r="7" fill="#FF5C7A"/>
+        <line x1="168" y1="92" x2="250" y2="35" stroke="#FF5C7A" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.5"/>
+        <text x="198" y="55" font-family="ui-monospace,monospace" font-size="10" fill="#FF5C7A">0.11</text>
+        <text x="86" y="55" font-family="Arial,sans-serif" font-size="11" fill="#8791A3">"how plants make food"</text>
+        <text x="140" y="112" font-family="Arial,sans-serif" font-size="11" fill="#8791A3">"photosynthesis&hellip;"</text>
+        <text x="198" y="24" font-family="Arial,sans-serif" font-size="11" fill="#8791A3">unrelated sentence</text>
+      </svg>
+    </div>
+
+    <div class="rule-box rise d3">
+      <div class="k">The one non-negotiable rule</div>
+      <div class="v">Index and query must use the exact same embedding model. Swap models mid-way and nearest neighbour stops meaning anything, because the two vector spaces no longer line up.</div>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Same Model vs. Mismatched Model</div>
+      <p class="viz-note">Toggle the embedding model used at query time and watch the "nearest neighbours" scatter.</p>
+      <div class="toggle-row">
+        <button class="toggle-btn on" id="viz-s4-btn-same" data-mode="same">Same model &middot; index &amp; query</button>
+        <button class="toggle-btn" id="viz-s4-btn-diff" data-mode="diff">Different model &middot; query only</button>
+      </div>
+      <svg viewBox="0 0 300 190" width="100%" height="190" id="viz-s4-svg" role="img" aria-label="Interactive scatter plot toggling between matched and mismatched embedding spaces">
+        <circle class="embed-toggle-dot float-dot" id="s4-q" cx="150" cy="95" r="8" fill="#fff" stroke="#5AC8FA" stroke-width="2"/>
+        <circle class="embed-toggle-dot float-dot" id="s4-d1" cx="120" cy="75" r="6" fill="#5AC8FA"/>
+        <circle class="embed-toggle-dot float-dot" id="s4-d2" cx="175" cy="110" r="6" fill="#5AC8FA"/>
+        <circle class="embed-toggle-dot float-dot" id="s4-d3" cx="140" cy="120" r="6" fill="#5AC8FA"/>
+        <circle class="embed-toggle-dot float-dot" id="s4-d4" cx="180" cy="70" r="6" fill="#5AC8FA"/>
+      </svg>
+      <div class="viz-readout"><span id="viz-s4-label">Query lands beside its true neighbours. Retrieval works.</span><span class="big" id="viz-s4-verdict" style="color:var(--good);">VALID</span></div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s4"></div>
+  </div>
+</section>
+
+<!-- S5 — VECTOR DATABASES -->
+<section class="stage" id="s5" style="--ac:#34D399">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 05 · Vector Databases</div>
+    <h2 class="rise d1">Same search, three levels of who runs it</h2>
+
+    <div class="three-step rise d2">
+      <div class="card box"><div class="name">FAISS</div><div class="role">library, not a database</div><div class="d">We built the HNSW graph and IVF clusters ourselves, to see the mechanics.</div></div>
+      <div class="card box"><div class="name">Chroma</div><div class="role">embedded database</div><div class="d">Same HNSW core, plus metadata filters and persistence, with zero infrastructure to run.</div></div>
+      <div class="card box"><div class="name">Pinecone</div><div class="role">managed service</div><div class="d">Someone else runs the infrastructure. You pay for that in cost and lock-in.</div></div>
+    </div>
+
+    <div class="curve-wrap rise d3">
+      <svg width="260" height="160" viewBox="0 0 260 160" role="img" aria-label="Recall versus latency curve for approximate nearest neighbour search">
+        <line x1="30" y1="20" x2="30" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <line x1="30" y1="140" x2="240" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <text x="2" y="24" font-family="Arial" font-size="10" fill="#8791A3">recall</text>
+        <text x="195" y="155" font-family="Arial" font-size="10" fill="#8791A3">latency</text>
+        <line x1="30" y1="28" x2="240" y2="28" stroke="#FF5C7A" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="150" y="24" font-family="ui-monospace,monospace" font-size="9.5" fill="#FF5C7A">exact search, 100%</text>
+        <path d="M 32 132 C 70 60, 110 32, 240 30" fill="none" stroke="#34D399" stroke-width="2.5"/>
+        <circle cx="90" cy="48" r="4" fill="#FFD166"/>
+        <text x="98" y="46" font-family="ui-monospace,monospace" font-size="9.5" fill="#FFD166">efSearch &uarr;</text>
+      </svg>
+      <div class="curve-legend"><b>efSearch</b> (HNSW) and <b>nprobe</b> (IVF) are the dials. Turn them up: recall climbs toward the exact-search line, and so does latency. Every vector database is tuning this same tradeoff underneath.</div>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Drag efSearch</div>
+      <p class="viz-note">Watch the marker slide along the recall/latency curve as you turn the search-width dial.</p>
+      <input type="range" id="viz-s5-slider" min="10" max="500" value="80" step="10">
+      <svg width="100%" height="150" viewBox="0 0 260 160" role="img" aria-label="Recall versus latency curve with a draggable marker">
+        <line x1="30" y1="20" x2="30" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <line x1="30" y1="140" x2="240" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <text x="2" y="24" font-family="Arial" font-size="10" fill="#8791A3">recall</text>
+        <text x="195" y="155" font-family="Arial" font-size="10" fill="#8791A3">latency</text>
+        <path d="M 32 132 C 70 60, 110 32, 240 30" fill="none" stroke="#34D399" stroke-width="2.5" id="viz-s5-path"/>
+        <circle class="curve-marker" id="viz-s5-marker" cx="32" cy="132" r="6" fill="#FFD166" stroke="#0A0D13" stroke-width="1.5"/>
+      </svg>
+      <div class="viz-readout"><span>recall: <b id="viz-s5-recall" style="color:var(--good)">n/a</b></span><span>query latency: <b id="viz-s5-latency" style="color:var(--ac)">n/a</b></span></div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s5"></div>
+  </div>
+</section>
+
+<!-- S6 — SPARSE / BM25 -->
+<section class="stage" id="s6" style="--ac:#FFD166">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 06 · Sparse Retrieval</div>
+    <h2 class="rise d1">The keyword matcher that refused to die</h2>
+    <p class="sub rise d2">We already had dense embeddings. So why does every major search engine still run a keyword scorer underneath? Because raw counts have no ceiling, and BM25 fixes that.</p>
+
+    <div class="sat-wrap rise d3">
+      <svg width="260" height="160" viewBox="0 0 260 160" role="img" aria-label="TF-IDF unbounded growth versus BM25 saturating curve">
+        <line x1="30" y1="20" x2="30" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <line x1="30" y1="140" x2="240" y2="140" stroke="#5B6577" stroke-width="1"/>
+        <text x="2" y="24" font-family="Arial" font-size="10" fill="#8791A3">score</text>
+        <text x="200" y="155" font-family="Arial" font-size="10" fill="#8791A3">term freq</text>
+        <path d="M 30 138 L 240 20" fill="none" stroke="#FF5C7A" stroke-width="2" stroke-dasharray="3 3"/>
+        <text x="150" y="55" font-family="ui-monospace,monospace" font-size="9.5" fill="#FF5C7A">TF-IDF, unbounded</text>
+        <path d="M 30 138 C 70 70, 120 40, 240 35" fill="none" stroke="#FFD166" stroke-width="2.5"/>
+        <text x="150" y="100" font-family="ui-monospace,monospace" font-size="9.5" fill="#FFD166">BM25, saturates</text>
+      </svg>
+      <div class="sat-legend">Stuff a keyword 50 times into a document and TF-IDF's score keeps climbing forever. BM25 caps the benefit of repetition and normalizes for document length, which is why it beat TF-IDF in production search. <b>SPLADE</b> goes a step further: a learned sparse model that still keeps BM25-style term matching inside it.</div>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Stuff the Keyword</div>
+      <p class="viz-note">Drag to repeat a keyword in a document N times. Watch TF-IDF run away while BM25 tops out.</p>
+      <input type="range" id="viz-s6-slider" min="1" max="50" value="1" step="1">
+      <div class="viz-readout"><span>keyword repeated</span><span class="big" id="viz-s6-n">1&times;</span></div>
+      <div class="bar-chart" style="margin-top:14px;">
+        <div class="bar-row"><div class="bar-lbl">TF-IDF score</div><div class="bar-track"><div class="bar-fill" id="viz-s6-tfidf" style="background:var(--bad); transition:width .25s linear;"></div></div><div class="bar-val" id="viz-s6-tfidf-val">0.0</div></div>
+        <div class="bar-row"><div class="bar-lbl">BM25 score</div><div class="bar-track"><div class="bar-fill" id="viz-s6-bm25" style="background:var(--c6); transition:width .25s linear;"></div></div><div class="bar-val" id="viz-s6-bm25-val">0.0</div></div>
+      </div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s6"></div>
+  </div>
+</section>
+
+<!-- S7 — HYBRID SEARCH -->
+<section class="stage" id="s7" style="--ac:#8BE0D6">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 07 · Hybrid Search</div>
+    <h2 class="rise d1">Two retrievers, one blind spot each</h2>
+    <p class="sub rise d2">Across 16 real queries, dense and sparse each won on different questions, and each went completely blind on the other's home turf.</p>
+
+    <div class="blind-row rise d3">
+      <div class="card blind-card sparse">
+        <span class="tag">Sparse &middot; blind to meaning</span>
+        <div class="d">Query "heart attack" scores 0.000 against a document that only says "myocardial infarction." Zero shared tokens, zero score, no matter how relevant the document actually is.</div>
+      </div>
+      <div class="card blind-card dense">
+        <span class="tag">Dense &middot; fuzzy on exact terms</span>
+        <div class="d">Ask for an exact product code or error string and embeddings blur it into "something similar," when you needed the literal match.</div>
+      </div>
+    </div>
+
+    <div class="fusion-note rise d4">Naively summing BM25 and cosine scores fails, because the two live on completely different scales. <b>Reciprocal Rank Fusion</b> fuses on rank position instead of raw score. Across all 16 test queries, hybrid beat both single-stage retrievers on every metric.</div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Tune the Fusion Weight</div>
+      <p class="viz-note">Drag alpha from pure sparse to pure dense and watch these three documents reorder live.</p>
+      <input type="range" id="viz-s7-slider" min="0" max="100" value="50" step="5">
+      <div class="viz-readout"><span>&larr; sparse (BM25)</span><span class="big" id="viz-s7-alpha">&alpha; = 0.50</span><span>dense (embeddings) &rarr;</span></div>
+      <div class="fusion-list" id="viz-s7-list"></div>
+    </div>
+    <div class="quiz rise d4" id="quiz-s7"></div>
+  </div>
+</section>
+
+<!-- S8 — RERANKING -->
+<section class="stage" id="s8" style="--ac:#F72585">
+  <div class="wrap">
+    <div class="eyebrow rise">Station 08 · Reranking</div>
+    <h2 class="rise d1">Fusion gets it into the list. Reranking puts it on top.</h2>
+    <p class="sub rise d2">Same transformer architecture, two completely different jobs: encode once vs. compare directly.</p>
+
+    <div class="rerank-row rise d3">
+      <div class="card rerank-card bi">
+        <div class="name">Bi-encoder</div>
+        <div class="speed">pass 1 &middot; done ahead of time</div>
+        <div class="d">Query and document are embedded <i>independently</i>, then compared by cosine similarity. Fast enough to search millions of chunks, but the two texts never actually "see" each other.</div>
+      </div>
+      <div class="card rerank-card cross">
+        <div class="name">Cross-encoder</div>
+        <div class="speed">pass 2 &middot; done at search time</div>
+        <div class="d">Query and document are fed into the transformer <i>together</i>, so self-attention can directly model word-to-word interaction. Far more accurate, far slower, so it only runs on the top 20&ndash;50 fused candidates.</div>
+      </div>
+    </div>
+
+    <div class="vendor-row rise d4">
+      <span class="vendor">Cross-encoder &middot; pointwise</span>
+      <span class="vendor">FlashRank &middot; CPU-only</span>
+      <span class="vendor">Cohere Rerank &middot; managed API</span>
+      <span class="vendor">ColBERT &middot; late interaction</span>
+      <span class="vendor">RankGPT &middot; listwise LLM</span>
+    </div>
+
+    <div class="viz-card rise d4">
+      <div class="viz-hd">&#9670; Interactive &middot; Pick a Reranker</div>
+      <p class="viz-note">Every method trades accuracy against latency differently. Click one to see the trade live.</p>
+      <div class="toggle-row" id="viz-s8-toggles">
+        <button class="toggle-btn on" data-k="bi">Bi-encoder</button>
+        <button class="toggle-btn" data-k="cross">Cross-encoder</button>
+        <button class="toggle-btn" data-k="colbert">ColBERT</button>
+        <button class="toggle-btn" data-k="rankgpt">RankGPT</button>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row"><div class="bar-lbl">Accuracy (NDCG@10)</div><div class="bar-track"><div class="bar-fill" id="viz-s8-acc" style="background:var(--good); transition:width .5s cubic-bezier(.2,.8,.2,1);"></div></div><div class="bar-val" id="viz-s8-acc-val">0%</div></div>
+        <div class="bar-row"><div class="bar-lbl">Latency (relative)</div><div class="bar-track"><div class="bar-fill" id="viz-s8-lat" style="background:var(--ac); transition:width .5s cubic-bezier(.2,.8,.2,1);"></div></div><div class="bar-val" id="viz-s8-lat-val">0ms</div></div>
+      </div>
+      <p class="viz-note" id="viz-s8-desc" style="margin-top:14px; color:var(--ink);"></p>
+    </div>
+    <div class="quiz rise d4" id="quiz-s8"></div>
+  </div>
+</section>
+
+<!-- S9 — FINAL / SCORE -->
+<section class="stage" id="s9">
+  <div class="wrap">
+    <div class="eyebrow rise" style="--ac:#fff; color:#fff;">Signal Path · Complete</div>
+    <h2 class="rise d1">The full retrieval pipeline, station by station</h2>
+
+    <div class="final-pipe rise d2" id="finalPipe">
+      <div class="fp-node" data-c="#FF7A45"><div class="nb">01</div><div class="t">Why RAG</div></div>
+      <div class="fp-node" data-c="#FF5C7A"><div class="nb">02&middot;03</div><div class="t">Parse &amp; Chunk</div></div>
+      <div class="fp-node" data-c="#5AC8FA"><div class="nb">04</div><div class="t">Embed</div></div>
+      <div class="fp-node" data-c="#34D399"><div class="nb">05</div><div class="t">Store</div></div>
+      <div class="fp-node" data-c="#FFD166"><div class="nb">06</div><div class="t">Sparse</div></div>
+      <div class="fp-node" data-c="#8BE0D6"><div class="nb">07</div><div class="t">Hybrid Fuse</div></div>
+      <div class="fp-node" data-c="#F72585"><div class="nb">08</div><div class="t">Rerank</div></div>
+      <div class="fp-node" data-c="#fff"><div class="nb">&rarr;</div><div class="t">Generate</div></div>
+    </div>
+
+    <div class="score-reveal rise d3">
+      <div class="ring-wrap">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FF7A45"/>
+              <stop offset="50%" stop-color="#5AC8FA"/>
+              <stop offset="100%" stop-color="#F72585"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="75" cy="75" r="65"></circle>
+          <circle class="ring-fill" id="ringFill" cx="75" cy="75" r="65"></circle>
+        </svg>
+        <div class="ring-txt"><span class="n" id="scoreNum">0/40</span><span class="l">Correct</span></div>
+      </div>
+      <div class="badge-block">
+        <span class="badge" id="badgeText">Answer all 40 to reveal your badge</span>
+        <div class="badge-note" id="badgeNote">Your tier updates live as you answer each Interview Radar question above.</div>
+        <button class="restart-btn" id="restartBtn">&#8635; Restart quiz</button>
+      </div>
+    </div>
+
+    <div class="station-summary rise d4" id="stationSummary"></div>
+
+    <div class="footer-line rise d4">GenAI 2026 &middot; Module 10, RAG &middot; Mohamed Noordeen</div>
+  </div>
+</section>
+
+<script>
+(function(){
+  // =============== QUIZ DATA — 5 interview Q&A per station ===============
+  var QUIZ_DATA = {
+    s1: [
+      { q:"Why does an LLM answer confidently about your company's HR policy, even when it's wrong?",
+        opts:[["a","It memorized your documents, but the weights degraded over time"],
+              ["b","It has no access to your private data, so it generates the most statistically likely-sounding answer instead"],
+              ["c","It deliberately withholds the correct answer to save on tokens"]],
+        correct:"b", explain:"Hallucination isn't lying, it's fluent generation with zero grounding. RAG fixes this by handing the model the real document first." },
+      { q:"Training cutoff is January 2025. In June 2026 you ask about Q1 2026 earnings. What's the only fix without retrieval?",
+        opts:[["a","Raise the temperature so it guesses more creatively"],
+              ["b","Retrain on fresh data, which is expensive and goes stale again the next day"],
+              ["c","Lower the temperature so it's more precise"]],
+        correct:"b", explain:"This is the knowledge-freeze problem. Retraining works but it's a treadmill. RAG fetches fresh documents at query time instead." },
+      { q:"Does RAG fully solve hallucination?",
+        opts:[["a","Yes, grounding makes it mathematically impossible"],
+              ["b","No, it cuts hallucination sharply but the model can still misread or ignore the retrieved text"],
+              ["c","No, RAG has no real effect on hallucination"]],
+        correct:"b", explain:"RAG is a major mitigation, not a guarantee. The model still has to read the context correctly, which is why evaluation still matters." },
+      { q:"An airline's chatbot invented a discount policy and a tribunal made the airline honor it. What's the lesson?",
+        opts:[["a","Chatbots shouldn't handle customer service"],
+              ["b","Ungrounded answers carry real legal and financial risk. Grounding in a source document is risk management, not polish"],
+              ["c","It was a misconfigured temperature setting"]],
+        correct:"b", explain:"The Air Canada case shows hallucination has real liability, not just quality cost." },
+      { q:"What three problems does RAG specifically fix in a standalone LLM?",
+        opts:[["a","Slow inference, high cost, poor formatting"],
+              ["b","Hallucination, knowledge freeze, and data isolation"],
+              ["c","Token limits, rate limits, API downtime"]],
+        correct:"b", explain:"Retrieval supplies evidence, fresh indexing supplies recency, your own corpus supplies private context." }
+    ],
+    s2: [
+      { q:"Chunk size goes from 200 tokens to 2,000. What happens?",
+        opts:[["a","Precision improves, each chunk carries more information"],
+              ["b","The embedding gets diluted, the vector now blends several topics and hurts narrow-query matches"],
+              ["c","Nothing, chunk size only affects storage"]],
+        correct:"b", explain:"Bigger chunks keep context but average multiple ideas into one vector. Small chunks are precise but can lose the surrounding context." },
+      { q:"What's the risk of fixed-character chunking with no overlap?",
+        opts:[["a","It's too slow to compute"],
+              ["b","It can slice a sentence or table row in half and lose meaning at the boundary"],
+              ["c","Chunks end up too similar to each other"]],
+        correct:"b", explain:"Fixed-size chunking has no sense of structure. It cuts wherever the count runs out." },
+      { q:"Why add 10 to 20 percent overlap between chunks?",
+        opts:[["a","To raise the token count billed to the vector DB"],
+              ["b","So information sitting at a boundary still appears whole in at least one chunk"],
+              ["c","Overlap is a hard requirement of embedding models"]],
+        correct:"b", explain:"Overlap is cheap insurance against boundary loss." },
+      { q:"In semantic chunking, what decides where the cut happens?",
+        opts:[["a","A random number generator"],
+              ["b","The point where sentence embeddings show a big similarity drop, where the topic actually shifts"],
+              ["c","Punctuation marks only"]],
+        correct:"b", explain:"Semantic chunking watches for a similarity cliff between neighboring sentences instead of counting characters." },
+      { q:"What does parent/child chunking solve that neither small nor large chunks solve alone?",
+        opts:[["a","It removes the need for an embedding model"],
+              ["b","It matches on a small precise chunk, then returns the larger parent chunk so the LLM keeps full context"],
+              ["c","It shrinks the vector index on disk"]],
+        correct:"b", explain:"Precision at match time, context at generation time. Two chunk sizes, two jobs." }
+    ],
+    s3: [
+      { q:"What does LlamaIndex's HierarchicalNodeParser do that plain recursive chunking can't?",
+        opts:[["a","Makes the embedding model run faster on GPU"],
+              ["b","Removes the need for a vector database"],
+              ["c","Builds parent/child chunk links automatically, enabling small-to-big retrieval out of the box"]],
+        correct:"c", explain:"Recursive chunking is flat, every chunk stands alone. HierarchicalNodeParser links children to parents." },
+      { q:"What should actually decide LangChain vs. LlamaIndex for a new project?",
+        opts:[["a","LlamaIndex is always faster at inference"],
+              ["b","Whichever framework's built-ins save the most code for the chunking strategy you need"],
+              ["c","LangChain can't do retrieval at all"]],
+        correct:"b", explain:"Retrieval quality comes from parsing and chunking choices, not the framework wrapper." },
+      { q:"What is a 'Node' in LlamaIndex roughly equivalent to?",
+        opts:[["a","A vector database connection"],
+              ["b","A document chunk, similar to a split chunk in LangChain"],
+              ["c","An LLM API call"]],
+        correct:"b", explain:"Nodes are LlamaIndex's atomic retrievable unit, same role as a LangChain document chunk." },
+      { q:"Why did sentence-window retrieval take custom code in LangChain but one line in LlamaIndex?",
+        opts:[["a","LangChain doesn't support retrieval"],
+              ["b","LlamaIndex ships purpose-built node parsers as ready classes, LangChain expects you to compose it yourself"],
+              ["c","Sentence-window retrieval is impossible in LangChain"]],
+        correct:"b", explain:"Both frameworks reach the same result. LlamaIndex just packages the pattern." },
+      { q:"Is either framework objectively better for every RAG use case?",
+        opts:[["a","True, LlamaIndex always wins on capability"],
+              ["b","False, they converge on similar retrieval quality. The real difference is ergonomics"],
+              ["c","True, LangChain wins because it's more widely adopted"]],
+        correct:"b", explain:"Neither has a retrieval-quality monopoly. Pick based on how much code each saves you." }
+    ],
+    s4: [
+      { q:"You switch the query embedding model but keep old document vectors from a different model. What happens?",
+        opts:[["a","Slightly lower recall, retrieval still mostly works"],
+              ["b","Nearest-neighbour search becomes meaningless, the two models don't share a vector space"],
+              ["c","The vector database auto-normalizes across models"]],
+        correct:"b", explain:"Two embedding models place the same text in incompatible coordinate systems. There's no auto-alignment." },
+      { q:"Two sentences share no words but mean the same thing. Why do embeddings still place them close together?",
+        opts:[["a","The model checks a synonym dictionary at query time"],
+              ["b","It was trained so similar meaning produces similar vectors, not similar vocabulary"],
+              ["c","It can't, embeddings only match exact keywords"]],
+        correct:"b", explain:"Meaning, not vocabulary, decides proximity in vector space." },
+      { q:"What does cosine similarity actually measure?",
+        opts:[["a","The straight-line distance between two vector endpoints"],
+              ["b","The angle between two vectors, independent of their length"],
+              ["c","How many dimensions two vectors share"]],
+        correct:"b", explain:"Cosine similarity is direction only. Two vectors pointing the same way score 1.0 regardless of magnitude." },
+      { q:"Why pick a smaller 384-dim embedding model over a 3072-dim one?",
+        opts:[["a","Smaller dimensions always give better accuracy"],
+              ["b","A real latency and storage tradeoff, smaller vectors are cheaper and often good enough"],
+              ["c","Large embedding models can't be stored in a vector database"]],
+        correct:"b", explain:"Dimensionality is a cost dial, not a quality ranking." },
+      { q:"What's the benefit of a domain-specific embedding model, like legal or medical, over a general one?",
+        opts:[["a","Domain-specific models are always worse, they've seen less data"],
+              ["b","It places field-specific jargon more accurately in vector space"],
+              ["c","Domain doesn't affect embeddings at all"]],
+        correct:"b", explain:"General models optimize for breadth. Domain models trade some of that breadth for sharper placement of specialized terms." }
+    ],
+    s5: [
+      { q:"Raising HNSW's efSearch typically does what?",
+        opts:[["a","Higher recall, at the cost of higher latency"],
+              ["b","Lower recall, lower memory use"],
+              ["c","No effect on search, only on index build time"]],
+        correct:"a", explain:"efSearch controls how many candidates HNSW explores per query. More exploration, more time, closer to exact recall." },
+      { q:"What's the real difference between FAISS and Chroma if both run HNSW?",
+        opts:[["a","FAISS is a full database, Chroma is just a math library"],
+              ["b","FAISS is a library you wire up yourself, Chroma adds persistence and filtering on top"],
+              ["c","They give mathematically different results on identical data"]],
+        correct:"b", explain:"Same core math, different level of abstraction." },
+      { q:"In IVF search, what does raising nprobe do?",
+        opts:[["a","Reduces how many vectors get indexed"],
+              ["b","Searches more of the pre-clustered partitions per query, trading latency for recall"],
+              ["c","Changes the embedding model used for indexing"]],
+        correct:"b", explain:"IVF's version of efSearch. More cells checked, closer to exhaustive search." },
+      { q:"Why pick a managed service like Pinecone over self-hosting FAISS or Chroma?",
+        opts:[["a","It's the only option that supports cosine similarity"],
+              ["b","It offloads scaling and uptime for a recurring cost and some lock-in"],
+              ["c","Self-hosted stores can't handle more than 100 documents"]],
+        correct:"b", explain:"A build-vs-buy tradeoff, not a capability gap." },
+      { q:"What does approximate nearest neighbor search trade against exact brute-force search?",
+        opts:[["a","A small amount of recall for much lower query latency at scale"],
+              ["b","Embedding size for storage cost"],
+              ["c","ANN only works on sparse vectors"]],
+        correct:"a", explain:"Brute-force scans everything. ANN sacrifices a small, tunable amount of exactness for speed." }
+    ],
+    s6: [
+      { q:"Why does BM25 beat raw TF-IDF for keyword ranking?",
+        opts:[["a","It secretly uses a neural network"],
+              ["b","It saturates term frequency and normalizes for document length, so stuffing or long documents can't dominate"],
+              ["c","It ignores stopwords and TF-IDF doesn't"]],
+        correct:"b", explain:"TF-IDF's term-frequency term grows unbounded. BM25's saturation and length normalization fixed that." },
+      { q:"In BM25, what does the parameter b control?",
+        opts:[["a","The number of results returned"],
+              ["b","How strongly the score is normalized against document length"],
+              ["c","The embedding dimensionality used internally"]],
+        correct:"b", explain:"b=1 fully penalizes long documents for length, b=0 ignores length entirely." },
+      { q:"Why does BM25 score 0.000 for 'heart attack' against a document that only says 'myocardial infarction'?",
+        opts:[["a","The document is too short to score"],
+              ["b","BM25 only matches shared tokens. Zero overlap means nothing to score, regardless of meaning"],
+              ["c","BM25 requires medical terminology to be pre-translated"]],
+        correct:"b", explain:"The classic sparse-retrieval blind spot. No concept of synonymy, only exact terms." },
+      { q:"What makes SPLADE different from BM25 while still being sparse?",
+        opts:[["a","It's a dense model wearing a sparse name"],
+              ["b","It learns term weights and expansions via a neural model, keeping exact-match strength while catching some synonyms"],
+              ["c","It removes the need for an inverted index"]],
+        correct:"b", explain:"Learned sparse: still an inverted-index-friendly vector, but the weights come from a trained model." },
+      { q:"When does a sparse retriever like BM25 typically beat dense embeddings?",
+        opts:[["a","Broad conceptual questions with many valid phrasings"],
+              ["b","Queries with exact identifiers, like product codes or error strings"],
+              ["c","Full natural-language questions"]],
+        correct:"b", explain:"Dense embeddings compress meaning and can blur exact strings. BM25 rewards the literal token." }
+    ],
+    s7: [
+      { q:"Why prefer RRF over simply summing BM25 and cosine scores?",
+        opts:[["a","RRF needs no normalization, it only uses rank position, so the scale mismatch never matters"],
+              ["b","RRF is faster to compute at query time"],
+              ["c","RRF removes the need for reranking afterward"]],
+        correct:"a", explain:"BM25 is unbounded, cosine sits in [-1,1]. Summing lets whichever has bigger raw numbers win. RRF only cares about order." },
+      { q:"In RRF, why use 1/(k + rank) instead of just 1/rank?",
+        opts:[["a","k is decorative and has no real effect"],
+              ["b","k softens the gap between rank 1 and rank 2, so one retriever's top pick doesn't dominate the fusion"],
+              ["c","k converts the sparse score into a dense embedding"]],
+        correct:"b", explain:"Without k, 1/1 vs 1/2 is a sharp 2x gap. A constant, usually 60, smooths that out." },
+      { q:"What does the alpha parameter control in weighted hybrid search?",
+        opts:[["a","How many documents get retrieved before reranking"],
+              ["b","The weight given to the dense score versus the sparse score when blending"],
+              ["c","The chunk size used during ingestion"]],
+        correct:"b", explain:"Alpha biases the blend toward meaning-matching or exact-term-matching." },
+      { q:"Hybrid beat both retrievers alone on all 16 benchmark queries. Why not skip straight to hybrid and ignore the individual retrievers?",
+        opts:[["a","Hybrid is actually slower and less accurate than either alone"],
+              ["b","Knowing each retriever's blind spots is what lets you tune the fusion correctly"],
+              ["c","Hybrid search can't be evaluated with standard metrics"]],
+        correct:"b", explain:"Alpha, k, and normalization choices all depend on understanding what each half does well." },
+      { q:"Besides RRF and weighted summing, what's a third way to combine sparse and dense results?",
+        opts:[["a","Pick whichever retriever returns results faster"],
+              ["b","Normalize both score sets to 0 to 1, then sum them"],
+              ["c","Average the token count per chunk"]],
+        correct:"b", explain:"A middle ground: keeps some magnitude information while fixing the scale mismatch." }
+    ],
+    s8: [
+      { q:"Why is a cross-encoder more accurate than a bi-encoder, despite being much slower?",
+        opts:[["a","It uses a bigger vocabulary"],
+              ["b","It processes query and document together, so attention can compare their words directly"],
+              ["c","It always calls a large hosted LLM"]],
+        correct:"b", explain:"A bi-encoder commits to one vector per text before seeing the query. A cross-encoder sees both at once." },
+      { q:"Why is a cross-encoder never used as the first-stage retriever over a full corpus?",
+        opts:[["a","It can only process one document at a time, ever"],
+              ["b","A full forward pass per pair is too slow across millions of documents. It only works on a short list"],
+              ["c","It doesn't support cosine similarity"]],
+        correct:"b", explain:"Standard pattern: cheap fused retrieval first, expensive cross-encoder second, on a short list only." },
+      { q:"What's the core idea behind ColBERT's late interaction?",
+        opts:[["a","It waits 24 hours before reranking to save compute"],
+              ["b","It keeps per-token embeddings and compares them at query time with a fast max-similarity step"],
+              ["c","It reranks only after the LLM has already answered"]],
+        correct:"b", explain:"Middle ground: token-level nuance like a cross-encoder, precomputed like a bi-encoder." },
+      { q:"What does listwise reranking do differently from pointwise cross-encoder reranking?",
+        opts:[["a","It scores each document in total isolation"],
+              ["b","It looks at the whole candidate list at once and reasons about documents relative to each other"],
+              ["c","It doesn't require a language model at all"]],
+        correct:"b", explain:"Pointwise scores candidates independently. Listwise compares them as a group, often via a large LLM." },
+      { q:"Why pay for a managed reranking API instead of self-hosting a cross-encoder?",
+        opts:[["a","It's the only option that supports English"],
+              ["b","You trade a per-call cost for not having to host and maintain GPU infrastructure"],
+              ["c","Self-hosted cross-encoders can't improve ranking at all"]],
+        correct:"b", explain:"Same build-vs-buy tradeoff as vector databases." }
+    ]
+  };
+
+  var STATION_META = {
+    s1:{ name:"01 · Why RAG", color:"#FF7A45" }, s2:{ name:"02 · Chunking", color:"#FF5C7A" },
+    s3:{ name:"03 · Frameworks", color:"#C77DFF" }, s4:{ name:"04 · Embeddings", color:"#5AC8FA" },
+    s5:{ name:"05 · Vector DB", color:"#34D399" }, s6:{ name:"06 · Sparse", color:"#FFD166" },
+    s7:{ name:"07 · Hybrid", color:"#8BE0D6" }, s8:{ name:"08 · Rerank", color:"#F72585" }
+  };
+  var STATION_ORDER = ["s1","s2","s3","s4","s5","s6","s7","s8"];
+
+  var totalScore = 0;
+  var TOTAL_Q = STATION_ORDER.length * 5;
+  var state = {};
+  STATION_ORDER.forEach(function(sid){ state[sid] = { idx:0, answers:[null,null,null,null,null] }; });
+
+  // ---------- reveal on scroll ----------
+  var risers = document.querySelectorAll('.rise');
+  var ro = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  }, { threshold: 0.18 });
+  risers.forEach(function(el){ ro.observe(el); });
+
+  // ---------- generic: animate bar-fills to their data-w when scrolled into view ----------
+  function animateBarsOnView(containerId){
+    var el = document.getElementById(containerId);
+    if(!el) return;
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.querySelectorAll('.bar-fill').forEach(function(bar){
+            bar.style.width = bar.getAttribute('data-w') + '%';
+          });
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.4 });
+    obs.observe(el);
+  }
+  animateBarsOnView('viz-s1-bars');
+  animateBarsOnView('viz-s3-bars');
+
+  // ---------- S2: interactive chunk-size slider ----------
+  (function(){
+    var SAMPLE = "Retrieval-augmented generation grounds a language model in evidence it did not memorize. The system parses a source document, splits it into chunks, embeds each chunk into a vector, and stores those vectors for fast nearest-neighbour search. At query time the same embedding model turns the question into a vector, retrieves the closest chunks, and hands them to the model before it writes an answer.";
+    var slider = document.getElementById('viz-s2-slider');
+    var textEl = document.getElementById('viz-s2-text');
+    var sizeEl = document.getElementById('viz-s2-size');
+    var countEl = document.getElementById('viz-s2-count');
+    var precEl = document.getElementById('viz-s2-precision');
+    var ctxEl = document.getElementById('viz-s2-context');
+    if(!slider) return;
+    var colors = ['rgba(255,122,69,0.22)','rgba(90,200,250,0.20)'];
+    function render(){
+      var size = parseInt(slider.value, 10);
+      var chunks = [];
+      for(var i=0;i<SAMPLE.length;i+=size){ chunks.push(SAMPLE.slice(i, i+size)); }
+      textEl.innerHTML = chunks.map(function(c,i){ return '<span style="background:' + colors[i%2] + '">' + c + '</span>'; }).join('');
+      sizeEl.textContent = size + ' chars';
+      countEl.textContent = chunks.length;
+      var t = (size - 40) / (320 - 40);
+      precEl.textContent = Math.round(100 - t*65) + '%';
+      ctxEl.textContent = Math.round(25 + t*70) + '%';
+    }
+    slider.addEventListener('input', render);
+    render();
+  })();
+
+  // ---------- S4: interactive same-model vs mismatched-model toggle ----------
+  (function(){
+    var btnSame = document.getElementById('viz-s4-btn-same');
+    var btnDiff = document.getElementById('viz-s4-btn-diff');
+    var label = document.getElementById('viz-s4-label');
+    var verdict = document.getElementById('viz-s4-verdict');
+    if(!btnSame) return;
+    var POS = {
+      same: { d1:[120,75], d2:[175,110], d3:[140,120], d4:[180,70] },
+      diff: { d1:[36,26], d2:[255,158], d3:[54,150], d4:[238,34] }
+    };
+    function setMode(mode){
+      var p = POS[mode];
+      ['d1','d2','d3','d4'].forEach(function(k){
+        var el = document.getElementById('s4-' + k);
+        el.setAttribute('cx', p[k][0]);
+        el.setAttribute('cy', p[k][1]);
+      });
+      btnSame.classList.toggle('on', mode === 'same');
+      btnDiff.classList.toggle('on', mode === 'diff');
+      if(mode === 'same'){
+        label.textContent = 'Query lands beside its true neighbours. Retrieval works.';
+        verdict.textContent = 'VALID'; verdict.style.color = 'var(--good)';
+      } else {
+        label.textContent = 'Query lands nowhere near its true neighbours. Nearest-neighbour search is now noise.';
+        verdict.textContent = 'BROKEN'; verdict.style.color = 'var(--bad)';
+      }
+    }
+    btnSame.addEventListener('click', function(){ setMode('same'); });
+    btnDiff.addEventListener('click', function(){ setMode('diff'); });
+  })();
+
+  // ---------- S5: interactive efSearch slider ----------
+  (function(){
+    var slider = document.getElementById('viz-s5-slider');
+    var recallEl = document.getElementById('viz-s5-recall');
+    var latEl = document.getElementById('viz-s5-latency');
+    var marker = document.getElementById('viz-s5-marker');
+    var path = document.getElementById('viz-s5-path');
+    if(!slider) return;
+    function render(){
+      var ef = parseInt(slider.value, 10);
+      var recall = 1 - Math.exp(-ef/150);
+      var latency = 8 + ef*0.15;
+      recallEl.textContent = Math.round(recall*100) + '%';
+      latEl.textContent = Math.round(latency) + 'ms';
+      var len = path.getTotalLength();
+      var t = Math.min(1, ef/500);
+      var pt = path.getPointAtLength(t*len);
+      marker.setAttribute('cx', pt.x);
+      marker.setAttribute('cy', pt.y);
+    }
+    slider.addEventListener('input', render);
+    render();
+  })();
+
+  // ---------- S6: interactive term-frequency slider ----------
+  (function(){
+    var slider = document.getElementById('viz-s6-slider');
+    var nEl = document.getElementById('viz-s6-n');
+    var tfidfBar = document.getElementById('viz-s6-tfidf');
+    var tfidfVal = document.getElementById('viz-s6-tfidf-val');
+    var bm25Bar = document.getElementById('viz-s6-bm25');
+    var bm25Val = document.getElementById('viz-s6-bm25-val');
+    if(!slider) return;
+    function render(){
+      var n = parseInt(slider.value, 10);
+      var tfidf = n * 2.2;
+      var k1 = 1.5;
+      var bm25 = (n * (k1+1)) / (n + k1) * 2.2;
+      nEl.textContent = n + '×';
+      tfidfBar.style.width = Math.min(100, tfidf) + '%';
+      tfidfVal.textContent = tfidf.toFixed(1);
+      bm25Bar.style.width = Math.min(100, (bm25/3.5)*100) + '%';
+      bm25Val.textContent = bm25.toFixed(2);
+    }
+    slider.addEventListener('input', render);
+    render();
+  })();
+
+  // ---------- S7: interactive hybrid alpha slider ----------
+  (function(){
+    var slider = document.getElementById('viz-s7-slider');
+    var alphaEl = document.getElementById('viz-s7-alpha');
+    var listEl = document.getElementById('viz-s7-list');
+    if(!slider) return;
+    var DOCS = [
+      { name:'Doc A, exact keyword match, thin content', sparse:0.92, dense:0.35 },
+      { name:'Doc B, paraphrased, highly relevant', sparse:0.20, dense:0.88 },
+      { name:'Doc C, balanced partial match', sparse:0.55, dense:0.55 }
+    ];
+    function render(){
+      var alpha = parseInt(slider.value, 10) / 100;
+      alphaEl.textContent = 'α = ' + alpha.toFixed(2);
+      var scored = DOCS.map(function(d){ return { name:d.name, score: alpha*d.dense + (1-alpha)*d.sparse }; });
+      scored.sort(function(a,b){ return b.score - a.score; });
+      listEl.innerHTML = scored.map(function(d, i){
+        return '<div class="fusion-row"><span class="fusion-rank">#' + (i+1) + '</span><span class="fusion-doc">' + d.name + '</span><span class="fusion-score">' + d.score.toFixed(3) + '</span></div>';
+      }).join('');
+    }
+    slider.addEventListener('input', render);
+    render();
+  })();
+
+  // ---------- S8: interactive reranker method toggle ----------
+  (function(){
+    var toggles = document.getElementById('viz-s8-toggles');
+    var accBar = document.getElementById('viz-s8-acc');
+    var accVal = document.getElementById('viz-s8-acc-val');
+    var latBar = document.getElementById('viz-s8-lat');
+    var latVal = document.getElementById('viz-s8-lat-val');
+    var descEl = document.getElementById('viz-s8-desc');
+    if(!toggles) return;
+    var METHOD = {
+      bi:      { acc:68, lat:15,  desc:'Independent embeddings compared by cosine similarity. Cheapest, least accurate of the four.' },
+      cross:   { acc:89, lat:420, desc:'Full joint attention between query and document. Most accurate of the classic methods, but only affordable on a short candidate list.' },
+      colbert: { acc:84, lat:95,  desc:'Token-level late interaction. Most of the cross-encoder’s nuance, a fraction of the cost.' },
+      rankgpt: { acc:91, lat:650, desc:'An LLM reasons about the whole candidate list at once. Highest accuracy, but the highest latency and cost too.' }
+    };
+    function setMethod(key){
+      var m = METHOD[key];
+      accBar.style.width = m.acc + '%';
+      accVal.textContent = m.acc + '%';
+      latBar.style.width = Math.min(100, m.lat/7) + '%';
+      latVal.textContent = m.lat + 'ms';
+      descEl.textContent = m.desc;
+      toggles.querySelectorAll('.toggle-btn').forEach(function(b){
+        b.classList.toggle('on', b.getAttribute('data-k') === key);
+      });
+    }
+    toggles.querySelectorAll('.toggle-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){ setMethod(btn.getAttribute('data-k')); });
+    });
+    setMethod('bi');
+  })();
+
+  // ---------- rail nav ----------
+  var stages = Array.prototype.slice.call(document.querySelectorAll('.stage'));
+  var railNodes = Array.prototype.slice.call(document.querySelectorAll('.rail-node'));
+  var railFill = document.getElementById('railFill');
+
+  railNodes.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var t = document.getElementById(btn.getAttribute('data-target'));
+      if(t){ t.scrollIntoView({behavior:'smooth'}); }
+    });
+  });
+
+  function onScroll(){
+    var scrollTop = window.scrollY;
+    var docH = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docH > 0 ? Math.min(100, (scrollTop / docH) * 100) : 0;
+    railFill.style.height = pct + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+
+  if('IntersectionObserver' in window){
+    var map = {};
+    stages.forEach(function(sec, i){ map[sec.id] = railNodes[i]; });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          railNodes.forEach(function(b){ b.classList.remove('active'); });
+          var btn = map[entry.target.id];
+          if(btn){ btn.classList.add('active'); }
+        }
+      });
+    }, { threshold: 0.5 });
+    stages.forEach(function(sec){ io.observe(sec); });
+  }
+
+  // ---------- score UI ----------
+  var meterVal = document.getElementById('meterVal');
+  var meterFill = document.getElementById('meterFill');
+  var scoreNum = document.getElementById('scoreNum');
+  var ringFill = document.getElementById('ringFill');
+  var badgeText = document.getElementById('badgeText');
+  var badgeNote = document.getElementById('badgeNote');
+  var RING_CIRC = 408;
+
+  function stationScore(sid){
+    return state[sid].answers.filter(function(a){ return a && a.correct; }).length;
+  }
+
+  function updateScoreUI(){
+    var padded = (totalScore < 10 ? '0' + totalScore : '' + totalScore) + '/' + TOTAL_Q;
+    meterVal.textContent = padded;
+    meterFill.style.width = (totalScore/TOTAL_Q*100) + '%';
+    scoreNum.textContent = totalScore + '/' + TOTAL_Q;
+    ringFill.style.strokeDashoffset = RING_CIRC - (RING_CIRC * (totalScore/TOTAL_Q));
+
+    var tier;
+    if(totalScore === TOTAL_Q){ tier = { t:'RAG Architect', c:'linear-gradient(90deg,#FFD166,#F72585)', n:'Perfect score. You could design a production retrieval pipeline from scratch, today.' }; }
+    else if(totalScore >= 30){ tier = { t:'Production Ready 🚀', c:'linear-gradient(90deg,#34D399,#5AC8FA)', n:'Strong grasp of the pipeline. Reread the missed questions and you are interview-ready.' }; }
+    else if(totalScore >= 20){ tier = { t:'Solid Foundation 📚', c:'linear-gradient(90deg,#5AC8FA,#C77DFF)', n:'You have the core shape of RAG down. Revisit what you missed before the next notebook.' }; }
+    else if(totalScore > 0){ tier = { t:'Keep Building 🔧', c:'linear-gradient(90deg,#FF7A45,#FF5C7A)', n:'A good start. Scroll back through the stations above and clear out the ones you skipped.' }; }
+    else { tier = { t:'Answer all 40 to reveal your badge', c:'linear-gradient(90deg,#3A4150,#3A4150)', n:'Your tier updates live as you answer each Interview Radar question above.' }; }
+    badgeText.textContent = tier.t;
+    badgeText.style.background = tier.c;
+    badgeText.style.color = totalScore > 0 ? '#0A0D13' : 'var(--muted)';
+    badgeNote.textContent = tier.n;
+
+    var summary = document.getElementById('stationSummary');
+    summary.innerHTML = STATION_ORDER.map(function(sid){
+      var meta = STATION_META[sid];
+      var sc = stationScore(sid);
+      return '<div class="ss-row"><div class="ss-swatch" style="background:' + meta.color + '"></div>' +
+        '<div class="ss-name">' + meta.name + '</div>' +
+        '<div class="ss-bar"><div class="ss-bar-fill" style="width:' + (sc/5*100) + '%; background:' + meta.color + '"></div></div>' +
+        '<div class="ss-score">' + sc + '/5</div></div>';
+    }).join('');
+  }
+
+  function spawnConfetti(originEl){
+    var rect = originEl.getBoundingClientRect();
+    var colors = ['#FF7A45','#FFD166','#34D399','#5AC8FA','#C77DFF','#F72585'];
+    for(var i=0;i<18;i++){
+      var s = document.createElement('span');
+      s.className = 'confetti';
+      s.style.background = colors[i % colors.length];
+      s.style.left = (rect.left + rect.width/2) + 'px';
+      s.style.top = (rect.top + rect.height/2) + 'px';
+      document.body.appendChild(s);
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 60 + Math.random() * 90;
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist - 40;
+      var rot = (Math.random() * 720 - 360);
+      s.animate([
+        { transform:'translate(0,0) rotate(0deg)', opacity:1 },
+        { transform:'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)', opacity:0 }
+      ], { duration: 900 + Math.random()*400, easing:'cubic-bezier(.2,.8,.2,1)' });
+      (function(el){ setTimeout(function(){ el.remove(); }, 1400); })(s);
+    }
+  }
+
+  // ---------- paginated quiz renderer ----------
+  function renderQuiz(sid){
+    var root = document.getElementById('quiz-' + sid);
+    var meta = STATION_META[sid];
+    var qs = QUIZ_DATA[sid];
+    var st = state[sid];
+    var idx = st.idx;
+    var item = qs[idx];
+    var ans = st.answers[idx];
+
+    var dotsHtml = qs.map(function(q, i){
+      var cls = 'quiz-dot';
+      if(i === idx) cls += ' current';
+      if(st.answers[i]){ cls += st.answers[i].correct ? ' correct' : ' incorrect'; }
+      return '<button class="' + cls + '" data-i="' + i + '" aria-label="Question ' + (i+1) + '"></button>';
+    }).join('');
+
+    var optsHtml = item.opts.map(function(o){
+      var key = o[0], label = o[1];
+      var cls = 'quiz-opt';
+      var disabled = '';
+      if(ans){
+        disabled = 'disabled';
+        if(key === item.correct) cls += ' correct';
+        else if(key === ans.key) cls += ' incorrect';
+        else cls += ' dim';
+      }
+      return '<button class="' + cls + '" data-k="' + key + '" ' + disabled + '><span class="k">' + key.toUpperCase() + '</span>' + label + '</button>';
+    }).join('');
+
+    var fbHtml = '';
+    if(ans){
+      var okClass = ans.correct ? 'ok' : 'no';
+      var verdict = ans.correct ? 'Correct, nailed it' : 'Not quite, here is the real answer';
+      fbHtml = '<div class="quiz-feedback ' + okClass + '"><p class="fb-verdict">' + verdict + '</p><p class="fb-explain">' + item.explain + '</p></div>' +
+               '<p class="quiz-helpful">' + stationScore(sid) + ' of 5 answered correctly in this station so far.</p>';
+    }
+
+    root.innerHTML =
+      '<div class="quiz-hd"><span class="quiz-hd-l"><span class="quiz-icon">&#9670;</span>Interview Radar &middot; ' + meta.name + '</span><span class="quiz-count">Question ' + (idx+1) + ' of ' + qs.length + '</span></div>' +
+      '<div class="quiz-dots">' + dotsHtml + '</div>' +
+      '<p class="quiz-q">' + item.q + '</p>' +
+      '<div class="quiz-opts">' + optsHtml + '</div>' + fbHtml +
+      '<div class="quiz-nav"><button class="quiz-btn ghost" id="prev-' + sid + '" ' + (idx===0?'disabled':'') + '>&lsaquo; Previous</button>' +
+      '<button class="quiz-btn primary" id="next-' + sid + '" ' + (idx===qs.length-1?'disabled':'') + '>Next question &rsaquo;</button></div>';
+
+    root.querySelectorAll('.quiz-opt').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(state[sid].answers[idx]) return;
+        var key = btn.getAttribute('data-k');
+        var isCorrect = key === item.correct;
+        state[sid].answers[idx] = { key:key, correct:isCorrect };
+        if(isCorrect){ totalScore++; spawnConfetti(btn); }
+        updateScoreUI();
+        renderQuiz(sid);
+      });
+    });
+    root.querySelectorAll('.quiz-dot').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state[sid].idx = parseInt(btn.getAttribute('data-i'), 10);
+        renderQuiz(sid);
+      });
+    });
+    var prevBtn = document.getElementById('prev-' + sid);
+    var nextBtn = document.getElementById('next-' + sid);
+    if(prevBtn) prevBtn.addEventListener('click', function(){ state[sid].idx = Math.max(0, state[sid].idx - 1); renderQuiz(sid); });
+    if(nextBtn) nextBtn.addEventListener('click', function(){ state[sid].idx = Math.min(qs.length - 1, state[sid].idx + 1); renderQuiz(sid); });
+  }
+
+  STATION_ORDER.forEach(renderQuiz);
+  updateScoreUI();
+
+  document.getElementById('restartBtn').addEventListener('click', function(){
+    totalScore = 0;
+    STATION_ORDER.forEach(function(sid){
+      state[sid] = { idx:0, answers:[null,null,null,null,null] };
+      renderQuiz(sid);
+    });
+    updateScoreUI();
+    document.getElementById('s0').scrollIntoView({behavior:'smooth'});
+  });
+
+  // ---------- final pipeline light-up ----------
+  var fpNodes = Array.prototype.slice.call(document.querySelectorAll('.fp-node'));
+  var fpObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        fpNodes.forEach(function(node, i){
+          setTimeout(function(){
+            node.classList.add('on');
+            node.style.borderTopColor = node.getAttribute('data-c');
+          }, i * 140);
+        });
+        fpObs.disconnect();
+      }
+    });
+  }, { threshold: 0.4 });
+  var finalPipe = document.getElementById('finalPipe');
+  if(finalPipe) fpObs.observe(finalPipe);
+})();
+</script>
+
+</body>
+</html>

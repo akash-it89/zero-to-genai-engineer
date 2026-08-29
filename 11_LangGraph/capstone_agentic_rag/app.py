@@ -20,6 +20,11 @@ from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(_REPO_ROOT / ".env")
+load_dotenv(_REPO_ROOT / "10_RAG" / ".env")
+load_dotenv(_REPO_ROOT / "11_LangGraph" / ".env")
+
 sys.path.insert(0, str(Path(__file__).parent))
 from graph import build_graph, remember_answer_style, extract_structured_citations  # noqa: E402
 
@@ -29,8 +34,6 @@ from rag_pipeline import ProductionRAGChatbot  # noqa: E402
 
 from langchain_core.messages import HumanMessage  # noqa: E402
 from langgraph.types import Command  # noqa: E402
-
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 st.set_page_config(page_title="Self-Correcting Agentic RAG", page_icon="🧠", layout="wide")
 

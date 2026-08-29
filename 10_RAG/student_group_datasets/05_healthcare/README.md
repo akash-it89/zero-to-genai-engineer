@@ -8,9 +8,20 @@ Build a RAG chatbot modeled on **MedlinePlus** (the NIH/National Library of Medi
 ## Data sources (all real NIH-affiliated content)
 | Item | Count | What it is |
 |---|---|---|
-| `MedQuAD-master/` | **11,274 real XML documents** across 12 source folders | Real medical Q&A pulled from CancerGov, GARD, GHR, MPlus Health Topics, NIDDK, NINDS, SeniorHealth, NHLBI, CDC, MPlus Drugs, MPlus Herbs, MPlus ADAM |
+| `MedQuAD-master/` | **11,274 real XML documents** across 12 source folders | Real medical Q&A pulled from CancerGov, GARD, GHR, MPlus Health Topics, NIDDK, NINDS, SeniorHealth, NHLBI, CDC, MPlus Drugs, MPlus Herbs, MPlus ADAM. **Not in git** — download below. |
 | `NIDDK_Diabetes_in_America_Factsheet.pdf` | 2 pages | Real NIH/NIDDK fact sheet — same source as one of the 12 MedQuAD folders |
 | `CDC_Diabetes_Statistics.tsv` | — | Real CDC Healthy People objective-tracking data (access to health services, baseline/final values) |
+
+### Download MedQuAD (required for this group)
+
+The XML dump is too large to ship in this repo (~11k files). From this folder:
+
+```bash
+chmod +x download_medquad.sh
+./download_medquad.sh
+```
+
+That clones [abachaa/MedQuAD](https://github.com/abachaa/MedQuAD) into `MedQuAD-master/`.
 
 ## Required system prompt (hard requirement)
 This bot MUST refuse diagnostic questions ("do I have X") and redirect to a real healthcare provider. Ties into the M04 escalation-trigger pattern — this is not optional for this group.

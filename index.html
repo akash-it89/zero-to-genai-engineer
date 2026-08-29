@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zero to GenAI Engineer — Classroom presentations</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --line: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 24px 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.75rem; }
+    p.lead { color: var(--muted); margin: 0 0 16px; }
+    a { color: var(--accent); }
+    main { max-width: 880px; margin: 0 auto; padding: 0 24px 64px; }
+    h2 {
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 32px 0 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin: 0 0 8px;
+    }
+    li a {
+      display: block;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    li a:hover { color: var(--accent); }
+    li span {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zero to GenAI Engineer</h1>
+    <p class="lead">Classroom slides for Zero to GenAI Engineer. GitHub's file view shows HTML source &mdash; use these links.</p>
+    <p><a href="https://github.com/nursnaaz/zero-to-genai-engineer">Course repository</a></p>
+  </header>
+  <main>
+    <h2>Session 00 — Search engines (PDF)</h2>
+    <ul>
+      <li><a href="00_How_Search_Engine_Works/slides/00_genai_intro.pdf">GenAI intro<span>What is GenAI</span></a></li>
+      <li><a href="00_How_Search_Engine_Works/slides/00_how_search_engine_works.pdf">How search engines work<span>Crawling → TF-IDF</span></a></li>
+      <li><a href="00_How_Search_Engine_Works/slides/00_claude_code_leak_summary.pdf">Claude Code leak<span>How LLMs are instructed</span></a></li>
+    </ul>
+
+    <h2>Session 01 — Text to numbers (PDF)</h2>
+    <ul>
+      <li><a href="01_Text_to_Numbers/slides/M00-S01.pdf">Text to Numbers<span>BoW → FastText</span></a></li>
+    </ul>
+
+    <h2>Session 02 — Transformers (PDF)</h2>
+    <ul>
+      <li><a href="02_Transformer_Architecture/slides/Transformers.pptx.pdf">Transformer architecture<span>Attention, encoder–decoder, positional encoding</span></a></li>
+    </ul>
+
+    <h2>Session 03 — GPT papers</h2>
+    <ul>
+      <li><a href="03_GPT_Evolution_and_Alignment/GPT_Papers_Presentation.html">GPT-1 → DPO paper walkthrough<span>14 slides · 11 papers</span></a></li>
+    </ul>
+
+    <h2>Session 05 — Local LLMs (PDF)</h2>
+    <ul>
+      <li><a href="05_Local_LLMs_and_API_Providers/slides.pdf">Ollama · LM Studio · OpenRouter<span>Session PDF</span></a></li>
+    </ul>
+
+    <h2>Session 08 — Recap</h2>
+    <ul>
+      <li><a href="08_Recap/RECAP_PRESENTATION.html">Interactive recap of S00–S07<span>Visual slides</span></a></li>
+      <li><a href="08_Recap/RECAP_SLIDES.html">Full-text recap slides<span>Readable version</span></a></li>
+    </ul>
+
+    <h2>Session 10 — RAG</h2>
+    <ul>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_01_why_rag.html">01 — Why RAG</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_02_ingestion_chunking.html">02 — Chunking (LangChain)</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_03_ingestion_chunking_llamaindex.html">03 — Chunking (LlamaIndex)</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_04_embeddings.html">04 — Embeddings</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_05_vector_databases.html">05 — Vector databases</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/revision_notebooks_01_to_05.html">Revision — notebooks 01–05</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_06_why_bm25.html">06 — Why BM25</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_07_why_hybrid.html">07 — Hybrid search</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_08_why_reranking.html">08 — Reranking</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_09_full_pipeline_recap.html">09 — Full pipeline recap</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_11_production_chatbots.html">11 — Production chatbots (memory)</a></li>
+      <li><a href="10_RAG/notebooks/teaching_decks/teach_15_multimodal_rag.html">15 — Multimodal RAG</a></li>
+      <li><a href="10_RAG/capstone_rag_studio/reports/rag_strategy_evaluation_presentation.html">RAG Studio — strategy evaluation report</a></li>
+    </ul>
+
+    <h2>Session 11 — LangGraph</h2>
+    <ul>
+      <li><a href="11_LangGraph/notebooks/teaching_decks/teach_01_langgraph_fundamentals.html">01 — Fundamentals &amp; agents</a></li>
+      <li><a href="11_LangGraph/notebooks/teaching_decks/teach_02_human_in_the_loop.html">02 — Human-in-the-loop</a></li>
+      <li><a href="11_LangGraph/notebooks/teaching_decks/teach_04_agent_reasoning_patterns.html">04 — Reasoning patterns</a></li>
+      <li><a href="11_LangGraph/notebooks/teaching_decks/teach_05_sql_agent.html">05 — SQL agent</a></li>
+    </ul>
+
+    <h2>Session 12 — Deep Agents</h2>
+    <ul>
+      <li><a href="12_deepagents/notebooks/teaching_decks/teach_01_why_deep_agents.html">01 — Why Deep Agents<span>LLM vs agent vs harness · AGENT.md / SKILL.md</span></a></li>
+    </ul>
+  </main>
+  <footer>
+    Hosted at <a href="https://nursnaaz.github.io/zero-to-genai-engineer/">nursnaaz.github.io/zero-to-genai-engineer</a>.
+    S04, S06, S07, and S09 are notebook- or guide-led (no classroom deck).
+    S11 Day 3 (multi-agent orchestrator) is taught from the notebook + Streamlit app — there is no separate HTML deck.
+  </footer>
+</body>
+</html>
