@@ -203,7 +203,7 @@ S11 extra (separate repo, not in this clone): [Medium article agent](https://git
 | [S10](./10_RAG/) | RAG + Memory & Chatbots | Chunking → hybrid → RAGAS → chatbot with memory | [12 decks](https://nursnaaz.github.io/zero-to-genai-engineer/), also next to each notebook [below](#s10--rag--memory--chatbots-m07--m08--m06) |
 | [S11](./11_LangGraph/) | LangGraph | Graphs, HITL, helpdesk, ReAct→ToT, SQL | [4 decks](https://nursnaaz.github.io/zero-to-genai-engineer/), also next to each day [below](#s11--langgraph-stateful-agents-m10) |
 | [S12](./12_deepagents/) | Deep Agents | Chat vs files, `AGENT.md`, `SKILL.md` | [Food-delivery deck](https://nursnaaz.github.io/zero-to-genai-engineer/12_deepagents/notebooks/teaching_decks/teach_01_why_deep_agents.html) |
-| [S13](./13_Project_Implementation/) | Dining Bot capstone | Spec + sample DB — RAG, read-only SQL, HITL, Weather + Chart MCP | |
+| [S13](./13_Project_Implementation/) | Dining Bot capstone | One-file app: RAG, read-only SQL, HITL, Weather + Chart MCP, Deep Agents planning | |
 
 ---
 
@@ -598,13 +598,17 @@ Try: *“What is our refund policy?”* · *“How many open tickets does Jane D
 
 ### S13 — Dining Bot (capstone)
 
-> **MISSING from S12:** a product. Dining Bot is one restaurant-manager chat: RAG over policies, read-only SQL over orders, two MCP servers (weather + charts), and **add menu item** only after HITL. The LLM proposes; code validates and executes.
+> **MISSING from S12:** a product. Dining Bot is one restaurant-manager chat: RAG over policies, read-only SQL over orders, two MCP servers (weather + charts), **add menu item** only after HITL, and **multi-step planning** via Deep Agents (`AGENT.md` + skills). The LLM proposes; code validates and executes.
 
-**Start page:** [`13_Project_Implementation/README.md`](./13_Project_Implementation/) · [requirement (docx)](./13_Project_Implementation/Dining_Bot_Requirement_v1.1.docx) · [sample DB notes](./13_Project_Implementation/README_DATABASE.md)
+**Start page:** [`13_Project_Implementation/README.md`](./13_Project_Implementation/) · teach **[`dining_bot.py`](./13_Project_Implementation/dining_bot.py)** (one file, SECTION 0→8) · [requirement (docx)](./13_Project_Implementation/Dining_Bot_Requirement_v1.1.docx)
 
 ```bash
 cd 13_Project_Implementation
-python3 build_db.py
+python3.11 -m venv .venv && source .venv/bin/activate   # deepagents needs 3.11+
+pip install -r requirements.txt
+python build_db.py
+streamlit run dining_bot.py
+# optional CLI: python dining_bot.py --ask "Show me daily revenue for last week."
 ```
 
 ---
@@ -613,7 +617,7 @@ python3 build_db.py
 
 | Project | Session | Stack | What it is |
 |---|---|---|---|
-| **[Dining Bot](./13_Project_Implementation/)** | S13 | LangGraph, RAG, SQLite, MCP, HITL | Capstone spec + sample DB. You implement the assistant. |
+| **[Dining Bot](./13_Project_Implementation/)** | S13 | LangGraph, Deep Agents, RAG, SQLite, MCP, HITL | One-file teaching app + spec + sample DB |
 | **[Self-Correcting Agentic RAG](./11_LangGraph/capstone_agentic_rag/)** | S11 extra | LangGraph, RAGAS, Streamlit | Grade → rewrite → groundedness loop → escalate |
 | **[Medium Article Agent](https://github.com/nursnaaz/medium-article-agent)** | S11 extra | LangGraph, FastAPI, React | Ingest PDF/PPTX/HTML → draft → 6 reviewers → HITL → Markdown. Separate repo — not in this clone. |
 | **[RAG Studio](./10_RAG/capstone_rag_studio/)** | S10 | FastAPI, React, RAGAS, DeepEval | Swap retrieval strategies and compare scores. [Eval slides](https://nursnaaz.github.io/zero-to-genai-engineer/10_RAG/capstone_rag_studio/reports/rag_strategy_evaluation_presentation.html) |

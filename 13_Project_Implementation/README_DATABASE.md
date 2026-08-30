@@ -46,7 +46,7 @@ flag actually means something.
 | `orders` | ~1,370 | Order headers. `status` is paid / open / cancelled. Drives revenue analytics. |
 | `order_items` | ~3,900 | Line items. Drives top-item and category analytics. |
 | `payments` | ~1,240 | One per paid order; a few refunds. Method = card / upi / cash / wallet. |
-| `documents` | 10 | RAG corpus — real policy / SOP / menu chunks. `embedding` is NULL until you ingest. |
+| `documents` | 49 | RAG corpus — ingested from `sample_docs/{docx,xlsx,pptx,pdf}/` (49 chunks). |
 | `audit_log` | 3 | Sample rows showing the HITL write lifecycle: `actor_id, action, payload, approval_status, approved_by, approved_at, executed_at` (2 approved+executed, 1 rejected with NULL approver/exec). |
 
 ## The two design rules baked into the data
@@ -55,7 +55,9 @@ flag actually means something.
    "What was last week's revenue?" → `orders` (see QUERIES.sql).
    "What's our discount policy?" → `documents` (RAG). The router must never cross these.
 
-2. **`documents.embedding` is deliberately empty.** The Knowledge subgraph fills it
+2. **`documents.source_type` / `source_file`** record the real format and filename (`docx:Discount_Policy_v1.3.docx`, etc.). `build_db.py` uses `sample_doc_loader.py` to parse Word, Excel, PowerPoint, and PDF — not markdown.
+
+3. **`documents.embedding` is deliberately empty.** The Knowledge subgraph fills it
    during ingestion. Storing embeddings as text/JSON keeps this a pure single-file
    SQLite database; swap in a real vector index when you outgrow it.
 

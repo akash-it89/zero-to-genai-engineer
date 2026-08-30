@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "restaurant": {
+    "lat": 25.2048,
+    "lon": 55.2708,
+    "tz": "Asia/Dubai"
+  },
+  "forecast": [
+    {
+      "date": "2026-08-30",
+      "temp_max_c": 42.5,
+      "temp_min_c": 28.4,
+      "precip_prob_max": 0
+    },
+    {
+      "date": "2026-08-31",
+      "temp_max_c": 42.3,
+      "temp_min_c": 30.0,
+      "precip_prob_max": 0
+    },
+    {
+      "date": "2026-09-01",
+      "temp_max_c": 38.1,
+      "temp_min_c": 29.5,
+      "precip_prob_max": 0
+    }
+  ],
+  "cached_at": "2026-08-30T07:16:45.390724+04:00"
+}

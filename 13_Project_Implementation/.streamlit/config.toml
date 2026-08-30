@@ -1,0 +1,5 @@
+# Streamlit scans imported modules for hot-reload. sentence-transformers pulls in
+# transformers, whose lazy vision submodules expect torchvision — install it via
+# requirements.txt. Poll watcher is gentler than auto on macOS with ML stacks.
+[server]
+fileWatcherType = "poll"

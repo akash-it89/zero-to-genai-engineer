@@ -21,6 +21,8 @@ CREATE TABLE documents (
     version       TEXT    NOT NULL,          -- e.g. "v1.2"
     last_updated  TEXT    NOT NULL,
     chunk         TEXT    NOT NULL,          -- the retrievable text chunk
+    source_type   TEXT    NOT NULL DEFAULT 'md',  -- docx, xlsx, pptx, pdf, csv, md, ...
+    source_file   TEXT,                      -- original filename e.g. Promo_Calendar.xlsx
     embedding     TEXT                       -- JSON array placeholder, NULL until ingested
 );
 

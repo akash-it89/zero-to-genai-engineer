@@ -1,0 +1,22 @@
+# Document parsing (RAG corpus generation)
+python-docx>=1.0
+openpyxl>=3.1
+python-pptx>=1.0
+pypdf>=4.0
+fpdf2>=2.7
+# App runtime
+python-dotenv>=1.0.0
+pydantic>=2.0
+numpy<2
+sqlglot>=25.0
+sentence-transformers>=3.0
+torchvision>=0.15
+plotly>=5.0
+mcp>=1.0
+streamlit>=1.30
+langchain>=1.0
+langchain-core>=0.3
+langchain-openai>=0.3
+langgraph>=0.6
+langgraph-checkpoint-sqlite>=2.0
+deepagents>=0.7

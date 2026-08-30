@@ -73,6 +73,14 @@ dist/
 # Accidental installer downloads
 **/*.dmg
 
+# Local virtualenvs
+**/.venv/
+.venv/
+
+# Dining Bot generated plans (keep the folder via .gitkeep)
+13_Project_Implementation/plans/*.md
+!13_Project_Implementation/plans/.gitkeep
+
 # Gensim pre-trained model cache (~2.6 GB total, auto-downloaded to ~/gensim-data/)
 gensim-data/
 
