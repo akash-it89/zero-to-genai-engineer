@@ -1,0 +1,12 @@
+.env
+.venv-api/
+web/node_modules/
+web/dist/
+__pycache__/
+*.pyc
+.DS_Store
+deploy-urls.txt
+.env.deploy
+cdk-outputs.json
+cdk/.venv/
+cdk/cdk.out/

@@ -1,0 +1,38 @@
+[project]
+name = "crewai-agentcore-bedrock"
+version = "0.1.0"
+description = "CrewAI on Bedrock AgentCore — Competitor Brief crew demos"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "bedrock-agentcore>=1.22.0",
+    "crewai>=0.80.0",
+    "python-dotenv>=1.0.0",
+    "boto3>=1.34.0",
+    "httpx>=0.27.0",
+    "ddgs>=9.0.0",
+    "tavily-python>=0.5.0",
+    "openai>=1.40.0",
+]
+
+[project.optional-dependencies]
+# Local UI + CLI only — keep out of Runtime package (250MB direct-deploy limit)
+local = [
+    "bedrock-agentcore-starter-toolkit>=0.3.12",
+    "streamlit>=1.32.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "_shared",
+    "crewai_agent",
+    "crewai_agent_memory",
+    "crewai_agent_gateway",
+    "crewai_agent_identity",
+    "crewai_competitor_brief",
+    "streamlit_crew_app",
+]

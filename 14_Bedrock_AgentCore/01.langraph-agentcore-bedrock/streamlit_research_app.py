@@ -6,8 +6,13 @@ AgentCore Research console — telemetry-desk UI over InvokeAgentRuntime.
 - Live stack constellation, session sparklines, interactive tool timeline
 
 Run:
-  export AWS_PROFILE=inceptez
-  export RESEARCH_RUNTIME_ARN="arn:aws:bedrock-agentcore:us-east-1:899736802567:runtime/langgraph_research_graph-ZsDIkv2WYd"
+  export AWS_PROFILE=<your-profile>
+  export RESEARCH_RUNTIME_ARN="$(python - <<'PY'
+from pathlib import Path
+import yaml
+print(yaml.safe_load(Path(".bedrock_agentcore.yaml").read_text())["agents"]["langgraph_research_graph"]["bedrock_agentcore"]["agent_arn"])
+PY
+)"
   .venv/bin/streamlit run streamlit_research_app.py --server.port 8502
 """
 
@@ -28,10 +33,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DEFAULT_ARN = (
-    "arn:aws:bedrock-agentcore:us-east-1:899736802567:"
-    "runtime/langgraph_research_graph-ZsDIkv2WYd"
-)
+# Never hardcode a shared lab ARN — students must export RESEARCH_RUNTIME_ARN
+DEFAULT_ARN = os.getenv("RESEARCH_RUNTIME_ARN", "").strip()
 
 SUGGESTIONS = [
     {
