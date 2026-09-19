@@ -1,0 +1,239 @@
+<mxfile host="app.diagrams.net" modified="2026-09-13T07:15:00.000Z" agent="Cursor" version="24.7.17" type="device">
+  <diagram id="lauki-step10-arch" name="AWS Architecture">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Lauki Support Copilot — Step 10 AWS Architecture&#xa;CloudFront SPA + Cognito JWT + App Runner FastAPI → Bedrock AgentCore (Strands)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+          <mxGeometry x="40" y="20" width="980" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- AWS Cloud boundary -->
+        <mxCell id="aws-cloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=14;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="200" y="90" width="1320" height="920" as="geometry" />
+        </mxCell>
+
+        <!-- Users / Browser (outside AWS) -->
+        <mxCell id="browser" value="Browser SPA&#xa;React + Cognito JS&#xa;(Student / Demo)" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.user;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="40" y="420" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Edge group: CloudFront -->
+        <mxCell id="edge-group" value="Public Edge" style="fillColor=none;strokeColor=#8C4FFF;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#8C4FFF;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="40" y="50" width="240" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudfront" value="Amazon CloudFront&#xa;HTTPS CDN&#xa;/* → S3&#xa;/api/* /health → App Runner" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="edge-group" vertex="1">
+          <mxGeometry x="70" y="50" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Static UI group -->
+        <mxCell id="ui-group" value="Static UI Origin (private)" style="fillColor=none;strokeColor=#7AA116;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#7AA116;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="40" y="300" width="240" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="Amazon S3&#xa;UI Bucket&#xa;SPA + config.json&#xa;Block Public + OAC" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="ui-group" vertex="1">
+          <mxGeometry x="70" y="45" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Identity group -->
+        <mxCell id="id-group" value="Identity" style="fillColor=none;strokeColor=#DD344C;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#DD344C;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="40" y="560" width="240" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="cognito" value="Amazon Cognito&#xa;User Pool + SPA Client&#xa;demo / DemoUser1!&#xa;ID Token (RS256)" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;gradientColor=#F34482;gradientDirection=north;fillColor=#C7131F;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="id-group" vertex="1">
+          <mxGeometry x="70" y="50" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- API Compute group -->
+        <mxCell id="api-group" value="API Compute" style="fillColor=none;strokeColor=#ED7100;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#ED7100;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="340" y="180" width="420" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr" value="Amazon ECR&#xa;FastAPI image&#xa;(CDK DockerImageAsset)" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="api-group" vertex="1">
+          <mxGeometry x="40" y="60" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="apprunner" value="AWS App Runner&#xa;FastAPI :8000&#xa;JWT verify + chat proxy&#xa;1 vCPU / 2 GB" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.app_runner;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="api-group" vertex="1">
+          <mxGeometry x="170" y="60" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="iam" value="IAM Instance Role&#xa;tasks.apprunner&#xa;InvokeAgentRuntime&#xa;+ ForUser" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.role;gradientColor=#F34482;gradientDirection=north;fillColor=#C7131F;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="api-group" vertex="1">
+          <mxGeometry x="170" y="220" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- Ops -->
+        <mxCell id="ops-group" value="Ops" style="fillColor=none;strokeColor=#545B64;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#545B64;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="340" y="640" width="220" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="ssm" value="SSM Parameter&#xa;/lauki-support/...&#xa;deploy-stage = 10" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.parameter_store;gradientColor=#4AB29A;gradientDirection=north;fillColor=#2E5274;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="ops-group" vertex="1">
+          <mxGeometry x="60" y="45" width="78" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- AI Runtime (external) -->
+        <mxCell id="ai-group" value="AI Runtime (external to this CDK stack — ARN passed at deploy)" style="fillColor=#E6F4F1;strokeColor=#01A88D;dashed=0;verticalAlign=top;fontStyle=1;fontColor=#01A88D;fontSize=12;container=1;collapsible=0;pointerEvents=0;" parent="aws-cloud" vertex="1">
+          <mxGeometry x="820" y="220" width="440" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="agentcore" value="Amazon Bedrock&#xa;AgentCore Runtime&#xa;Strands Support Copilot&#xa;qualifier = DEFAULT&#xa;SUPPORT_RUNTIME_ARN" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;gradientColor=#4B48BC;gradientDirection=north;fillColor=#2E27AD;fontColor=#232F3E;strokeColor=#ffffff;strokeWidth=2;" parent="ai-group" vertex="1">
+          <mxGeometry x="170" y="80" width="96" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-note" value="Lab 05 does not create this brain.&#xa;It puts a locked door (JWT) and a face&#xa;(React + CloudFront) in front of it." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#545B64;fontStyle=2;" parent="ai-group" vertex="1">
+          <mxGeometry x="40" y="240" width="360" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: Browser → CloudFront -->
+        <mxCell id="e1" value="1  HTTPS /*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;fontColor=#232F3E;fontSize=11;fontStyle=1;endArrow=block;endFill=1;" parent="1" source="browser" target="cloudfront" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CloudFront → S3 -->
+        <mxCell id="e2" value="OAC SigV4&#xa;static assets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7AA116;fontColor=#7AA116;fontSize=10;dashed=1;endArrow=block;endFill=1;" parent="1" source="cloudfront" target="s3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Browser → Cognito -->
+        <mxCell id="e3" value="2  USER_PASSWORD_AUTH&#xa;ID Token" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#DD344C;fontColor=#DD344C;fontSize=11;fontStyle=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="browser" target="cognito" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="79" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- CloudFront → App Runner -->
+        <mxCell id="e4" value="3  /api/*  /health&#xa;(cache disabled)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#ED7100;fontColor=#ED7100;fontSize=11;fontStyle=1;endArrow=block;endFill=1;" parent="1" source="cloudfront" target="apprunner" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ECR → App Runner -->
+        <mxCell id="e5" value="pull image" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#7AA116;fontColor=#7AA116;fontSize=10;dashed=1;endArrow=block;endFill=1;" parent="1" source="ecr" target="apprunner" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Runner → Cognito JWKS -->
+        <mxCell id="e6" value="JWKS verify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#DD344C;fontColor=#DD344C;fontSize=10;dashed=1;endArrow=block;endFill=1;" parent="1" source="apprunner" target="cognito" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Runner → IAM -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;endArrow=block;endFill=1;" parent="1" source="apprunner" target="iam" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- IAM → AgentCore -->
+        <mxCell id="e8" value="4  InvokeAgentRuntime&#xa;payload + session + actor_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2.5;strokeColor=#01A88D;fontColor=#01A88D;fontSize=11;fontStyle=1;endArrow=block;endFill=1;" parent="1" source="iam" target="agentcore" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- App Runner → SSM -->
+        <mxCell id="e9" value="stage marker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#545B64;fontColor=#545B64;fontSize=10;dashed=1;endArrow=block;endFill=1;" parent="1" source="apprunner" target="ssm" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="Legend" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F2F3F3;strokeColor=#232F3E;fontColor=#232F3E;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="40" y="820" width="280" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" value="Solid black — UI / HTTPS path" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="legend" vertex="1">
+          <mxGeometry y="28" width="280" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" value="Red — Cognito auth / JWKS" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;fontColor=#DD344C;" parent="legend" vertex="1">
+          <mxGeometry y="54" width="280" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" value="Orange — API via CloudFront" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;fontColor=#ED7100;" parent="legend" vertex="1">
+          <mxGeometry y="80" width="280" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" value="Teal — AgentCore invoke (IAM)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;fontColor=#01A88D;" parent="legend" vertex="1">
+          <mxGeometry y="106" width="280" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="Dashed green — OAC / ECR pull" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;fontColor=#7AA116;" parent="legend" vertex="1">
+          <mxGeometry y="132" width="280" height="26" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="lauki-step10-sequence" name="Request Sequence">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="seq-title" value="Step 10 — Login + Chat Request Sequence" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+          <mxGeometry x="40" y="20" width="700" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Actors as swimlanes -->
+        <mxCell id="lane-browser" value="Browser" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#EFE8FC;strokeColor=#5A30B5;fontStyle=1;startSize=36;" parent="1" vertex="1">
+          <mxGeometry x="40" y="80" width="200" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-cf" value="CloudFront" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#FCE8EF;strokeColor=#BC1356;fontStyle=1;startSize=36;" parent="1" vertex="1">
+          <mxGeometry x="240" y="80" width="200" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-cog" value="Cognito" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#FCE8E8;strokeColor=#C7131F;fontStyle=1;startSize=36;" parent="1" vertex="1">
+          <mxGeometry x="440" y="80" width="200" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-api" value="App Runner API" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#FEF0E5;strokeColor=#D05C17;fontStyle=1;startSize=36;" parent="1" vertex="1">
+          <mxGeometry x="640" y="80" width="220" height="720" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-ac" value="AgentCore" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#E6F4F1;strokeColor=#01A88D;fontStyle=1;startSize=36;" parent="1" vertex="1">
+          <mxGeometry x="860" y="80" width="220" height="720" as="geometry" />
+        </mxCell>
+
+        <!-- Steps -->
+        <mxCell id="s1" value="1. GET / → SPA + config.json&#xa;(S3 via OAC)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#232F3E;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="260" y="130" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="2. USER_PASSWORD_AUTH&#xa;→ ID Token" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#DD344C;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="460" y="220" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="3. Store JWT&#xa;sessionStorage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5A30B5;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="60" y="310" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="4. POST /api/chat&#xa;Authorization: Bearer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#ED7100;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="60" y="400" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" value="5. Route /api/*&#xa;→ App Runner (no cache)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#BC1356;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="260" y="400" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="6. Verify JWT via JWKS&#xa;aud = client id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C7131F;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="670" y="400" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="7. InvokeAgentRuntime&#xa;session + actor_id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#01A88D;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="890" y="500" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" value="8. Strands agent reply&#xa;→ ChatResponse.result" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#01A88D;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="670" y="600" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s9" value="9. Render assistant&#xa;message in UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5A30B5;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="60" y="700" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="es1" style="endArrow=block;html=1;rounded=0;strokeColor=#232F3E;strokeWidth=1.5;" parent="1" source="lane-browser" target="s1" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es2" style="endArrow=block;html=1;rounded=0;strokeColor=#DD344C;strokeWidth=1.5;" parent="1" source="s1" target="s2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es3" style="endArrow=block;html=1;rounded=0;strokeColor=#5A30B5;strokeWidth=1.5;" parent="1" source="s2" target="s3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es4" style="endArrow=block;html=1;rounded=0;strokeColor=#ED7100;strokeWidth=1.5;" parent="1" source="s3" target="s4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es5" style="endArrow=block;html=1;rounded=0;strokeColor=#ED7100;strokeWidth=1.5;" parent="1" source="s4" target="s5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es6" style="endArrow=block;html=1;rounded=0;strokeColor=#ED7100;strokeWidth=1.5;" parent="1" source="s5" target="s6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es7" style="endArrow=block;html=1;rounded=0;strokeColor=#01A88D;strokeWidth=2;" parent="1" source="s6" target="s7" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es8" style="endArrow=block;html=1;rounded=0;strokeColor=#01A88D;strokeWidth=1.5;" parent="1" source="s7" target="s8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="es9" style="endArrow=block;html=1;rounded=0;strokeColor=#5A30B5;strokeWidth=1.5;" parent="1" source="s8" target="s9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

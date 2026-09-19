@@ -1,0 +1,126 @@
+name: S14 Lauki Support - CDK plan & deploy
+
+# Classroom CI/CD demo for 14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd
+# — this is the folder that matches the LaukiSupportStack actually deployed
+# in the classroom AWS account (verified via `aws cloudformation
+# describe-stacks`, DeployStep output). 05.agentcore-production-deploy is a
+# separate, never-deployed staged-CDK teaching path — do not point this
+# workflow at it.
+#
+# - Open a PR that touches this folder's cdk/ or api/  -> "plan" job runs
+#   `cdk diff` and posts the result as a PR comment. Nothing is deployed.
+# - Merge that PR to main                                -> "deploy" job runs
+#   `cdk deploy` for real, using the same stack the PR was reviewed against.
+#
+# One-time setup before this workflow can run (see
+# 05.agentcore-production-deploy/OPS_DAY_RUNBOOK.md):
+#   1. Deploy 11_ops_cicd once yourself (creates the GithubActionsDeployRole).
+#   2. Add repo secrets: AWS_DEPLOY_ROLE_ARN, SUPPORT_RUNTIME_ARN.
+#   3. Add repo variables (Settings -> Secrets and variables -> Actions ->
+#      Variables): BUDGET_ALERT_EMAIL (optional).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/api/**"
+  push:
+    branches: [main]
+    paths:
+      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/api/**"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # required to assume the AWS role via OIDC
+  contents: read
+  pull-requests: write # to comment the diff on the PR
+
+env:
+  AWS_REGION: us-east-1
+  WORKDIR: 14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk
+  CDK_CONTEXT: >-
+    -c stackName=LaukiSupportStack
+    -c supportRuntimeArn=${{ secrets.SUPPORT_RUNTIME_ARN }}
+    -c budgetAlertEmail=${{ vars.BUDGET_ALERT_EMAIL }}
+    -c budgetLimitUsd=${{ vars.BUDGET_LIMIT_USD }}
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install CDK app dependencies
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - name: cdk diff
+        working-directory: ${{ env.WORKDIR }}
+        run: cdk diff LaukiSupportStack ${{ env.CDK_CONTEXT }} | tee diff.txt
+
+      - name: Comment diff on the PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = `${process.env.WORKDIR}/diff.txt`;
+            const diff = fs.readFileSync(path, 'utf8').slice(0, 60000);
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### CDK diff for \`LaukiSupportStack\` (11_ops_cicd)\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n_Review this before merging — this is exactly what will change in AWS._`,
+            });
+
+  deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install CDK app dependencies
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - name: cdk deploy
+        working-directory: ${{ env.WORKDIR }}
+        run: cdk deploy LaukiSupportStack ${{ env.CDK_CONTEXT }} --require-approval never

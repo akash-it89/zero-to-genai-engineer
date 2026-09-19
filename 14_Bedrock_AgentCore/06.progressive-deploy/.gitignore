@@ -1,0 +1,11 @@
+*/.venv/
+*/cdk/.venv/
+*/cdk/cdk.out/
+*/web/node_modules/
+*/web/dist/
+__pycache__/
+*.pyc
+.DS_Store
+verify_run.log
+VERIFY_REPORT.md
+VERIFY_REPORT.md.bak

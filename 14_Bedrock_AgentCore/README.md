@@ -9,7 +9,8 @@ Self-contained labs for Amazon Bedrock AgentCore. Each Runtime lab starts from a
 | [`02.strands-agentcore-bedrock`](./02.strands-agentcore-bedrock/) | Strands | Support Copilot + Streamlit | Steps 0→3, Demos 1–5 |
 | [`03.crewai-agentcore-bedrock`](./03.crewai-agentcore-bedrock/) | CrewAI | Competitor Brief + Streamlit | Steps 0→3, Demos 1–5 |
 | [`04.framework-power-agents`](./04.framework-power-agents/) | **All three** | Side-by-side power-agent notebook | Open `powerful_agents_comparison.ipynb` |
-| [`05.strands-support-react-aws`](./05.strands-support-react-aws/) | Strands + React | Amplify/S3 UI → API → AgentCore + Guardrail | See lab README |
+| [`05.agentcore-production-deploy`](./05.agentcore-production-deploy/) | Strands + React | Cognito → CloudFront/S3 UI → App Runner API → AgentCore + Guardrail | See lab README |
+| [`06.progressive-deploy`](./06.progressive-deploy/) | Same app as lab 05 | 10 cumulative folders — same stack, taught as checkpoints instead of stage flags | See lab README |
 
 ## Shared student rules (01–03)
 
@@ -19,5 +20,5 @@ Self-contained labs for Amazon Bedrock AgentCore. Each Runtime lab starts from a
 4. Create Gateway with that lab’s `scripts/create_mcp_gateway.py` → local `gateway-credentials.json`.
 5. After Memory / Identity / Browser agents: run that lab’s IAM grant script on the Runtime role.
 
-Recommended order: **04 (compare locally)** → **01 → 02 → 03** (deploy the same ideas on AgentCore).
+Recommended order: **04 (compare locally)** → **01 → 02 → 03** (deploy the same ideas on AgentCore) → **05 or 06** (ship lab 02's agent to production on your own AWS account — pick one path, or do both).
 You can also run **02 or 03 alone** — each README is from scratch.
