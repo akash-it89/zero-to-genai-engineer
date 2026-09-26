@@ -1,37 +1,42 @@
-name: S14 Lauki Support - CDK plan & deploy
+name: S14 Lauki Support (Fargate) - CDK plan & deploy
 
-# Classroom CI/CD demo for 14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd
-# — this is the folder that matches the LaukiSupportStack actually deployed
-# in the classroom AWS account (verified via `aws cloudformation
-# describe-stacks`, DeployStep output). 05.agentcore-production-deploy is a
-# separate, never-deployed staged-CDK teaching path — do not point this
-# workflow at it.
+# Classroom CI/CD demo for
+# 14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd — the
+# Fargate sibling of agentcore-cdk-deploy.yml (which targets the App
+# Runner stack, LaukiSupportStack). This one targets
+# LaukiSupportFargateStack. Separate secrets on purpose: different stacks,
+# different deploy roles.
 #
 # - Open a PR that touches this folder's cdk/ or api/  -> "plan" job runs
 #   `cdk diff` and posts the result as a PR comment. Nothing is deployed.
-# - Merge that PR to main                                -> "deploy" job runs
-#   `cdk deploy` for real, using the same stack the PR was reviewed against.
+# - Merge that PR to main                                -> "deploy" job
+#   runs `cdk deploy` for real.
 #
 # One-time setup before this workflow can run (see
-# 05.agentcore-production-deploy/OPS_DAY_RUNBOOK.md):
-#   1. Deploy 11_ops_cicd once yourself (creates the GithubActionsDeployRole).
-#   2. Add repo secrets: AWS_DEPLOY_ROLE_ARN, SUPPORT_RUNTIME_ARN.
-#   3. Add repo variables (Settings -> Secrets and variables -> Actions ->
-#      Variables): BUDGET_ALERT_EMAIL (optional).
+# 13_fargate_ops_cicd/README.md):
+#   1. Deploy 13_fargate_ops_cicd once yourself (creates
+#      GithubActionsDeployRoleArn — a role scoped to
+#      LaukiSupportFargateStack, separate from the App Runner pipeline's
+#      role).
+#   2. Add repo secret: AWS_FARGATE_DEPLOY_ROLE_ARN (from that output).
+#      SUPPORT_RUNTIME_ARN is already set (shared with the App Runner
+#      pipeline).
+#   3. BUDGET_ALERT_EMAIL / BUDGET_LIMIT_USD variables are already set
+#      (shared with the App Runner pipeline).
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk/**"
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/api/**"
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/web/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/cdk/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/api/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/web/**"
   push:
     branches: [main]
     paths:
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk/**"
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/api/**"
-      - "14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/web/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/cdk/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/api/**"
+      - "14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/web/**"
   workflow_dispatch: {}
 
 permissions:
@@ -41,12 +46,13 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  WORKDIR: 14_Bedrock_AgentCore/06.progressive-deploy/11_ops_cicd/cdk
+  WORKDIR: 14_Bedrock_AgentCore/06.progressive-deploy/13_fargate_ops_cicd/cdk
   CDK_CONTEXT: >-
-    -c stackName=LaukiSupportStack
+    -c stackName=LaukiSupportFargateStack
     -c supportRuntimeArn=${{ secrets.SUPPORT_RUNTIME_ARN }}
     -c budgetAlertEmail=${{ vars.BUDGET_ALERT_EMAIL }}
     -c budgetLimitUsd=${{ vars.BUDGET_LIMIT_USD }}
+    -c githubOidcProviderArn=${{ secrets.OIDC_PROVIDER_ARN }}
 
 jobs:
   plan:
@@ -66,7 +72,7 @@ jobs:
       - name: Configure AWS credentials (OIDC, no stored keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_FARGATE_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install CDK app dependencies
@@ -82,7 +88,7 @@ jobs:
         run: |
           set -o pipefail
           attempt=0
-          until cdk diff LaukiSupportStack ${{ env.CDK_CONTEXT }} | tee diff.txt; do
+          until cdk diff LaukiSupportFargateStack ${{ env.CDK_CONTEXT }} | tee diff.txt; do
             attempt=$((attempt+1))
             if [ "$attempt" -ge 4 ]; then
               echo "cdk diff failed after $attempt attempts" >&2
@@ -103,7 +109,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### CDK diff for \`LaukiSupportStack\` (11_ops_cicd)\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n_Review this before merging — this is exactly what will change in AWS._`,
+              body: `### CDK diff for \`LaukiSupportFargateStack\` (13_fargate_ops_cicd)\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n_Review this before merging — this is exactly what will change in AWS._`,
             });
 
   deploy:
@@ -123,7 +129,7 @@ jobs:
       - name: Configure AWS credentials (OIDC, no stored keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_FARGATE_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install CDK app dependencies
@@ -139,7 +145,7 @@ jobs:
         run: |
           set -o pipefail
           attempt=0
-          until cdk deploy LaukiSupportStack ${{ env.CDK_CONTEXT }} --require-approval never; do
+          until cdk deploy LaukiSupportFargateStack ${{ env.CDK_CONTEXT }} --require-approval never; do
             attempt=$((attempt+1))
             if [ "$attempt" -ge 4 ]; then
               echo "cdk deploy failed after $attempt attempts" >&2

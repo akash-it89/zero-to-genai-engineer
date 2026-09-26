@@ -200,7 +200,7 @@ export default function App() {
             <h1>Lauki Support</h1>
             <p>
               {chatEnabled
-                ? "React UI → API → AgentCore Runtime (Strands) with Cognito + Guardrails + CI/CD"
+                ? "React UI → API → AgentCore Runtime (Strands) with Cognito + Guardrails."
                 : "Cognito login is live. Support chat turns on in stage 10."}
             </p>
           </div>

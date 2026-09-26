@@ -3,18 +3,19 @@ from __future__ import annotations
 from typing import Any
 
 import aws_cdk as cdk
-from aws_cdk import CfnOutput, RemovalPolicy, Stack
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import custom_resources as cr
 from aws_cdk import aws_s3 as s3
-from aws_cdk import Duration
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_s3_deployment as s3deploy
 from pathlib import Path
-from aws_cdk import aws_apprunner as apprunner
 from aws_cdk import aws_budgets as budgets
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecs as ecs
+from aws_cdk import aws_ecs_patterns as ecs_patterns
 from aws_cdk import aws_ecr_assets as ecr_assets
 from aws_cdk import aws_iam as iam
 from constructs import Construct
@@ -26,7 +27,21 @@ WEB_DIR = ROOT / "web"
 DEMO_USERNAME = "demo"
 DEMO_PASSWORD = "DemoUser1!"
 
-class LaukiSupportStack(Stack):
+
+class LaukiSupportFargateStack(Stack):
+    """Same app as 10_agentcore_chat, on ECS Fargate + ALB instead of App Runner.
+
+    A separate, independent stack (own Cognito pool, own S3/CloudFront, own
+    compute) — nothing here is shared with `LaukiSupportStack`. Safe to
+    deploy or delete without touching the App Runner demo.
+
+    Cost note: uses `nat_gateways=0` and runs the Fargate task in a PUBLIC
+    subnet with a public IP, specifically to avoid a NAT Gateway's ~$32/mo
+    fixed cost for what is a classroom comparison, not a production setup.
+    In a real deployment you'd put the task in a private subnet behind a
+    NAT Gateway (or VPC endpoints) instead of giving it a public IP.
+    """
+
     def __init__(
         self,
         scope: Construct,
@@ -42,15 +57,15 @@ class LaukiSupportStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         region = Stack.of(self).region
 
-        # Unique per STACK_NAME so parallel classroom stacks do not collide
         _safe = "".join(
             ch.lower() if ch.isalnum() else "-" for ch in construct_id
         ).strip("-")[:24]
-        CfnOutput(self, "DeployStep", value="11")
+
+        CfnOutput(self, "DeployStep", value="13-fargate-ops")
         CfnOutput(
             self,
             "StepHint",
-            value="Ops day — auto scaling + cost budget + GitHub Actions deploy role",
+            value="Fargate app (step 12) + ECS request-count autoscaling + cost budget + GitHub Actions deploy role",
         )
         CfnOutput(self, "StackName", value=construct_id)
 
@@ -58,11 +73,11 @@ class LaukiSupportStack(Stack):
             self,
             "StageMarker",
             parameter_name=f"/lauki-support/{_safe}/deploy-stage",
-            string_value="11",
-            description="Classroom step folder",
+            string_value="13-fargate-ops",
+            description="Classroom step folder (Fargate alternative)",
         )
 
-
+        # ----- Cognito (same shape as step 10) -----
         user_pool = cognito.UserPool(
             self,
             "UserPool",
@@ -81,19 +96,14 @@ class LaukiSupportStack(Stack):
         )
         CfnOutput(self, "UserPoolId", value=user_pool.user_pool_id)
 
-
         user_pool_client = user_pool.add_client(
             "SpaClient",
             user_pool_client_name="lauki-support-spa",
-            auth_flows=cognito.AuthFlow(
-                user_password=True,
-                user_srp=True,
-            ),
+            auth_flows=cognito.AuthFlow(user_password=True, user_srp=True),
             generate_secret=False,
             prevent_user_existence_errors=True,
         )
         CfnOutput(self, "UserPoolClientId", value=user_pool_client.user_pool_client_id)
-
 
         create_user = cr.AwsCustomResource(
             self,
@@ -175,7 +185,7 @@ class LaukiSupportStack(Stack):
         CfnOutput(self, "DemoUsername", value=DEMO_USERNAME)
         CfnOutput(self, "DemoPassword", value=DEMO_PASSWORD)
 
-
+        # ----- S3 bucket for the React UI (same shape as step 10) -----
         ui_bucket = s3.Bucket(
             self,
             "UiBucket",
@@ -187,6 +197,22 @@ class LaukiSupportStack(Stack):
         )
         CfnOutput(self, "UiBucketName", value=ui_bucket.bucket_name)
 
+        # ----- VPC — no NAT Gateway (cost), task runs in a public subnet -----
+        vpc = ec2.Vpc(
+            self,
+            "Vpc",
+            max_azs=2,
+            nat_gateways=0,
+            subnet_configuration=[
+                ec2.SubnetConfiguration(
+                    name="public",
+                    subnet_type=ec2.SubnetType.PUBLIC,
+                    cidr_mask=24,
+                )
+            ],
+        )
+
+        cluster = ecs.Cluster(self, "Cluster", vpc=vpc, container_insights=False)
 
         api_image = ecr_assets.DockerImageAsset(
             self,
@@ -195,55 +221,14 @@ class LaukiSupportStack(Stack):
             platform=ecr_assets.Platform.LINUX_AMD64,
             asset_name="lauki-support-api",
         )
-        ecr_access_role = iam.Role(
+
+        task_role = iam.Role(
             self,
-            "AppRunnerEcrAccessRole",
-            assumed_by=iam.ServicePrincipal("build.apprunner.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "service-role/AWSAppRunnerServicePolicyForECRAccess"
-                )
-            ],
+            "FargateTaskRole",
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
-        api_image.repository.grant_pull(ecr_access_role)
-
-        instance_role = iam.Role(
-            self,
-            "AppRunnerInstanceRole",
-            assumed_by=iam.ServicePrincipal("tasks.apprunner.amazonaws.com"),
-        )
-
-        env_vars = [
-            apprunner.CfnService.KeyValuePairProperty(
-                name="AWS_REGION", value=region
-            ),
-            apprunner.CfnService.KeyValuePairProperty(
-                name="CORS_ORIGINS", value="*"
-            ),
-        ]
-
-        env_vars.extend(
-            [
-                apprunner.CfnService.KeyValuePairProperty(
-                    name="COGNITO_REGION", value=region
-                ),
-                apprunner.CfnService.KeyValuePairProperty(
-                    name="COGNITO_USER_POOL_ID",
-                    value=user_pool.user_pool_id,
-                ),
-                apprunner.CfnService.KeyValuePairProperty(
-                    name="COGNITO_CLIENT_ID",
-                    value=user_pool_client.user_pool_client_id,
-                ),
-                apprunner.CfnService.KeyValuePairProperty(
-                    name="AUTH_DISABLED", value="false"
-                ),
-            ]
-        )
-
-
         endpoint_arn = f"{support_runtime_arn}/runtime-endpoint/DEFAULT"
-        instance_role.add_to_policy(
+        task_role.add_to_policy(
             iam.PolicyStatement(
                 actions=[
                     "bedrock-agentcore:InvokeAgentRuntime",
@@ -252,69 +237,68 @@ class LaukiSupportStack(Stack):
                 resources=[support_runtime_arn, endpoint_arn],
             )
         )
-        env_vars.append(
-            apprunner.CfnService.KeyValuePairProperty(
-                name="SUPPORT_RUNTIME_ARN",
-                value=support_runtime_arn,
-            )
-        )
         CfnOutput(self, "SupportRuntimeArn", value=support_runtime_arn)
 
-        api_service = apprunner.CfnService(
+        # ----- Fargate service + its own Application Load Balancer -----
+        # This one L2 construct is the Fargate equivalent of App Runner's
+        # single CfnService: it wires up the task definition, ECS service,
+        # ALB, target group, and listener together.
+        fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             "ApiService",
-            service_name=f"lauki-api-{_safe}"[:40],
-            source_configuration=apprunner.CfnService.SourceConfigurationProperty(
-                authentication_configuration=apprunner.CfnService.AuthenticationConfigurationProperty(
-                    access_role_arn=ecr_access_role.role_arn,
-                ),
-                auto_deployments_enabled=False,
-                image_repository=apprunner.CfnService.ImageRepositoryProperty(
-                    image_identifier=api_image.image_uri,
-                    image_repository_type="ECR",
-                    image_configuration=apprunner.CfnService.ImageConfigurationProperty(
-                        port="8000",
-                        runtime_environment_variables=env_vars,
-                    ),
-                ),
-            ),
-            instance_configuration=apprunner.CfnService.InstanceConfigurationProperty(
-                cpu="1024",
-                memory="2048",
-                instance_role_arn=instance_role.role_arn,
-            ),
-            health_check_configuration=apprunner.CfnService.HealthCheckConfigurationProperty(
-                protocol="HTTP",
-                path="/health",
-                interval=15,
-                timeout=5,
-                healthy_threshold=1,
-                unhealthy_threshold=5,
+            cluster=cluster,
+            cpu=1024,
+            memory_limit_mib=2048,
+            desired_count=1,
+            assign_public_ip=True,  # no NAT Gateway, so the task needs its own public IP
+            task_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            public_load_balancer=True,
+            listener_port=80,
+            task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
+                image=ecs.ContainerImage.from_docker_image_asset(api_image),
+                container_port=8000,
+                task_role=task_role,
+                environment={
+                    "AWS_REGION": region,
+                    "CORS_ORIGINS": "*",
+                    "COGNITO_REGION": region,
+                    "COGNITO_USER_POOL_ID": user_pool.user_pool_id,
+                    "COGNITO_CLIENT_ID": user_pool_client.user_pool_client_id,
+                    "AUTH_DISABLED": "false",
+                    "SUPPORT_RUNTIME_ARN": support_runtime_arn,
+                },
             ),
         )
-        api_service.node.add_dependency(ecr_access_role)
-        api_service.node.add_dependency(instance_role)
+        # Same /health path App Runner used; Fargate/ALB needs it configured
+        # explicitly on the target group (App Runner had this built in).
+        fargate_service.target_group.configure_health_check(
+            path="/health",
+            healthy_http_codes="200",
+            interval=Duration.seconds(15),
+            timeout=Duration.seconds(5),
+            healthy_threshold_count=2,
+            unhealthy_threshold_count=5,
+        )
+        # Demo-only: ALB accepts HTTP from anywhere so CloudFront can reach
+        # it. In production, restrict this security group to CloudFront's
+        # `com.amazonaws.global.cloudfront.origin-facing` managed prefix
+        # list instead of 0.0.0.0/0.
         CfnOutput(
             self,
-            "AppRunnerUrl",
-            value=f"https://{api_service.attr_service_url}",
+            "AlbUrl",
+            value=f"http://{fargate_service.load_balancer.load_balancer_dns_name}",
         )
 
-
+        # ----- CloudFront (same shape as step 10, ALB origin instead of App Runner) -----
         oac = cloudfront.S3OriginAccessControl(
-            self,
-            "UiOac",
-            signing=cloudfront.Signing.SIGV4_ALWAYS,
+            self, "UiOac", signing=cloudfront.Signing.SIGV4_ALWAYS
         )
         s3_origin = origins.S3BucketOrigin.with_origin_access_control(
-            ui_bucket,
-            origin_access_control=oac,
+            ui_bucket, origin_access_control=oac
         )
-        additional: dict[str, cloudfront.BehaviorOptions] = {}
-
-        api_origin = origins.HttpOrigin(
-            api_service.attr_service_url,
-            protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+        api_origin = origins.LoadBalancerV2Origin(
+            fargate_service.load_balancer,
+            protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
         )
         api_behavior = cloudfront.BehaviorOptions(
             origin=api_origin,
@@ -324,13 +308,12 @@ class LaukiSupportStack(Stack):
             cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
             origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         )
-        additional["/api/*"] = api_behavior
-        additional["/health"] = api_behavior
+        additional = {"/api/*": api_behavior, "/health": api_behavior}
 
         distribution = cloudfront.Distribution(
             self,
             "UiDistribution",
-            comment="lauki-support-ui-cdk",
+            comment="lauki-support-ui-fargate",
             default_root_object="index.html",
             default_behavior=cloudfront.BehaviorOptions(
                 origin=s3_origin,
@@ -339,7 +322,7 @@ class LaukiSupportStack(Stack):
                 cached_methods=cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
                 compress=True,
             ),
-            additional_behaviors=additional or None,
+            additional_behaviors=additional,
             error_responses=[
                 cloudfront.ErrorResponse(
                     http_status=403,
@@ -361,13 +344,11 @@ class LaukiSupportStack(Stack):
             value=f"https://{distribution.distribution_domain_name}",
         )
 
-
-        chat_enabled = True
         config = {
-            "step": 11,
-            "stage": 11,
+            "step": "13-fargate-ops",
+            "stage": "13-fargate-ops",
             "authRequired": True,
-            "chatEnabled": chat_enabled,
+            "chatEnabled": True,
             "region": region,
             "apiBase": "",
             "userPoolId": user_pool.user_pool_id,
@@ -400,28 +381,29 @@ class LaukiSupportStack(Stack):
             memory_limit=1024,
         )
 
-        # ----- Step 11: App Runner auto scaling + a monthly cost budget -----
-        # min_size keeps one warm instance (no cold start on the first
-        # request); max_size is a hard ceiling so a traffic burst in class
-        # can't turn into a runaway bill; max_concurrency is how many
-        # in-flight requests one instance takes before App Runner starts a
-        # new one.
-        min_size, max_size, max_concurrency = 1, 3, 15
-        autoscaling = apprunner.CfnAutoScalingConfiguration(
-            self,
-            "ApiAutoScaling",
-            auto_scaling_configuration_name=f"lauki-support-{_safe}"[:32],
-            min_size=min_size,
-            max_size=max_size,
-            max_concurrency=max_concurrency,
+        # ----- Step 13: ECS service auto scaling (Fargate's equivalent of -----
+        # ----- App Runner's CfnAutoScalingConfiguration from step 11)     -----
+        # App Runner scales on "requests per instance"; the closest native
+        # ECS/ALB equivalent is ALB request-count-per-target, which is what
+        # scale_on_request_count() wires up under the hood (an Application
+        # Auto Scaling policy on the ECS service, driven by the same ALB
+        # metric App Runner uses internally).
+        min_capacity, max_capacity, requests_per_target = 1, 3, 5
+        scaling = fargate_service.service.auto_scale_task_count(
+            min_capacity=min_capacity, max_capacity=max_capacity
         )
-        api_service.auto_scaling_configuration_arn = (
-            autoscaling.attr_auto_scaling_configuration_arn
+        scaling.scale_on_request_count(
+            "RequestCountScaling",
+            requests_per_target=requests_per_target,
+            target_group=fargate_service.target_group,
         )
         CfnOutput(
             self,
             "AutoScalingLimits",
-            value=f"min={min_size} max={max_size} concurrency={max_concurrency} (edit in stack.py)",
+            value=(
+                f"min={min_capacity} max={max_capacity} "
+                f"requests_per_target={requests_per_target} (edit in stack.py)"
+            ),
         )
 
         # Budgets supports an EMAIL subscriber directly — no SNS topic or
@@ -460,10 +442,11 @@ class LaukiSupportStack(Stack):
                 value=f"${budget_limit_usd}/mo, alert at 80% -> {budget_alert_email}",
             )
 
-        # ----- Step 11: let GitHub Actions deploy this stack via OIDC -----
-        # (no long-lived AWS keys stored in the repo — same "no secrets in
-        # the browser" idea from the Cognito/App Runner design, applied to
-        # the pipeline instead of the UI.)
+        # ----- Step 13: let GitHub Actions deploy this stack via OIDC -----
+        # Only one OIDC provider per URL is allowed per AWS account — the
+        # App Runner ops-day stack (11_ops_cicd) already created one, so
+        # this imports it by ARN instead of creating a duplicate (deploy.sh
+        # auto-detects it; see that folder's role for the precedent).
         if github_oidc_provider_arn:
             oidc_provider = iam.OpenIdConnectProvider.from_open_id_connect_provider_arn(
                 self, "GithubOidcProvider", github_oidc_provider_arn
